@@ -59,7 +59,7 @@
 
         if (img.naturalWidth <= maxWidth) {
           skipped.push(file.name);
-          li.innerHTML = `<span>${file.name}</span><span>変更不要(すでに${maxWidth}px以下)</span>`;
+          li.innerHTML = `<span>${file.name}</span><span>対応済み(すでに${maxWidth}px以下)</span>`;
           continue;
         }
 
@@ -84,7 +84,7 @@
       ? `
         <div class="result-card result-notice">
           <div class="result-info">
-            <p>${skipped.length}件は、すでに指定サイズ以下だったためリサイズしませんでした。</p>
+            <p>${skipped.length}件は、すでに指定サイズに収まっているため、そのままで完了しています。</p>
             <p class="format-note">${skipped.join("、")}</p>
           </div>
         </div>

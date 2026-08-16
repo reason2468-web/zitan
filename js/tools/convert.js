@@ -57,7 +57,7 @@
       // 元々HEICだったファイルは、この時点では既にJPEGへ変換済みだが「元は違う形式だった」ため変換対象にする
       if (normalizeImageType(file.type) === targetType && !file.zitanOriginallyHeic) {
         skipped.push(file.name);
-        li.innerHTML = `<span>${file.name}</span><span>変換不要(すでに${targetLabel}形式)</span>`;
+        li.innerHTML = `<span>${file.name}</span><span>対応済み(すでに${targetLabel}形式)</span>`;
         continue;
       }
 
@@ -89,7 +89,7 @@
       ? `
         <div class="result-card result-notice">
           <div class="result-info">
-            <p>${skipped.length}件は、もともと${targetLabel}形式だったため変換しませんでした。</p>
+            <p>${skipped.length}件は、すでに${targetLabel}形式のため、そのままで完了しています。</p>
             <p class="format-note">${skipped.join("、")}</p>
           </div>
         </div>
