@@ -222,7 +222,8 @@ function buildSaveName(context) {
 
 // 設定の保存先(フォルダ指定 / ZIPダウンロード / 単体ダウンロード)に従って処理済みファイルを保存する
 // context: { category: "画像", tool: "圧縮" } のように、保存名テンプレートに使う情報を渡す
-async function saveProcessedFiles(files, context) {
+// isBatch: 複数ファイルを選んで処理した場合はtrue(結果が1件だけでもZIPにまとめる)
+async function saveProcessedFiles(files, context, isBatch = false) {
   const baseName = buildSaveName(context);
 
   if (getSaveMode() === "folder" && supportsFolderSave() && chosenDirectoryHandle) {
@@ -236,7 +237,7 @@ async function saveProcessedFiles(files, context) {
     return "folder";
   }
 
-  if (files.length === 1) {
+  if (files.length === 1 && !isBatch) {
     downloadFile(files[0]);
     return "single";
   }

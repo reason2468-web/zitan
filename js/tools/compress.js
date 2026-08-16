@@ -82,7 +82,7 @@
     }
 
     if (results.length) {
-      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: "圧縮" });
+      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: "圧縮" }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
       const reduction = Math.round((1 - totalAfter / totalBefore) * 100);
       resultArea.innerHTML = `
