@@ -568,6 +568,17 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-family: var(--font-body);
 }
 
+.controls select {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-left: 6px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--paper-raised);
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;

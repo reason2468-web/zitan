@@ -62,6 +62,53 @@ async function getFilesFromDataTransfer(dataTransfer) {
   }
 }
 
+// ---------- 画像ファイルの読み込み(各ツール共通) ----------
+
+function isHeicFile(file) {
+  return file.type === "image/heic" || file.type === "image/heif" || /\.(heic|heif)$/i.test(file.name);
+}
+
+function isImageFile(file) {
+  return file.type.startsWith("image/") || isHeicFile(file);
+}
+
+// HEICファイルはブラウザが直接デコードできないため、先にJPEGへ変換する
+async function toDecodableImageFile(file) {
+  if (!isHeicFile(file)) return file;
+  const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+  const blob = Array.isArray(converted) ? converted[0] : converted;
+  return new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+}
+
+// ドロップ/選択されたファイル群を画像だけに絞り込み、HEICを変換して返す(各ツール共通の読み込み処理)
+async function loadImageFiles(fileList, { resultArea, listEl }) {
+  const allFiles = Array.from(fileList);
+  const imageFiles = allFiles.filter(isImageFile);
+  if (!imageFiles.length) {
+    if (!allFiles.length) {
+      resultArea.innerHTML = `<p style="color:red;">フォルダの中身を読み取れませんでした。お手数ですが「フォルダを選択」ボタンからお試しください。</p>`;
+    } else {
+      resultArea.innerHTML = `<p style="color:red;">画像ファイルが見つかりませんでした。(${allFiles.length}件のファイルを検出しましたが、対応する画像形式ではありませんでした)</p>`;
+    }
+    return [];
+  }
+
+  if (listEl) listEl.innerHTML = "";
+  resultArea.innerHTML = `<p>読み込み中...(${imageFiles.length}件)</p>`;
+
+  const converted = [];
+  for (const file of imageFiles) {
+    try {
+      converted.push(await toDecodableImageFile(file));
+    } catch (err) {
+      // 変換できないファイルはスキップ
+    }
+  }
+
+  resultArea.innerHTML = `<p>${converted.length}件の画像を選択中</p>`;
+  return converted;
+}
+
 // ドラッグ&ドロップ + クリックでファイル選択できるようにする共通セットアップ
 // (ドラッグ&ドロップはフォルダにも対応、フォルダの中の画像も再帰的に拾う)
 function setupDropzone(dropzoneEl, inputEl, onFiles) {
