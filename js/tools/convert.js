@@ -32,6 +32,7 @@
   function extensionFor(mimeType) {
     if (mimeType === "image/png") return "png";
     if (mimeType === "image/webp") return "webp";
+    if (mimeType === "image/avif") return "avif";
     return "jpg";
   }
 
@@ -43,13 +44,22 @@
     resultArea.innerHTML = "";
 
     const targetType = formatSelect.value;
+    const targetLabel = targetType.replace("image/", "").toUpperCase();
     const ext = extensionFor(targetType);
     const results = [];
+    const skipped = [];
 
     for (const file of currentFiles) {
       const li = document.createElement("li");
       li.innerHTML = `<span>${file.name}</span><span>処理中...</span>`;
       listEl.appendChild(li);
+
+      // 元々HEICだったファイルは、この時点では既にJPEGへ変換済みだが「元は違う形式だった」ため変換対象にする
+      if (file.type === targetType && !file.zitanOriginallyHeic) {
+        skipped.push(file.name);
+        li.innerHTML = `<span>${file.name}</span><span>変換不要(すでに${targetLabel}形式)</span>`;
+        continue;
+      }
 
       try {
         const img = await loadImageElement(file);
@@ -69,16 +79,28 @@
         const newName = `${file.name.replace(/\.[^/.]+$/, "")}.${ext}`;
         const converted = new File([blob], newName, { type: targetType });
         results.push(converted);
-        li.innerHTML = `<span>${file.name}</span><span>${targetType.replace("image/", "").toUpperCase()}に変換しました</span>`;
+        li.innerHTML = `<span>${file.name}</span><span>${targetLabel}に変換しました</span>`;
       } catch (err) {
         li.innerHTML = `<span>${file.name}</span><span style="color:red;">失敗</span>`;
       }
     }
 
+    const skippedNotice = skipped.length
+      ? `
+        <div class="result-card result-notice">
+          <div class="result-info">
+            <p>${skipped.length}件は、もともと${targetLabel}形式だったため変換しませんでした。</p>
+            <p class="format-note">${skipped.join("、")}</p>
+          </div>
+        </div>
+      `
+      : "";
+
     if (results.length) {
       const saveResult = await saveProcessedFiles(results, { category: "画像", tool: "変換" });
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
       resultArea.innerHTML = `
+        ${skippedNotice}
         <div class="result-card">
           <div class="result-info">
             <p>${results.length}件を変換しました。</p>
@@ -86,6 +108,8 @@
           </div>
         </div>
       `;
+    } else if (skipped.length) {
+      resultArea.innerHTML = skippedNotice;
     } else {
       resultArea.innerHTML = `<p style="color:red;">変換できたファイルがありませんでした。</p>`;
     }

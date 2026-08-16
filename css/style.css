@@ -646,6 +646,11 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin-top: 10px;
 }
 
+.result-notice {
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
 .result-card img {
   max-width: 160px;
   max-height: 160px;

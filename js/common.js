@@ -73,11 +73,14 @@ function isImageFile(file) {
 }
 
 // HEICファイルはブラウザが直接デコードできないため、先にJPEGへ変換する
+// (zitanOriginallyHeic を付けておくと、「元はHEICだった」ことを後段のツールが判別できる)
 async function toDecodableImageFile(file) {
   if (!isHeicFile(file)) return file;
   const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
   const blob = Array.isArray(converted) ? converted[0] : converted;
-  return new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+  const newFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+  newFile.zitanOriginallyHeic = true;
+  return newFile;
 }
 
 // ドロップ/選択されたファイル群を画像だけに絞り込み、HEICを変換して返す(各ツール共通の読み込み処理)
