@@ -55,7 +55,7 @@
       listEl.appendChild(li);
 
       // 元々HEICだったファイルは、この時点では既にJPEGへ変換済みだが「元は違う形式だった」ため変換対象にする
-      if (file.type === targetType && !file.zitanOriginallyHeic) {
+      if (normalizeImageType(file.type) === targetType && !file.zitanOriginallyHeic) {
         skipped.push(file.name);
         li.innerHTML = `<span>${file.name}</span><span>変換不要(すでに${targetLabel}形式)</span>`;
         continue;

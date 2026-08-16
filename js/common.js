@@ -72,6 +72,13 @@ function isImageFile(file) {
   return file.type.startsWith("image/") || isHeicFile(file);
 }
 
+// ブラウザ/OSによっては同じ形式でも古いMIMEタイプ表記になることがあるため、比較用に正規化する
+function normalizeImageType(type) {
+  if (type === "image/x-png") return "image/png";
+  if (type === "image/jpg" || type === "image/pjpeg") return "image/jpeg";
+  return type;
+}
+
 // HEICファイルはブラウザが直接デコードできないため、先にJPEGへ変換する
 // (zitanOriginallyHeic を付けておくと、「元はHEICだった」ことを後段のツールが判別できる)
 async function toDecodableImageFile(file) {
