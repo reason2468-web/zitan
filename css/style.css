@@ -823,6 +823,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .slider-row-label input[type="range"] { width: 100%; }
 
+#wm-text-controls[hidden], #wm-image-controls[hidden] { display: none; }
+
 #wm-text-controls, #wm-image-controls {
   display: flex;
   flex-direction: column;
