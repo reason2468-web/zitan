@@ -5,25 +5,20 @@
   const runBtn = document.getElementById("filter-run");
   const resultArea = document.getElementById("filter-result");
   const listEl = document.getElementById("filter-list");
+  const previewImg = document.getElementById("filter-preview-img");
 
   let currentFiles = [];
+  let previewToken = 0;
 
-  async function loadFiles(fileList) {
-    const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
-    currentFiles = currentFiles.concat(newFiles);
-    runBtn.disabled = currentFiles.length === 0;
-    if (currentFiles.length) {
-      renderSelectedFiles(resultArea, currentFiles, (updated) => {
-        currentFiles = updated;
-        runBtn.disabled = currentFiles.length === 0;
-      });
-    }
-  }
-
-  setupDropzone(dropzone, input, loadFiles);
-  folderInput.addEventListener("change", () => {
-    if (folderInput.files.length) loadFiles(folderInput.files);
-  });
+  const FILTER_CSS = {
+    grayscale: "grayscale(100%)",
+    sepia: "sepia(100%)",
+    brighten: "brightness(130%)",
+    vivid: "saturate(180%)",
+    "blur-weak": "blur(2px)",
+    "blur-medium": "blur(5px)",
+    "blur-strong": "blur(10px)",
+  };
 
   function loadImageElement(file) {
     return new Promise((resolve, reject) => {
@@ -35,6 +30,78 @@
     });
   }
 
+  // 画像を小さく縮小してから拡大し直す(なめらかにしない)ことでモザイク状のブロックを作る
+  function applyMosaic(canvas, ctx, img, blockSize = 12) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const smallW = Math.max(1, Math.round(w / blockSize));
+    const smallH = Math.max(1, Math.round(h / blockSize));
+
+    const tmp = document.createElement("canvas");
+    tmp.width = smallW;
+    tmp.height = smallH;
+    tmp.getContext("2d").drawImage(img, 0, 0, smallW, smallH);
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tmp, 0, 0, smallW, smallH, 0, 0, w, h);
+  }
+
+  function applyFilterToCanvas(canvas, ctx, img, filterType) {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    if (filterType === "mosaic") {
+      applyMosaic(canvas, ctx, img);
+    } else {
+      ctx.filter = FILTER_CSS[filterType] || "none";
+      ctx.drawImage(img, 0, 0);
+    }
+  }
+
+  async function updatePreview() {
+    const token = ++previewToken;
+    if (!currentFiles.length) {
+      previewImg.hidden = true;
+      return;
+    }
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
+    try {
+      const img = await loadImageElement(currentFiles[0]);
+      if (token !== previewToken) return;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      applyFilterToCanvas(canvas, ctx, img, filterType);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+      if (token !== previewToken) return;
+      previewImg.src = URL.createObjectURL(blob);
+      previewImg.hidden = false;
+    } catch (err) {
+      previewImg.hidden = true;
+    }
+  }
+
+  document.querySelectorAll('input[name="filter-type"]').forEach((radio) => {
+    radio.addEventListener("change", updatePreview);
+  });
+
+  async function loadFiles(fileList) {
+    const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
+    currentFiles = mergeUniqueFiles(currentFiles, newFiles);
+    runBtn.disabled = currentFiles.length === 0;
+    if (currentFiles.length) {
+      renderSelectedFiles(resultArea, currentFiles, (updated) => {
+        currentFiles = updated;
+        runBtn.disabled = currentFiles.length === 0;
+        updatePreview();
+      });
+    }
+    updatePreview();
+  }
+
+  setupDropzone(dropzone, input, loadFiles);
+  folderInput.addEventListener("change", () => {
+    if (folderInput.files.length) loadFiles(folderInput.files);
+  });
+
   runBtn.addEventListener("click", async () => {
     if (!currentFiles.length) return;
     runBtn.disabled = true;
@@ -42,7 +109,7 @@
     listEl.innerHTML = "";
     resultArea.innerHTML = "";
 
-    const filterValue = document.querySelector('input[name="filter-type"]:checked').value;
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
     const results = [];
 
     for (const file of currentFiles) {
@@ -53,11 +120,8 @@
       try {
         const img = await loadImageElement(file);
         const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
         const ctx = canvas.getContext("2d");
-        ctx.filter = filterValue;
-        ctx.drawImage(img, 0, 0);
+        applyFilterToCanvas(canvas, ctx, img, filterType);
 
         const mimeType = normalizeImageType(file.type) || "image/jpeg";
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, mimeType, 0.92));

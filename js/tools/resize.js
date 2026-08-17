@@ -14,7 +14,7 @@
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
-    currentFiles = currentFiles.concat(newFiles);
+    currentFiles = mergeUniqueFiles(currentFiles, newFiles);
     runBtn.disabled = currentFiles.length === 0;
     if (currentFiles.length) {
       renderSelectedFiles(resultArea, currentFiles, (updated) => {

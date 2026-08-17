@@ -85,9 +85,32 @@ async function toDecodableImageFile(file) {
   if (!isHeicFile(file)) return file;
   const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
   const blob = Array.isArray(converted) ? converted[0] : converted;
-  const newFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+  const newFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), {
+    type: "image/jpeg",
+    lastModified: file.lastModified,
+  });
   newFile.zitanOriginallyHeic = true;
   return newFile;
+}
+
+// ファイルの「同一性」を判定するための鍵(名前+サイズ+更新日時)。HEIC変換後も
+// lastModifiedを元ファイルから引き継いでいるので、同じ写真なら毎回同じ鍵になる。
+function fileIdentityKey(file) {
+  return `${file.name}::${file.size}::${file.lastModified}`;
+}
+
+// 既存のファイル一覧に、まだ含まれていない新規ファイルだけを追加する(重複を除いて追記)
+function mergeUniqueFiles(existingFiles, newFiles) {
+  const seen = new Set(existingFiles.map(fileIdentityKey));
+  const uniqueNew = [];
+  for (const file of newFiles) {
+    const key = fileIdentityKey(file);
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueNew.push(file);
+    }
+  }
+  return existingFiles.concat(uniqueNew);
 }
 
 // ドロップ/選択されたファイル群を画像だけに絞り込み、HEICを変換して返す(各ツール共通の読み込み処理)
@@ -135,6 +158,7 @@ function buildSelectedFilesPreview(files) {
       <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
       <img class="file-thumb" src="${URL.createObjectURL(f)}" alt="">
       <span class="file-name">${f.name}</span>
+      <span class="file-size">${formatBytes(f.size)}</span>
     </li>
   `).join("");
   const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";

@@ -642,6 +642,44 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   white-space: nowrap;
 }
 
+.file-size {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+
+.filter-layout {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.filter-options-col {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filter-preview-col {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.filter-preview-img[hidden] { display: none; }
+
+.filter-preview-img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
