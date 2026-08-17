@@ -838,6 +838,95 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .watermark-preview-canvas:active { cursor: grabbing; }
 
+.colorpicker-layout[hidden] { display: none; }
+
+.colorpicker-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 28px;
+  margin-top: 18px;
+}
+
+.colorpicker-canvas-col { flex: 2; min-width: 280px; }
+
+.colorpicker-options-col {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.colorpicker-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  cursor: crosshair;
+  margin-top: 6px;
+}
+
+.colorpicker-picked-card[hidden] { display: none; }
+
+.colorpicker-picked-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.colorpicker-picked-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.colorpicker-picked-hex {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.colorpicker-picked-card .preset-btn { margin-left: auto; flex-shrink: 0; }
+
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.color-swatch {
+  width: 64px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+}
+
+.color-swatch-fill { display: block; width: 100%; height: 44px; }
+
+.color-swatch-hex {
+  display: block;
+  font-size: 0.7rem;
+  padding: 3px 2px;
+  text-align: center;
+  background: var(--paper-raised);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.color-swatch.copied .color-swatch-hex { color: var(--moss); font-weight: 700; }
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
