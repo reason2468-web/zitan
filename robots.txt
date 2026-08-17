@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zitan-tools.github.io/zitan/sitemap.xml
