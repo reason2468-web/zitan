@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=37">
+<link rel="stylesheet" href="css/style.css?v=38">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -355,6 +355,28 @@
           <span class="tool-text">
             <span class="tool-label">日付計算</span>
             <span class="tool-caption">2つの日付の日数、○日後の日付など</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="calculator" style="--gem:#5A6B8C;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                <rect x="7" y="5" width="10" height="4" rx="0.5"/>
+                <circle cx="7.5" cy="13.5" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="13.5" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="16.5" cy="13.5" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="7.5" cy="18" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="16.5" cy="18" r="1" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">電卓</span>
+            <span class="tool-caption">普通の電卓・関数電卓を切り替えて使える</span>
           </span>
         </button>
 
@@ -1033,6 +1055,74 @@
         </div>
       </section>
 
+      <section id="calculator" class="tool-panel">
+        <h2>電卓</h2>
+        <p class="desc">普通の電卓と関数電卓を切り替えて使えます。パソコンのキーボードでも入力できます。</p>
+
+        <div class="radio-group calc-mode-group">
+          <label class="radio-option">
+            <input type="radio" name="calc-mode" value="basic" checked>
+            <span>普通の電卓</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="calc-mode" value="scientific">
+            <span>関数電卓</span>
+          </label>
+        </div>
+
+        <div class="calc-body">
+          <div class="calc-display">
+            <div class="calc-expression" id="calc-expression">&nbsp;</div>
+            <div class="calc-result" id="calc-result">0</div>
+          </div>
+
+          <div class="calc-grid calc-sci-grid" id="calc-sci-grid" hidden>
+            <button type="button" class="calc-btn calc-btn-fn" id="calc-deg-toggle">DEG</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="sin">sin</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="cos">cos</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="tan">tan</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="log">log</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="ln">ln</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-fn="sqrt">√</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="^2" data-continue="1">x²</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="^" data-continue="1">x^y</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="^(-1)" data-continue="1">1/x</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="!" data-continue="1">n!</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="π">π</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="e">e</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert="(">(</button>
+            <button type="button" class="calc-btn calc-btn-fn" data-insert=")">)</button>
+          </div>
+
+          <div class="calc-grid">
+            <button type="button" class="calc-btn calc-btn-op" data-action="clear">AC</button>
+            <button type="button" class="calc-btn calc-btn-op" data-action="backspace">⌫</button>
+            <button type="button" class="calc-btn calc-btn-op" data-insert="%" data-continue="1">%</button>
+            <button type="button" class="calc-btn calc-btn-op" data-insert="÷" data-continue="1">÷</button>
+
+            <button type="button" class="calc-btn" data-insert="7">7</button>
+            <button type="button" class="calc-btn" data-insert="8">8</button>
+            <button type="button" class="calc-btn" data-insert="9">9</button>
+            <button type="button" class="calc-btn calc-btn-op" data-insert="×" data-continue="1">×</button>
+
+            <button type="button" class="calc-btn" data-insert="4">4</button>
+            <button type="button" class="calc-btn" data-insert="5">5</button>
+            <button type="button" class="calc-btn" data-insert="6">6</button>
+            <button type="button" class="calc-btn calc-btn-op" data-insert="−" data-continue="1">−</button>
+
+            <button type="button" class="calc-btn" data-insert="1">1</button>
+            <button type="button" class="calc-btn" data-insert="2">2</button>
+            <button type="button" class="calc-btn" data-insert="3">3</button>
+            <button type="button" class="calc-btn calc-btn-op" data-insert="+" data-continue="1">+</button>
+
+            <button type="button" class="calc-btn" data-action="sign">±</button>
+            <button type="button" class="calc-btn" data-insert="0">0</button>
+            <button type="button" class="calc-btn" data-insert=".">.</button>
+            <button type="button" class="calc-btn calc-btn-eq" data-action="equals">=</button>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1055,21 +1145,22 @@
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="js/common.js?v=37"></script>
-<script src="js/app.js?v=37"></script>
-<script src="js/settings.js?v=37"></script>
-<script src="js/tools/compress.js?v=37"></script>
-<script src="js/tools/convert.js?v=37"></script>
-<script src="js/tools/resize.js?v=37"></script>
-<script src="js/tools/exif.js?v=37"></script>
-<script src="js/tools/rotate.js?v=37"></script>
-<script src="js/tools/crop.js?v=37"></script>
-<script src="js/tools/filter.js?v=37"></script>
-<script src="js/tools/watermark.js?v=37"></script>
-<script src="js/tools/qrcode.js?v=37"></script>
-<script src="js/tools/charcount.js?v=37"></script>
-<script src="js/tools/colorpicker.js?v=37"></script>
-<script src="js/tools/unitconvert.js?v=37"></script>
-<script src="js/tools/datecalc.js?v=37"></script>
+<script src="js/common.js?v=38"></script>
+<script src="js/app.js?v=38"></script>
+<script src="js/settings.js?v=38"></script>
+<script src="js/tools/compress.js?v=38"></script>
+<script src="js/tools/convert.js?v=38"></script>
+<script src="js/tools/resize.js?v=38"></script>
+<script src="js/tools/exif.js?v=38"></script>
+<script src="js/tools/rotate.js?v=38"></script>
+<script src="js/tools/crop.js?v=38"></script>
+<script src="js/tools/filter.js?v=38"></script>
+<script src="js/tools/watermark.js?v=38"></script>
+<script src="js/tools/qrcode.js?v=38"></script>
+<script src="js/tools/charcount.js?v=38"></script>
+<script src="js/tools/colorpicker.js?v=38"></script>
+<script src="js/tools/unitconvert.js?v=38"></script>
+<script src="js/tools/datecalc.js?v=38"></script>
+<script src="js/tools/calculator.js?v=38"></script>
 </body>
 </html>
