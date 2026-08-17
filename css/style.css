@@ -764,6 +764,53 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   flex-shrink: 0;
 }
 
+.watermark-position-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows: repeat(3, 34px);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.wm-pos-btn {
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.wm-pos-btn::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.wm-pos-btn:hover, .wm-pos-btn.active {
+  background: var(--moss);
+  border-color: var(--moss);
+}
+
+.wm-pos-btn:hover::after, .wm-pos-btn.active::after {
+  background: #fff;
+}
+
+.slider-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.slider-row-label input[type="range"] { width: 100%; }
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
