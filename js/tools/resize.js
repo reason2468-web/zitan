@@ -114,7 +114,12 @@
       : "";
 
     if (results.length) {
-      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: "リサイズ" }, currentFiles.length > 1);
+      const mode = document.querySelector('input[name="resize-mode"]:checked').value;
+      const detail = mode === "preset"
+        ? document.querySelector("#resize .preset-btn.active")?.textContent || ""
+        : `横幅${maxWidth}px`;
+      const toolLabel = detail ? `リサイズ.${detail}` : "リサイズ";
+      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: toolLabel }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
       resultArea.innerHTML = `
         ${skippedNotice}

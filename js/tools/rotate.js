@@ -105,9 +105,11 @@
     }
 
     if (results.length) {
+      const opLabel = document.querySelector(`input[name="rotate-op"][value="${operation}"]`)
+        .closest(".radio-option").querySelector("span").textContent;
       const saveResult = await saveProcessedFiles(
         results,
-        { category: "画像", tool: "回転・反転" },
+        { category: "画像", tool: `回転・反転.${opLabel}` },
         currentFiles.length > 1
       );
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";

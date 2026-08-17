@@ -611,17 +611,22 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .clear-all-btn {
   flex-shrink: 0;
-  border: none;
-  background: none;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
   color: var(--text-muted);
-  text-decoration: underline;
   cursor: pointer;
   font-size: 0.8rem;
+  font-weight: 600;
   font-family: var(--font-body);
-  padding: 4px 2px;
+  padding: 5px 10px;
+  border-radius: 6px;
 }
 
-.clear-all-btn:hover { color: #c0392b; }
+.clear-all-btn:hover {
+  color: #c0392b;
+  border-color: #c0392b;
+  background: rgba(200, 60, 60, 0.08);
+}
 
 .selected-file-list {
   list-style: none;

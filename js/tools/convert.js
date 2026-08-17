@@ -104,7 +104,7 @@
       : "";
 
     if (results.length) {
-      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: "変換" }, currentFiles.length > 1);
+      const saveResult = await saveProcessedFiles(results, { category: "画像", tool: `変換.${targetLabel}` }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
       resultArea.innerHTML = `
         ${skippedNotice}

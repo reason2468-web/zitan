@@ -134,9 +134,11 @@
     }
 
     if (results.length) {
+      const filterLabel = document.querySelector(`input[name="filter-type"][value="${filterType}"]`)
+        .closest(".radio-option").querySelector("span").textContent;
       const saveResult = await saveProcessedFiles(
         results,
-        { category: "画像", tool: "フィルター" },
+        { category: "画像", tool: `フィルター.${filterLabel}` },
         currentFiles.length > 1
       );
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
