@@ -969,6 +969,34 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--paper-raised);
 }
 
+#dc-diff-controls[hidden], #dc-add-controls[hidden] { display: none; }
+
+#dc-diff-controls, #dc-add-controls { margin-top: 18px; }
+
+.datecalc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.datecalc-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.datecalc-row input {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.datecalc-row input[type="number"] { width: 120px; }
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -37,7 +37,7 @@
       <button class="category-btn" data-category="other">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         <span class="category-label">その他</span>
-        <span class="category-count">4</span>
+        <span class="category-count">5</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -294,6 +294,24 @@
           <span class="tool-text">
             <span class="tool-label">単位変換</span>
             <span class="tool-caption">長さ・重さ・温度をまとめて変換</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="datecalc" style="--gem:#6E7FDB;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="5" width="18" height="16" rx="2"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+                <line x1="8" y1="3" x2="8" y2="7"/>
+                <line x1="16" y1="3" x2="16" y2="7"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">日付計算</span>
+            <span class="tool-caption">2つの日付の日数、○日後の日付など</span>
           </span>
         </button>
 
@@ -901,6 +919,62 @@
         </div>
       </section>
 
+      <section id="datecalc" class="tool-panel">
+        <h2>日付計算</h2>
+        <p class="desc">2つの日付の間の日数を計算したり、ある日付から○日後・○日前の日付を計算したりできます。</p>
+
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="datecalc-mode" value="diff" checked>
+            <span>2つの日付の日数を計算</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="datecalc-mode" value="add">
+            <span>日付に日数を足し引きする</span>
+          </label>
+        </div>
+
+        <div id="dc-diff-controls">
+          <div class="datecalc-row">
+            <label>開始日 <input type="date" id="dc-start"></label>
+            <label>終了日 <input type="date" id="dc-end"></label>
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="dc-inclusive" value="exclusive" checked>
+              <span>初日は含めない(差の日数)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="dc-inclusive" value="inclusive">
+              <span>初日を含める(滞在・在籍日数など)</span>
+            </label>
+          </div>
+          <div class="charcount-box">
+            <ul class="charcount-list" id="dc-diff-result"></ul>
+          </div>
+        </div>
+
+        <div id="dc-add-controls" hidden>
+          <div class="datecalc-row">
+            <label>基準日 <input type="date" id="dc-base"></label>
+            <label>日数 <input type="number" id="dc-days" value="7" min="0"></label>
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="dc-direction" value="after" checked>
+              <span>後(あと)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="dc-direction" value="before">
+              <span>前</span>
+            </label>
+          </div>
+          <div class="charcount-box">
+            <ul class="charcount-list" id="dc-add-result"></ul>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -923,20 +997,21 @@
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="js/common.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
-<script src="js/settings.js?v=30"></script>
-<script src="js/tools/compress.js?v=30"></script>
-<script src="js/tools/convert.js?v=30"></script>
-<script src="js/tools/resize.js?v=30"></script>
-<script src="js/tools/exif.js?v=30"></script>
-<script src="js/tools/rotate.js?v=30"></script>
-<script src="js/tools/crop.js?v=30"></script>
-<script src="js/tools/filter.js?v=30"></script>
-<script src="js/tools/watermark.js?v=30"></script>
-<script src="js/tools/qrcode.js?v=30"></script>
-<script src="js/tools/charcount.js?v=30"></script>
-<script src="js/tools/colorpicker.js?v=30"></script>
-<script src="js/tools/unitconvert.js?v=30"></script>
+<script src="js/common.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
+<script src="js/settings.js?v=31"></script>
+<script src="js/tools/compress.js?v=31"></script>
+<script src="js/tools/convert.js?v=31"></script>
+<script src="js/tools/resize.js?v=31"></script>
+<script src="js/tools/exif.js?v=31"></script>
+<script src="js/tools/rotate.js?v=31"></script>
+<script src="js/tools/crop.js?v=31"></script>
+<script src="js/tools/filter.js?v=31"></script>
+<script src="js/tools/watermark.js?v=31"></script>
+<script src="js/tools/qrcode.js?v=31"></script>
+<script src="js/tools/charcount.js?v=31"></script>
+<script src="js/tools/colorpicker.js?v=31"></script>
+<script src="js/tools/unitconvert.js?v=31"></script>
+<script src="js/tools/datecalc.js?v=31"></script>
 </body>
 </html>
