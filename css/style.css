@@ -93,7 +93,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   gap: 6px;
 }
 
-.settings-nav {
+.settings-nav, .contact-nav {
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
@@ -110,6 +110,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-size: 0.95rem;
   font-family: var(--font-body);
   text-align: left;
+  text-decoration: none;
   color: var(--ink);
   transition: background 0.15s, box-shadow 0.15s;
 }

@@ -4,7 +4,7 @@ const toolDetail = document.getElementById("tool-detail");
 const toolPanels = document.querySelectorAll(".tool-panel");
 const categoryPanels = document.querySelectorAll(".category-panel");
 
-document.querySelectorAll(".category-btn").forEach((btn) => {
+document.querySelectorAll(".category-btn[data-category]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
