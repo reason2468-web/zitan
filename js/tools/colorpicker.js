@@ -10,6 +10,8 @@
   const pickedHex = document.getElementById("colorpicker-picked-hex");
   const pickedRgb = document.getElementById("colorpicker-picked-rgb");
   const copyBtn = document.getElementById("colorpicker-copy-btn");
+  const eyedropperBtn = document.getElementById("colorpicker-eyedropper-btn");
+  const eyedropperNote = document.getElementById("colorpicker-eyedropper-note");
 
   let currentHex = "#000000";
 
@@ -25,6 +27,15 @@
 
   function rgbToHex(r, g, b) {
     return "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("").toUpperCase();
+  }
+
+  function hexToRgb(hex) {
+    const clean = hex.replace("#", "");
+    return [
+      parseInt(clean.slice(0, 2), 16),
+      parseInt(clean.slice(2, 4), 16),
+      parseInt(clean.slice(4, 6), 16),
+    ];
   }
 
   function extractPalette(w, h, count = 8) {
@@ -108,6 +119,21 @@
   });
 
   copyBtn.addEventListener("click", () => copyHex(currentHex, null));
+
+  eyedropperBtn.addEventListener("click", async () => {
+    if (!window.EyeDropper) {
+      eyedropperNote.textContent = "お使いのブラウザは対応していません。Chrome・Edgeなどでお試しください。";
+      return;
+    }
+    eyedropperNote.textContent = "";
+    try {
+      const result = await new window.EyeDropper().open();
+      const [r, g, b] = hexToRgb(result.sRGBHex);
+      showPickedColor(r, g, b);
+    } catch (err) {
+      // ユーザーがEscキーなどでキャンセルした場合は何もしない
+    }
+  });
 
   async function loadFile(fileList) {
     const files = await loadImageFiles(fileList, { resultArea, listEl: null });

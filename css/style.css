@@ -868,6 +868,14 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin-top: 6px;
 }
 
+.eyedropper-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 18px 0;
+}
+
 .colorpicker-picked-card[hidden] { display: none; }
 
 .colorpicker-picked-card {
