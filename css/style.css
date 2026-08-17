@@ -675,14 +675,14 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-size: 0.8rem;
 }
 
-.filter-layout {
+.tool-preview-layout {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 28px;
 }
 
-.filter-options-col {
+.tool-options-col {
   flex: 1;
   min-width: 220px;
   display: flex;
@@ -690,15 +690,15 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   gap: 16px;
 }
 
-.filter-preview-col {
+.tool-preview-col {
   flex: 1;
   min-width: 200px;
   max-width: 320px;
 }
 
-.filter-preview-img[hidden] { display: none; }
+.tool-preview-img[hidden] { display: none; }
 
-.filter-preview-img {
+.tool-preview-img {
   display: block;
   width: 100%;
   border-radius: 12px;

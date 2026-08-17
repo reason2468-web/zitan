@@ -5,8 +5,10 @@
   const runBtn = document.getElementById("rotate-run");
   const resultArea = document.getElementById("rotate-result");
   const listEl = document.getElementById("rotate-list");
+  const previewImg = document.getElementById("rotate-preview-img");
 
   let currentFiles = [];
+  let previewToken = 0;
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
@@ -16,8 +18,10 @@
       renderSelectedFiles(resultArea, currentFiles, (updated) => {
         currentFiles = updated;
         runBtn.disabled = currentFiles.length === 0;
+        updatePreview();
       });
     }
+    updatePreview();
   }
 
   setupDropzone(dropzone, input, loadFiles);
@@ -72,6 +76,32 @@
     }
     ctx.drawImage(img, 0, 0);
   }
+
+  async function updatePreview() {
+    const token = ++previewToken;
+    if (!currentFiles.length) {
+      previewImg.hidden = true;
+      return;
+    }
+    const operation = document.querySelector('input[name="rotate-op"]:checked').value;
+    try {
+      const img = await loadImageElement(currentFiles[0]);
+      if (token !== previewToken) return;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      applyTransform(canvas, ctx, img, operation);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+      if (token !== previewToken) return;
+      previewImg.src = URL.createObjectURL(blob);
+      previewImg.hidden = false;
+    } catch (err) {
+      previewImg.hidden = true;
+    }
+  }
+
+  document.querySelectorAll('input[name="rotate-op"]').forEach((radio) => {
+    radio.addEventListener("change", updatePreview);
+  });
 
   runBtn.addEventListener("click", async () => {
     if (!currentFiles.length) return;

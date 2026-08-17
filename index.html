@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=18">
+<link rel="stylesheet" href="css/style.css?v=19">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -454,30 +454,36 @@
             <label class="file-btn file-btn-outline">フォルダを選択<input type="file" id="rotate-folder-input" webkitdirectory hidden></label>
           </div>
         </div>
-        <div class="controls">
-          <div class="radio-group">
-            <label class="radio-option">
-              <input type="radio" name="rotate-op" value="rotate-right" checked>
-              <span>右に90度回転</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rotate-op" value="rotate-left">
-              <span>左に90度回転</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rotate-op" value="rotate-180">
-              <span>180度回転</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rotate-op" value="flip-h">
-              <span>左右反転(鏡写し)</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rotate-op" value="flip-v">
-              <span>上下反転</span>
-            </label>
+        <div class="controls tool-preview-layout">
+          <div class="tool-options-col">
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="rotate-op" value="rotate-right" checked>
+                <span>右に90度回転</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rotate-op" value="rotate-left">
+                <span>左に90度回転</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rotate-op" value="rotate-180">
+                <span>180度回転</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rotate-op" value="flip-h">
+                <span>左右反転(鏡写し)</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rotate-op" value="flip-v">
+                <span>上下反転</span>
+              </label>
+            </div>
+            <button id="rotate-run" class="run-btn" disabled>回転・反転する</button>
           </div>
-          <button id="rotate-run" class="run-btn" disabled>回転・反転する</button>
+          <div class="tool-preview-col">
+            <p class="format-note">プレビュー(1枚目の画像で表示)</p>
+            <img id="rotate-preview-img" class="tool-preview-img" alt="回転・反転後のプレビュー" hidden>
+          </div>
         </div>
         <div class="result-area" id="rotate-result"></div>
         <ul class="batch-list" id="rotate-list"></ul>
@@ -522,8 +528,8 @@
             <label class="file-btn file-btn-outline">フォルダを選択<input type="file" id="filter-folder-input" webkitdirectory hidden></label>
           </div>
         </div>
-        <div class="controls filter-layout">
-          <div class="filter-options-col">
+        <div class="controls tool-preview-layout">
+          <div class="tool-options-col">
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="filter-type" value="grayscale" checked>
@@ -560,9 +566,9 @@
             </div>
             <button id="filter-run" class="run-btn" disabled>フィルターを適用する</button>
           </div>
-          <div class="filter-preview-col">
+          <div class="tool-preview-col">
             <p class="format-note">プレビュー(1枚目の画像で表示)</p>
-            <img id="filter-preview-img" class="filter-preview-img" alt="フィルター適用後のプレビュー" hidden>
+            <img id="filter-preview-img" class="tool-preview-img" alt="フィルター適用後のプレビュー" hidden>
           </div>
         </div>
         <div class="result-area" id="filter-result"></div>
@@ -589,15 +595,15 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-<script src="js/common.js?v=18"></script>
-<script src="js/app.js?v=18"></script>
-<script src="js/settings.js?v=18"></script>
-<script src="js/tools/compress.js?v=18"></script>
-<script src="js/tools/convert.js?v=18"></script>
-<script src="js/tools/resize.js?v=18"></script>
-<script src="js/tools/exif.js?v=18"></script>
-<script src="js/tools/rotate.js?v=18"></script>
-<script src="js/tools/crop.js?v=18"></script>
-<script src="js/tools/filter.js?v=18"></script>
+<script src="js/common.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
+<script src="js/settings.js?v=19"></script>
+<script src="js/tools/compress.js?v=19"></script>
+<script src="js/tools/convert.js?v=19"></script>
+<script src="js/tools/resize.js?v=19"></script>
+<script src="js/tools/exif.js?v=19"></script>
+<script src="js/tools/rotate.js?v=19"></script>
+<script src="js/tools/crop.js?v=19"></script>
+<script src="js/tools/filter.js?v=19"></script>
 </body>
 </html>
