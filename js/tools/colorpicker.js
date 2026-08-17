@@ -12,8 +12,18 @@
   const copyBtn = document.getElementById("colorpicker-copy-btn");
   const eyedropperBtn = document.getElementById("colorpicker-eyedropper-btn");
   const eyedropperNote = document.getElementById("colorpicker-eyedropper-note");
+  const screenControls = document.getElementById("cp-screen-controls");
+  const imageControls = document.getElementById("cp-image-controls");
 
   let currentHex = "#000000";
+
+  document.querySelectorAll('input[name="colorpicker-mode"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const mode = document.querySelector('input[name="colorpicker-mode"]:checked').value;
+      screenControls.hidden = mode !== "screen";
+      imageControls.hidden = mode !== "image";
+    });
+  });
 
   function loadImageElement(file) {
     return new Promise((resolve, reject) => {

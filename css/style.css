@@ -838,6 +838,21 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .watermark-preview-canvas:active { cursor: grabbing; }
 
+#cp-screen-controls[hidden], #cp-image-controls[hidden] { display: none; }
+
+#cp-screen-controls {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.colorpicker-eyedropper-btn {
+  padding-left: 36px;
+  padding-right: 36px;
+}
+
 .colorpicker-layout[hidden] { display: none; }
 
 .colorpicker-layout {
@@ -866,14 +881,6 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--paper);
   cursor: crosshair;
   margin-top: 6px;
-}
-
-.eyedropper-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 18px 0;
 }
 
 .colorpicker-picked-card[hidden] { display: none; }
