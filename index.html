@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=19">
+<link rel="stylesheet" href="css/style.css?v=20">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -33,6 +33,11 @@
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="category-label">PDF</span>
         <span class="category-count soon">近日公開</span>
+      </button>
+      <button class="category-btn" data-category="other">
+        <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="category-label">その他</span>
+        <span class="category-count">1</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -189,6 +194,39 @@
           <span class="tool-text">
             <span class="tool-label">フィルター</span>
             <span class="tool-caption">白黒・セピアなど雰囲気を変更</span>
+          </span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- カテゴリ: その他 -->
+    <div id="category-other" class="category-panel">
+      <div class="category-header">
+        <span class="category-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </span>
+        <span>
+          <h2 class="category-title">その他のツール</h2>
+          <p class="category-desc">使いたいツールを選んでください</p>
+        </span>
+      </div>
+      <div class="tool-grid">
+
+        <button class="tool-card" data-tool="qrcode" style="--gem:#41505E;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="3" height="3" fill="currentColor" stroke="none"/><rect x="18" y="14" width="3" height="3" fill="currentColor" stroke="none"/>
+                <rect x="14" y="18" width="3" height="3" fill="currentColor" stroke="none"/><rect x="18" y="18" width="3" height="3" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">QRコード生成</span>
+            <span class="tool-caption">URLや文字からQRコードを作成</span>
           </span>
         </button>
 
@@ -575,6 +613,27 @@
         <ul class="batch-list" id="filter-list"></ul>
       </section>
 
+      <section id="qrcode" class="tool-panel">
+        <h2>QRコード生成</h2>
+        <p class="desc">URLや文字を入力するだけで、その場でQRコード画像を作成できます。スマホで読み取れるか、その場で確認しながら作れます。</p>
+        <div class="controls tool-preview-layout">
+          <div class="tool-options-col">
+            <label class="template-label">QRコードにする内容(URL・文字など)
+              <textarea id="qrcode-text" class="template-input" rows="3" placeholder="https://example.com"></textarea>
+            </label>
+            <div class="custom-width-row">
+              <label>画像のサイズ(px): <input type="number" id="qrcode-size" min="100" max="1000" value="400"></label>
+            </div>
+            <button id="qrcode-run" class="run-btn" disabled>QRコードを保存する</button>
+          </div>
+          <div class="tool-preview-col">
+            <p class="format-note">プレビュー</p>
+            <div id="qrcode-canvas" class="tool-preview-img qrcode-canvas" hidden></div>
+          </div>
+        </div>
+        <div class="result-area" id="qrcode-result"></div>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -583,7 +642,8 @@
         <a href="https://github.com/alexcorvi/heic2any" target="_blank" rel="noopener">heic2any</a>,
         <a href="https://github.com/Stuk/jszip" target="_blank" rel="noopener">JSZip</a>,
         <a href="https://github.com/MikeKovarik/exifr" target="_blank" rel="noopener">exifr</a>,
-        <a href="https://github.com/fengyuanchen/cropperjs" target="_blank" rel="noopener">Cropper.js</a>
+        <a href="https://github.com/fengyuanchen/cropperjs" target="_blank" rel="noopener">Cropper.js</a>,
+        <a href="https://github.com/davidshimjs/qrcodejs" target="_blank" rel="noopener">qrcodejs</a>
       </p>
     </footer>
 
@@ -595,15 +655,17 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-<script src="js/common.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
-<script src="js/settings.js?v=19"></script>
-<script src="js/tools/compress.js?v=19"></script>
-<script src="js/tools/convert.js?v=19"></script>
-<script src="js/tools/resize.js?v=19"></script>
-<script src="js/tools/exif.js?v=19"></script>
-<script src="js/tools/rotate.js?v=19"></script>
-<script src="js/tools/crop.js?v=19"></script>
-<script src="js/tools/filter.js?v=19"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="js/common.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
+<script src="js/settings.js?v=20"></script>
+<script src="js/tools/compress.js?v=20"></script>
+<script src="js/tools/convert.js?v=20"></script>
+<script src="js/tools/resize.js?v=20"></script>
+<script src="js/tools/exif.js?v=20"></script>
+<script src="js/tools/rotate.js?v=20"></script>
+<script src="js/tools/crop.js?v=20"></script>
+<script src="js/tools/filter.js?v=20"></script>
+<script src="js/tools/qrcode.js?v=20"></script>
 </body>
 </html>

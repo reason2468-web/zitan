@@ -706,6 +706,19 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--paper);
 }
 
+.qrcode-canvas {
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.qrcode-canvas canvas,
+.qrcode-canvas img {
+  max-width: 100%;
+  height: auto;
+}
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
