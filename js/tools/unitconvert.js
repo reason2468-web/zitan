@@ -74,11 +74,28 @@
         tb: { label: "TB(テラバイト)", symbol: "TB", toBase: 1024 ** 4 },
       },
     },
+    // 電子レンジは「W(ワット数)× 秒 = 温める熱量」が一定になるように換算する。
+    // toBaseにワット数そのものを使うことで、他カテゴリと同じ計算式(baseValue = 秒数×W)がそのまま使える。
+    microwave: {
+      defaultUnit: "w600",
+      defaultValue: 500,
+      hint: "「元は何ワットで何秒か」を、数値(秒)と単位(ワット数)で入力してください",
+      units: {
+        w500: { label: "500W", symbol: "秒", toBase: 500 },
+        w600: { label: "600W", symbol: "秒", toBase: 600 },
+        w700: { label: "700W", symbol: "秒", toBase: 700 },
+        w800: { label: "800W", symbol: "秒", toBase: 800 },
+        w1000: { label: "1000W", symbol: "秒", toBase: 1000 },
+        w1200: { label: "1200W", symbol: "秒", toBase: 1200 },
+        w1500: { label: "1500W", symbol: "秒", toBase: 1500 },
+      },
+    },
   };
 
   const valueInput = document.getElementById("unitconvert-value");
   const unitSelect = document.getElementById("unitconvert-unit");
   const resultList = document.getElementById("unitconvert-result-list");
+  const hintEl = document.getElementById("unitconvert-hint");
   const categoryRadios = document.querySelectorAll('input[name="unitconvert-category"]');
 
   function toCelsius(value, unit) {
@@ -103,6 +120,8 @@
       .map(([key, u]) => `<option value="${key}">${u.label}</option>`)
       .join("");
     unitSelect.value = cat.defaultUnit;
+    if (cat.defaultValue !== undefined) valueInput.value = cat.defaultValue;
+    hintEl.textContent = cat.hint || "";
   }
 
   function formatNumber(n) {
