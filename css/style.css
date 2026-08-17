@@ -1353,6 +1353,157 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   color: #fff;
 }
 
+.pdfdesk-canvas {
+  position: relative;
+  margin-top: 16px;
+  min-height: 460px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--paper);
+  overflow: hidden;
+}
+
+.pdfdesk-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.pdfdesk-card {
+  position: absolute;
+  width: 152px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 6px 16px -6px rgba(30, 43, 34, 0.35);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  z-index: 1;
+}
+
+.pdfdesk-card.dragging {
+  cursor: grabbing;
+  box-shadow: 0 18px 30px -10px rgba(30, 43, 34, 0.45);
+  z-index: 20;
+}
+
+.pdfdesk-card.merge-target {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px var(--moss-pale), 0 18px 30px -10px rgba(30, 43, 34, 0.45);
+}
+
+.pdfdesk-card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pdfdesk-card-pages {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdfdesk-card-btn {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdfdesk-card-btn:hover { background: var(--moss-pale); }
+
+.pdfdesk-card-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  background: var(--paper);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pdfdesk-card-thumb canvas {
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 2px 6px rgba(30, 43, 34, 0.15);
+}
+
+.pdfdesk-card-name {
+  font-size: 0.76rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdfdesk-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pdfdesk-card-actions .pdfdesk-card-btn { width: auto; flex: 1; padding: 0 4px; font-size: 0.7rem; gap: 2px; }
+.pdfdesk-card-actions .file-remove-btn { flex-shrink: 0; border: 1px solid var(--line); border-radius: 6px; width: 24px; height: 24px; padding: 0; }
+
+.pdfdesk-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pdfdesk-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 24, 18, 0.55);
+}
+
+.pdfdesk-modal-box {
+  position: relative;
+  max-width: 720px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--paper-raised);
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5);
+}
+
+.pdfdesk-modal-box h3 { margin: 0 0 6px; font-size: 1.2rem; }
+
+.pdfdesk-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .crop-stage {
   max-width: 100%;
   margin-top: 16px;
