@@ -115,21 +115,51 @@ async function loadImageFiles(fileList, { resultArea, listEl }) {
     }
   }
 
-  resultArea.innerHTML = buildSelectedFilesPreview(converted);
   return converted;
 }
 
-// 選択中のファイル一覧プレビュー(先頭10件まで名前を表示、それ以上は「ほかN件」とまとめる)
+const TRASH_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+  <polyline points="3 6 5 6 21 6"/>
+  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+  <path d="M10 11v6"/><path d="M14 11v6"/>
+  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+</svg>`;
+
+// 選択中のファイル一覧プレビュー(先頭10件まで小さいサムネイル+名前+削除ボタンを表示、それ以上は「ほかN件」とまとめる)
 function buildSelectedFilesPreview(files) {
   const maxShow = 10;
   const shown = files.slice(0, maxShow);
   const remaining = files.length - shown.length;
-  const items = shown.map((f) => `<li>${f.name}</li>`).join("");
+  const items = shown.map((f, i) => `
+    <li data-index="${i}">
+      <img class="file-thumb" src="${URL.createObjectURL(f)}" alt="">
+      <span class="file-name">${f.name}</span>
+      <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
+    </li>
+  `).join("");
   const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";
   return `
     <p>${files.length}件の画像を選択中</p>
     <ul class="selected-file-list">${items}${moreItem}</ul>
   `;
+}
+
+// 選択中ファイルの一覧をresultAreaに描画し、削除ボタンで1件ずつ取り除けるようにする。
+// ファイルが削除されるたびに onChange(更新後のファイル配列) が呼ばれるので、
+// 呼び出し側(各ツール)はそこで自分の currentFiles を更新する。
+function renderSelectedFiles(resultArea, files, onChange) {
+  function render(list) {
+    resultArea.innerHTML = buildSelectedFilesPreview(list);
+    resultArea.querySelectorAll(".file-remove-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.index);
+        list = list.slice(0, idx).concat(list.slice(idx + 1));
+        render(list);
+        onChange(list);
+      });
+    });
+  }
+  render(files);
 }
 
 // ドラッグ&ドロップ + クリックでファイル選択できるようにする共通セットアップ

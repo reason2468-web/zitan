@@ -65,6 +65,15 @@
     currentFiles = await loadImageFiles(fileList, { resultArea, listEl });
     runBtn.disabled = currentFiles.length === 0;
     if (currentFiles.length) {
+      renderSelectedFiles(resultArea, currentFiles, async (updated) => {
+        currentFiles = updated;
+        runBtn.disabled = currentFiles.length === 0;
+        if (currentFiles.length) {
+          await showExifPreview(currentFiles);
+        } else {
+          previewArea.innerHTML = "";
+        }
+      });
       await showExifPreview(currentFiles);
     } else {
       previewArea.innerHTML = "";

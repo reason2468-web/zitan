@@ -18,9 +18,9 @@
     }
 
     currentFile = files[0];
-    if (files.length > 1) {
-      resultArea.innerHTML += `<p class="format-note">トリミングは1枚ずつの処理のため、最初の1枚(${currentFile.name})のみ読み込みました。</p>`;
-    }
+    resultArea.innerHTML = files.length > 1
+      ? `<p>${currentFile.name} を読み込みました</p><p class="format-note">トリミングは1枚ずつの処理のため、最初の1枚のみ読み込みました。</p>`
+      : `<p>${currentFile.name} を読み込みました</p>`;
 
     const url = URL.createObjectURL(currentFile);
     imageEl.src = url;

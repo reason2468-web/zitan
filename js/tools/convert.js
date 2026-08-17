@@ -12,6 +12,12 @@
   async function loadFiles(fileList) {
     currentFiles = await loadImageFiles(fileList, { resultArea, listEl });
     runBtn.disabled = currentFiles.length === 0;
+    if (currentFiles.length) {
+      renderSelectedFiles(resultArea, currentFiles, (updated) => {
+        currentFiles = updated;
+        runBtn.disabled = currentFiles.length === 0;
+      });
+    }
   }
 
   setupDropzone(dropzone, input, loadFiles);
