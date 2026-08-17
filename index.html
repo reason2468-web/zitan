@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=40">
+<link rel="stylesheet" href="css/style.css?v=41">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -69,7 +69,7 @@
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="category-label">PDF</span>
-        <span class="category-count">2</span>
+        <span class="category-count">1</span>
       </button>
       <button class="category-btn" data-category="other">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -396,41 +396,22 @@
       </div>
       <div class="tool-grid">
 
-        <button class="tool-card" data-tool="pdfmerge" style="--gem:#C0392B;">
-          <span class="tool-sphere-wrap">
-            <span class="tool-shadow"></span>
-            <span class="tool-bubble">
-              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="2" width="7" height="9" rx="1"/>
-                <rect x="1" y="13" width="7" height="9" rx="1"/>
-                <line x1="10" y1="12" x2="14" y2="12"/>
-                <polyline points="12.5 9 15.5 12 12.5 15"/>
-                <rect x="16" y="7" width="7" height="10" rx="1"/>
-              </svg>
-            </span>
-          </span>
-          <span class="tool-text">
-            <span class="tool-label">PDF結合</span>
-            <span class="tool-caption">複数のPDFを順番通りに1つにまとめる</span>
-          </span>
-        </button>
-
-        <button class="tool-card" data-tool="pdfsplit" style="--gem:#16A085;">
+        <button class="tool-card" data-tool="pdftools" style="--gem:#C0392B;">
           <span class="tool-sphere-wrap">
             <span class="tool-shadow"></span>
             <span class="tool-bubble">
               <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="1" y="7" width="7" height="10" rx="1"/>
-                <line x1="10" y1="12" x2="14" y2="12"/>
-                <polyline points="12.5 9 15.5 12 12.5 15"/>
+                <path d="M11 9l3 3-3 3"/>
+                <path d="M17 15l-3-3 3-3"/>
                 <rect x="16" y="2" width="7" height="9" rx="1"/>
                 <rect x="16" y="13" width="7" height="9" rx="1"/>
               </svg>
             </span>
           </span>
           <span class="tool-text">
-            <span class="tool-label">PDF分割</span>
-            <span class="tool-caption">1ページずつ、または指定ページ数ごとに分割</span>
+            <span class="tool-label">PDF結合・分割</span>
+            <span class="tool-caption">複数のPDFを1つに、1つのPDFを複数に</span>
           </span>
         </button>
 
@@ -1113,7 +1094,7 @@
         <h2>電卓</h2>
         <p class="desc">普通の電卓と関数電卓を切り替えて使えます。パソコンのキーボードでも入力できます。</p>
 
-        <div class="radio-group calc-mode-group">
+        <div class="radio-group mode-toggle-row">
           <label class="radio-option">
             <input type="radio" name="calc-mode" value="basic" checked>
             <span>普通の電卓</span>
@@ -1177,51 +1158,64 @@
         </div>
       </section>
 
-      <section id="pdfmerge" class="tool-panel">
-        <h2>PDF結合</h2>
-        <p class="desc">複数のPDFファイルを、指定した順番で1つのPDFにまとめます。ファイルはすべてブラウザ内で処理され、外部に送信されることはありません。</p>
-        <div class="dropzone" data-target="pdfmerge-input">
-          <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
-          <div class="dropzone-buttons">
-            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdfmerge-input" accept="application/pdf,.pdf" multiple hidden></label>
-          </div>
-        </div>
-        <p class="format-note" id="pdfmerge-order-note" hidden>↑↓ボタンで結合する順番を入れ替えられます</p>
-        <ol class="pdfmerge-list" id="pdfmerge-list"></ol>
-        <div class="controls">
-          <button id="pdfmerge-run" class="run-btn" disabled>結合してダウンロード</button>
-        </div>
-        <div class="result-area" id="pdfmerge-result"></div>
-      </section>
+      <section id="pdftools" class="tool-panel">
+        <h2>PDF結合・分割</h2>
+        <p class="desc">複数のPDFを1つにまとめたり、1つのPDFを複数に分けたりできます。ファイルはすべてブラウザ内で処理され、外部に送信されることはありません。</p>
 
-      <section id="pdfsplit" class="tool-panel">
-        <h2>PDF分割</h2>
-        <p class="desc">PDFファイルを複数のファイルに分割します。複数のPDFをまとめて処理することもできます。</p>
-        <div class="dropzone" data-target="pdfsplit-input">
-          <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
-          <div class="dropzone-buttons">
-            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdfsplit-input" accept="application/pdf,.pdf" multiple hidden></label>
-          </div>
+        <div class="radio-group mode-toggle-row">
+          <label class="radio-option">
+            <input type="radio" name="pdftools-mode" value="merge" checked>
+            <span>結合する</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="pdftools-mode" value="split">
+            <span>分割する</span>
+          </label>
         </div>
-        <div class="result-area" id="pdfsplit-select-result"></div>
-        <div class="controls">
-          <div class="radio-group">
-            <label class="radio-option">
-              <input type="radio" name="pdfsplit-mode" value="single" checked>
-              <span>1ページずつ分割する</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="pdfsplit-mode" value="every">
-              <span>指定したページ数ごとに分割する</span>
-            </label>
+
+        <div id="pdfmerge">
+          <div class="dropzone" data-target="pdfmerge-input">
+            <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
+            <div class="dropzone-buttons">
+              <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdfmerge-input" accept="application/pdf,.pdf" multiple hidden></label>
+            </div>
           </div>
-          <div class="custom-width-row" id="pdfsplit-every-row" hidden>
-            <label>何ページごとに分割するか: <input type="number" id="pdfsplit-every" min="1" value="5"></label>
+          <p class="format-note" id="pdfmerge-order-note" hidden>⠿を つまんでドラッグするか、↑↓ボタンで結合する順番を入れ替えられます</p>
+          <ol class="pdfmerge-list" id="pdfmerge-list"></ol>
+          <div class="controls">
+            <button id="pdfmerge-run" class="run-btn" disabled>結合してダウンロード</button>
           </div>
-          <button id="pdfsplit-run" class="run-btn" disabled>分割してダウンロード</button>
+          <div class="result-area" id="pdfmerge-result"></div>
         </div>
-        <div class="result-area" id="pdfsplit-result"></div>
-        <ul class="batch-list" id="pdfsplit-list"></ul>
+
+        <div id="pdfsplit" hidden>
+          <div class="dropzone" data-target="pdfsplit-input">
+            <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
+            <div class="dropzone-buttons">
+              <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdfsplit-input" accept="application/pdf,.pdf" multiple hidden></label>
+            </div>
+          </div>
+          <p class="format-note">複数のPDFをまとめて処理することもできます</p>
+          <div class="result-area" id="pdfsplit-select-result"></div>
+          <div class="controls">
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="pdfsplit-mode" value="single" checked>
+                <span>1ページずつ分割する</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="pdfsplit-mode" value="every">
+                <span>指定したページ数ごとに分割する</span>
+              </label>
+            </div>
+            <div class="custom-width-row" id="pdfsplit-every-row" hidden>
+              <label>何ページごとに分割するか: <input type="number" id="pdfsplit-every" min="1" value="5"></label>
+            </div>
+            <button id="pdfsplit-run" class="run-btn" disabled>分割してダウンロード</button>
+          </div>
+          <div class="result-area" id="pdfsplit-result"></div>
+          <ul class="batch-list" id="pdfsplit-list"></ul>
+        </div>
       </section>
 
     </div>
@@ -1248,24 +1242,25 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="js/common.js?v=40"></script>
-<script src="js/app.js?v=40"></script>
-<script src="js/settings.js?v=40"></script>
-<script src="js/tools/compress.js?v=40"></script>
-<script src="js/tools/convert.js?v=40"></script>
-<script src="js/tools/resize.js?v=40"></script>
-<script src="js/tools/exif.js?v=40"></script>
-<script src="js/tools/rotate.js?v=40"></script>
-<script src="js/tools/crop.js?v=40"></script>
-<script src="js/tools/filter.js?v=40"></script>
-<script src="js/tools/watermark.js?v=40"></script>
-<script src="js/tools/qrcode.js?v=40"></script>
-<script src="js/tools/charcount.js?v=40"></script>
-<script src="js/tools/colorpicker.js?v=40"></script>
-<script src="js/tools/unitconvert.js?v=40"></script>
-<script src="js/tools/datecalc.js?v=40"></script>
-<script src="js/tools/calculator.js?v=40"></script>
-<script src="js/tools/pdfmerge.js?v=40"></script>
-<script src="js/tools/pdfsplit.js?v=40"></script>
+<script src="js/common.js?v=41"></script>
+<script src="js/app.js?v=41"></script>
+<script src="js/settings.js?v=41"></script>
+<script src="js/tools/compress.js?v=41"></script>
+<script src="js/tools/convert.js?v=41"></script>
+<script src="js/tools/resize.js?v=41"></script>
+<script src="js/tools/exif.js?v=41"></script>
+<script src="js/tools/rotate.js?v=41"></script>
+<script src="js/tools/crop.js?v=41"></script>
+<script src="js/tools/filter.js?v=41"></script>
+<script src="js/tools/watermark.js?v=41"></script>
+<script src="js/tools/qrcode.js?v=41"></script>
+<script src="js/tools/charcount.js?v=41"></script>
+<script src="js/tools/colorpicker.js?v=41"></script>
+<script src="js/tools/unitconvert.js?v=41"></script>
+<script src="js/tools/datecalc.js?v=41"></script>
+<script src="js/tools/calculator.js?v=41"></script>
+<script src="js/tools/pdfmerge.js?v=41"></script>
+<script src="js/tools/pdfsplit.js?v=41"></script>
+<script src="js/tools/pdftools.js?v=41"></script>
 </body>
 </html>

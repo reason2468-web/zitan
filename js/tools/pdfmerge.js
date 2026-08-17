@@ -7,6 +7,7 @@
   const resultArea = document.getElementById("pdfmerge-result");
 
   let currentFiles = [];
+  let dragSrcIndex = null;
 
   function isPdfFile(file) {
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -15,6 +16,7 @@
   function render() {
     listEl.innerHTML = currentFiles.map((file, i) => `
       <li data-index="${i}">
+        <span class="pdfmerge-handle" draggable="true" data-index="${i}" aria-label="つまんで並び替え" title="つまんで並び替え">⠿</span>
         <span class="pdfmerge-order">${i + 1}</span>
         <span class="pdfmerge-name">${file.name}</span>
         <span class="pdfmerge-size">${formatBytes(file.size)}</span>
@@ -28,6 +30,50 @@
     orderNote.hidden = currentFiles.length < 2;
     runBtn.disabled = currentFiles.length < 2;
   }
+
+  function moveFile(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+    const [moved] = currentFiles.splice(fromIndex, 1);
+    currentFiles.splice(toIndex, 0, moved);
+    render();
+  }
+
+  listEl.addEventListener("dragstart", (e) => {
+    const handle = e.target.closest(".pdfmerge-handle");
+    if (!handle) return;
+    dragSrcIndex = Number(handle.dataset.index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(dragSrcIndex));
+    handle.closest("li").classList.add("dragging");
+  });
+
+  listEl.addEventListener("dragover", (e) => {
+    if (dragSrcIndex === null) return;
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    li.classList.add("drag-over");
+  });
+
+  listEl.addEventListener("dragleave", (e) => {
+    const li = e.target.closest("li[data-index]");
+    if (li) li.classList.remove("drag-over");
+  });
+
+  listEl.addEventListener("drop", (e) => {
+    if (dragSrcIndex === null) return;
+    const li = e.target.closest("li[data-index]");
+    if (!li) return;
+    e.preventDefault();
+    moveFile(dragSrcIndex, Number(li.dataset.index));
+    dragSrcIndex = null;
+  });
+
+  listEl.addEventListener("dragend", () => {
+    dragSrcIndex = null;
+    listEl.querySelectorAll("li").forEach((li) => li.classList.remove("dragging", "drag-over"));
+  });
 
   function loadFiles(fileList) {
     const allFiles = Array.from(fileList);
@@ -49,12 +95,12 @@
     const idx = Number(btn.dataset.index);
     if (btn.dataset.action === "remove") {
       currentFiles = currentFiles.slice(0, idx).concat(currentFiles.slice(idx + 1));
+      render();
     } else if (btn.dataset.action === "up" && idx > 0) {
-      [currentFiles[idx - 1], currentFiles[idx]] = [currentFiles[idx], currentFiles[idx - 1]];
+      moveFile(idx, idx - 1);
     } else if (btn.dataset.action === "down" && idx < currentFiles.length - 1) {
-      [currentFiles[idx + 1], currentFiles[idx]] = [currentFiles[idx], currentFiles[idx + 1]];
+      moveFile(idx, idx + 1);
     }
-    render();
   });
 
   runBtn.addEventListener("click", async () => {
