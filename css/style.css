@@ -359,6 +359,18 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--moss-pale);
 }
 
+.dropzone-small {
+  padding: 14px;
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+}
+
+.dropzone-small .file-btn {
+  margin-top: 6px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+}
+
 .file-btn {
   display: inline-block;
   margin-top: 10px;

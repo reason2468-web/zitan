@@ -13,6 +13,7 @@
   const colorInput = document.getElementById("watermark-color");
   const textSizeInput = document.getElementById("watermark-text-size");
   const textSizeVal = document.getElementById("watermark-text-size-val");
+  const logoDropzone = document.querySelector('[data-target="watermark-logo-input"]');
   const logoInput = document.getElementById("watermark-logo-input");
   const logoNameEl = document.getElementById("wm-logo-name");
   const imageSizeInput = document.getElementById("watermark-image-size");
@@ -37,7 +38,11 @@
   let previewBaseImg = null;
   let logoImg = null;
   let dragging = false;
-  const pos = { ...PRESET_POS["bottom-right"] };
+  let dragTarget = null;
+  const pos = {
+    text: { ...PRESET_POS["bottom-right"] },
+    image: { ...PRESET_POS["top-right"] },
+  };
 
   function loadImageElement(file) {
     return new Promise((resolve, reject) => {
@@ -61,13 +66,21 @@
       textSizeRatio: Number(textSizeInput.value) / 100,
       imageSizeRatio: Number(imageSizeInput.value) / 100,
       opacity: Number(opacityInput.value) / 100,
-      x: pos.x,
-      y: pos.y,
     };
   }
 
+  function hasText(settings) {
+    return (settings.mode === "text" || settings.mode === "both") && !!settings.text;
+  }
+
+  function hasImage(settings) {
+    return (settings.mode === "image" || settings.mode === "both") && !!logoImg;
+  }
+
   function isReady(settings) {
-    return settings.mode === "text" ? !!settings.text : !!logoImg;
+    if (settings.mode === "text") return !!settings.text;
+    if (settings.mode === "image") return !!logoImg;
+    return !!settings.text || !!logoImg;
   }
 
   function drawWatermark(canvas, ctx, baseImg, settings) {
@@ -76,11 +89,18 @@
     ctx.globalAlpha = 1;
     ctx.drawImage(baseImg, 0, 0);
 
-    const cx = canvas.width * settings.x;
-    const cy = canvas.height * settings.y;
+    if (hasImage(settings)) {
+      const cx = canvas.width * pos.image.x;
+      const cy = canvas.height * pos.image.y;
+      const w = canvas.width * settings.imageSizeRatio;
+      const h = w * (logoImg.naturalHeight / logoImg.naturalWidth);
+      ctx.globalAlpha = settings.opacity;
+      ctx.drawImage(logoImg, cx - w / 2, cy - h / 2, w, h);
+    }
 
-    if (settings.mode === "text") {
-      if (!settings.text) return;
+    if (hasText(settings)) {
+      const cx = canvas.width * pos.text.x;
+      const cy = canvas.height * pos.text.y;
       const fontSize = Math.max(10, Math.round(canvas.width * settings.textSizeRatio));
       ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.textAlign = "center";
@@ -92,11 +112,6 @@
       ctx.fillStyle = settings.color;
       ctx.strokeText(settings.text, cx, cy);
       ctx.fillText(settings.text, cx, cy);
-    } else if (logoImg) {
-      const w = canvas.width * settings.imageSizeRatio;
-      const h = w * (logoImg.naturalHeight / logoImg.naturalWidth);
-      ctx.globalAlpha = settings.opacity;
-      ctx.drawImage(logoImg, cx - w / 2, cy - h / 2, w, h);
     }
     ctx.globalAlpha = 1;
   }
@@ -132,8 +147,11 @@
   document.querySelectorAll('input[name="watermark-mode"]').forEach((radio) => {
     radio.addEventListener("change", () => {
       const mode = getMode();
-      textControls.hidden = mode !== "text";
-      imageControls.hidden = mode !== "image";
+      textControls.hidden = mode === "image";
+      imageControls.hidden = mode === "text";
+      if (mode === "both" && pos.text.x === pos.image.x && pos.text.y === pos.image.y) {
+        pos.image = { ...PRESET_POS["top-right"] };
+      }
       updateRunState();
       renderPreview();
     });
@@ -157,8 +175,8 @@
     renderPreview();
   });
 
-  logoInput.addEventListener("change", async () => {
-    const file = logoInput.files[0];
+  async function loadLogoFile(fileList) {
+    const file = fileList[0];
     if (!file) return;
     logoNameEl.textContent = "読み込み中...";
     try {
@@ -171,39 +189,86 @@
     }
     updateRunState();
     renderPreview();
-  });
+  }
+
+  setupDropzone(logoDropzone, logoInput, loadLogoFile);
 
   posBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       posBtns.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       const p = PRESET_POS[btn.dataset.pos];
-      pos.x = p.x;
-      pos.y = p.y;
+      pos.text.x = p.x;
+      pos.text.y = p.y;
+      pos.image.x = p.x;
+      pos.image.y = p.y;
       renderPreview();
     });
   });
 
-  function setPosFromEvent(e) {
+  function getTextBoxRatio(settings) {
+    const cw = previewBaseImg.naturalWidth;
+    const ch = previewBaseImg.naturalHeight;
+    const fontSize = Math.max(10, Math.round(cw * settings.textSizeRatio));
+    const ctx = previewCanvas.getContext("2d");
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const w = ctx.measureText(settings.text).width;
+    const h = fontSize * 1.2;
+    return { cx: pos.text.x, cy: pos.text.y, halfW: (w / 2) / cw, halfH: (h / 2) / ch };
+  }
+
+  function getImageBoxRatio(settings) {
+    const cw = previewBaseImg.naturalWidth;
+    const ch = previewBaseImg.naturalHeight;
+    const w = cw * settings.imageSizeRatio;
+    const h = w * (logoImg.naturalHeight / logoImg.naturalWidth);
+    return { cx: pos.image.x, cy: pos.image.y, halfW: (w / 2) / cw, halfH: (h / 2) / ch };
+  }
+
+  function pickDragTarget(rx, ry, settings) {
+    const candidates = [];
+    if (hasText(settings)) candidates.push({ key: "text", ...getTextBoxRatio(settings) });
+    if (hasImage(settings)) candidates.push({ key: "image", ...getImageBoxRatio(settings) });
+    if (!candidates.length) return null;
+
+    const inside = candidates.filter((b) => Math.abs(rx - b.cx) <= b.halfW && Math.abs(ry - b.cy) <= b.halfH);
+    if (inside.length) {
+      inside.sort((a, b) => (a.halfW * a.halfH) - (b.halfW * b.halfH));
+      return inside[0].key;
+    }
+    candidates.sort((a, b) => Math.hypot(rx - a.cx, ry - a.cy) - Math.hypot(rx - b.cx, ry - b.cy));
+    return candidates[0].key;
+  }
+
+  function eventToRatio(e) {
     const rect = previewCanvas.getBoundingClientRect();
-    pos.x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-    pos.y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
-    posBtns.forEach((b) => b.classList.remove("active"));
-    renderPreview();
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height)),
+    };
   }
 
   previewCanvas.addEventListener("pointerdown", (e) => {
-    if (previewCanvas.hidden) return;
+    if (previewCanvas.hidden || !previewBaseImg) return;
+    const { x, y } = eventToRatio(e);
+    dragTarget = pickDragTarget(x, y, getSettings());
+    if (!dragTarget) return;
     dragging = true;
     previewCanvas.setPointerCapture(e.pointerId);
-    setPosFromEvent(e);
+    pos[dragTarget].x = x;
+    pos[dragTarget].y = y;
+    posBtns.forEach((b) => b.classList.remove("active"));
+    renderPreview();
   });
   previewCanvas.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    setPosFromEvent(e);
+    if (!dragging || !dragTarget) return;
+    const { x, y } = eventToRatio(e);
+    pos[dragTarget].x = x;
+    pos[dragTarget].y = y;
+    renderPreview();
   });
-  previewCanvas.addEventListener("pointerup", () => { dragging = false; });
-  previewCanvas.addEventListener("pointercancel", () => { dragging = false; });
+  previewCanvas.addEventListener("pointerup", () => { dragging = false; dragTarget = null; });
+  previewCanvas.addEventListener("pointercancel", () => { dragging = false; dragTarget = null; });
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
@@ -256,9 +321,10 @@
     }
 
     if (results.length) {
+      const modeLabel = settings.mode === "text" ? "文字" : settings.mode === "image" ? "画像" : "文字と画像";
       const saveResult = await saveProcessedFiles(
         results,
-        { category: "画像", tool: `ウォーターマーク.${settings.mode === "text" ? "文字" : "画像"}` },
+        { category: "画像", tool: `ウォーターマーク.${modeLabel}` },
         currentFiles.length > 1
       );
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
