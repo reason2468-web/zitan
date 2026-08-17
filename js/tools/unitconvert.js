@@ -3,32 +3,75 @@
     length: {
       defaultUnit: "cm",
       units: {
-        mm: { label: "mm(ミリメートル)", toBase: 0.001 },
-        cm: { label: "cm(センチメートル)", toBase: 0.01 },
-        m: { label: "m(メートル)", toBase: 1 },
-        km: { label: "km(キロメートル)", toBase: 1000 },
-        inch: { label: "inch(インチ)", toBase: 0.0254 },
-        feet: { label: "feet(フィート)", toBase: 0.3048 },
-        mile: { label: "mile(マイル)", toBase: 1609.344 },
+        mm: { label: "mm(ミリメートル)", symbol: "mm", toBase: 0.001 },
+        cm: { label: "cm(センチメートル)", symbol: "cm", toBase: 0.01 },
+        m: { label: "m(メートル)", symbol: "m", toBase: 1 },
+        km: { label: "km(キロメートル)", symbol: "km", toBase: 1000 },
+        inch: { label: "inch(インチ)", symbol: "inch", toBase: 0.0254 },
+        feet: { label: "feet(フィート)", symbol: "ft", toBase: 0.3048 },
+        mile: { label: "mile(マイル)", symbol: "mi", toBase: 1609.344 },
       },
     },
     weight: {
       defaultUnit: "kg",
       units: {
-        mg: { label: "mg(ミリグラム)", toBase: 0.001 },
-        g: { label: "g(グラム)", toBase: 1 },
-        kg: { label: "kg(キログラム)", toBase: 1000 },
-        oz: { label: "oz(オンス)", toBase: 28.3495 },
-        lb: { label: "lb(ポンド)", toBase: 453.592 },
+        mg: { label: "mg(ミリグラム)", symbol: "mg", toBase: 0.001 },
+        g: { label: "g(グラム)", symbol: "g", toBase: 1 },
+        kg: { label: "kg(キログラム)", symbol: "kg", toBase: 1000 },
+        t: { label: "t(トン)", symbol: "t", toBase: 1000000 },
+        oz: { label: "oz(オンス)", symbol: "oz", toBase: 28.3495 },
+        lb: { label: "lb(ポンド)", symbol: "lb", toBase: 453.592 },
       },
     },
     temperature: {
       defaultUnit: "c",
       special: true,
       units: {
-        c: { label: "℃(摂氏)" },
-        f: { label: "℉(華氏)" },
-        k: { label: "K(ケルビン)" },
+        c: { label: "℃(摂氏)", symbol: "℃" },
+        f: { label: "℉(華氏)", symbol: "℉" },
+        k: { label: "K(ケルビン)", symbol: "K" },
+      },
+    },
+    area: {
+      defaultUnit: "m2",
+      units: {
+        cm2: { label: "cm²(平方センチメートル)", symbol: "cm²", toBase: 0.0001 },
+        m2: { label: "m²(平方メートル)", symbol: "m²", toBase: 1 },
+        km2: { label: "km²(平方キロメートル)", symbol: "km²", toBase: 1000000 },
+        tsubo: { label: "坪", symbol: "坪", toBase: 3.30578 },
+        tatami: { label: "畳(帖・目安)", symbol: "畳", toBase: 1.62 },
+        ha: { label: "ha(ヘクタール)", symbol: "ha", toBase: 10000 },
+        acre: { label: "acre(エーカー)", symbol: "acre", toBase: 4046.86 },
+      },
+    },
+    volume: {
+      defaultUnit: "ml",
+      units: {
+        ml: { label: "ml(ミリリットル)", symbol: "ml", toBase: 1 },
+        l: { label: "L(リットル)", symbol: "L", toBase: 1000 },
+        m3: { label: "m³(立方メートル)", symbol: "m³", toBase: 1000000 },
+        cup: { label: "カップ(料理用・200ml)", symbol: "カップ", toBase: 200 },
+        go: { label: "合(米・お酒)", symbol: "合", toBase: 180.39 },
+        gallon: { label: "gallon(米ガロン)", symbol: "gal", toBase: 3785.41 },
+      },
+    },
+    speed: {
+      defaultUnit: "kmh",
+      units: {
+        ms: { label: "m/s(メートル毎秒)", symbol: "m/s", toBase: 1 },
+        kmh: { label: "km/h(時速)", symbol: "km/h", toBase: 0.277778 },
+        mph: { label: "mph(マイル毎時)", symbol: "mph", toBase: 0.44704 },
+        knot: { label: "ノット", symbol: "kt", toBase: 0.514444 },
+      },
+    },
+    dataSize: {
+      defaultUnit: "mb",
+      units: {
+        b: { label: "B(バイト)", symbol: "B", toBase: 1 },
+        kb: { label: "KB(キロバイト)", symbol: "KB", toBase: 1024 },
+        mb: { label: "MB(メガバイト)", symbol: "MB", toBase: 1024 ** 2 },
+        gb: { label: "GB(ギガバイト)", symbol: "GB", toBase: 1024 ** 3 },
+        tb: { label: "TB(テラバイト)", symbol: "TB", toBase: 1024 ** 4 },
       },
     },
   };
@@ -81,17 +124,17 @@
     let results;
     if (cat.special) {
       const c = toCelsius(value, fromUnit);
-      results = Object.entries(cat.units).map(([key, u]) => [key, u.label, fromCelsius(c, key)]);
+      results = Object.entries(cat.units).map(([key, u]) => [key, u, fromCelsius(c, key)]);
     } else {
       const baseValue = value * cat.units[fromUnit].toBase;
-      results = Object.entries(cat.units).map(([key, u]) => [key, u.label, baseValue / u.toBase]);
+      results = Object.entries(cat.units).map(([key, u]) => [key, u, baseValue / u.toBase]);
     }
 
     resultList.innerHTML = results
-      .map(([key, label, v]) => `
+      .map(([key, u, v]) => `
         <li>
-          <span class="cc-label">${label}</span>
-          <strong class="cc-value">${key === fromUnit ? "" : "≈ "}${formatNumber(v)}</strong>
+          <span class="cc-label">${u.label}</span>
+          <strong class="cc-value">${key === fromUnit ? "" : "≈ "}${formatNumber(v)} ${u.symbol}</strong>
         </li>
       `)
       .join("");
