@@ -132,9 +132,9 @@ function buildSelectedFilesPreview(files) {
   const remaining = files.length - shown.length;
   const items = shown.map((f, i) => `
     <li data-index="${i}">
+      <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
       <img class="file-thumb" src="${URL.createObjectURL(f)}" alt="">
       <span class="file-name">${f.name}</span>
-      <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
     </li>
   `).join("");
   const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";

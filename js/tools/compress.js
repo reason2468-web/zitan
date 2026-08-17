@@ -35,7 +35,8 @@
   targetKbPlus.addEventListener("click", () => stepTargetKb(50));
 
   async function loadFiles(fileList) {
-    currentFiles = await loadImageFiles(fileList, { resultArea, listEl });
+    const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
+    currentFiles = currentFiles.concat(newFiles);
     runBtn.disabled = currentFiles.length === 0;
     if (currentFiles.length) {
       renderSelectedFiles(resultArea, currentFiles, (updated) => {

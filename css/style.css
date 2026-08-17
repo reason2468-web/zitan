@@ -621,7 +621,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 .selected-file-list li.file-list-more {
   color: var(--moss);
   font-style: italic;
-  padding-left: 40px;
+  padding-left: 71px;
 }
 
 .file-thumb {
