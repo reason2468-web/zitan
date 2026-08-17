@@ -5,9 +5,18 @@
   const runBtn = document.getElementById("crop-run");
   const resultArea = document.getElementById("crop-result");
   const ratioBtns = document.querySelectorAll("#crop .ratio-btn");
+  const customRow = document.getElementById("crop-custom-row");
+  const customW = document.getElementById("crop-ratio-w");
+  const customH = document.getElementById("crop-ratio-h");
 
   let currentFile = null;
   let cropper = null;
+
+  function applyCustomRatio() {
+    const w = Number(customW.value);
+    const h = Number(customH.value);
+    if (cropper && w > 0 && h > 0) cropper.setAspectRatio(w / h);
+  }
 
   async function loadFile(fileList) {
     const files = await loadImageFiles(fileList, { resultArea, listEl: null });
@@ -41,10 +50,20 @@
     btn.addEventListener("click", () => {
       ratioBtns.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
+
+      if (btn.dataset.ratio === "custom") {
+        customRow.hidden = false;
+        applyCustomRatio();
+        return;
+      }
+      customRow.hidden = true;
+
       const ratio = Number(btn.dataset.ratio);
       if (cropper) cropper.setAspectRatio(ratio === 0 ? NaN : ratio);
     });
   });
+
+  [customW, customH].forEach((el) => el.addEventListener("input", applyCustomRatio));
 
   runBtn.addEventListener("click", async () => {
     if (!cropper || !currentFile) return;

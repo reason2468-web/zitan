@@ -163,12 +163,15 @@ function buildSelectedFilesPreview(files) {
   `).join("");
   const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";
   return `
-    <p>${files.length}件の画像を選択中</p>
+    <div class="selected-file-header">
+      <p>${files.length}件の画像を選択中</p>
+      <button type="button" class="clear-all-btn">すべて削除</button>
+    </div>
     <ul class="selected-file-list">${items}${moreItem}</ul>
   `;
 }
 
-// 選択中ファイルの一覧をresultAreaに描画し、削除ボタンで1件ずつ取り除けるようにする。
+// 選択中ファイルの一覧をresultAreaに描画し、削除ボタンで1件ずつ、またはまとめて取り除けるようにする。
 // ファイルが削除されるたびに onChange(更新後のファイル配列) が呼ばれるので、
 // 呼び出し側(各ツール)はそこで自分の currentFiles を更新する。
 function renderSelectedFiles(resultArea, files, onChange) {
@@ -182,6 +185,14 @@ function renderSelectedFiles(resultArea, files, onChange) {
         onChange(list);
       });
     });
+    const clearBtn = resultArea.querySelector(".clear-all-btn");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        list = [];
+        resultArea.innerHTML = "";
+        onChange(list);
+      });
+    }
   }
   render(files);
 }
