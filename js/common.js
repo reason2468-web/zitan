@@ -285,7 +285,7 @@ function formatSaveName(template, context) {
   const values = {
     date,
     time,
-    datetime: date + time,
+    datetime: `${date}_${time}`,
     category: context.category || "",
     tool: context.tool || "",
   };
