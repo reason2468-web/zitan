@@ -115,8 +115,21 @@ async function loadImageFiles(fileList, { resultArea, listEl }) {
     }
   }
 
-  resultArea.innerHTML = `<p>${converted.length}件の画像を選択中</p>`;
+  resultArea.innerHTML = buildSelectedFilesPreview(converted);
   return converted;
+}
+
+// 選択中のファイル一覧プレビュー(先頭10件まで名前を表示、それ以上は「ほかN件」とまとめる)
+function buildSelectedFilesPreview(files) {
+  const maxShow = 10;
+  const shown = files.slice(0, maxShow);
+  const remaining = files.length - shown.length;
+  const items = shown.map((f) => `<li>${f.name}</li>`).join("");
+  const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";
+  return `
+    <p>${files.length}件の画像を選択中</p>
+    <ul class="selected-file-list">${items}${moreItem}</ul>
+  `;
 }
 
 // ドラッグ&ドロップ + クリックでファイル選択できるようにする共通セットアップ
