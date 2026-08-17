@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 
@@ -43,14 +43,13 @@
         </svg>
         <span class="category-label">設定</span>
       </button>
+      <button class="category-btn" data-category="terms">
+        <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="category-label">ご利用の前に</span>
+      </button>
     </nav>
-    <div class="sidebar-note">
-      <ul class="sidebar-list">
-        <li>ブラウザ内で処理完結、<br>サーバー送信なし</li>
-        <li>商用利用・ご紹介 大歓迎</li>
-        <li>お仕事のご依頼、<br>随時受付中</li>
-      </ul>
-    </div>
   </aside>
 
   <main class="content">
@@ -210,10 +209,50 @@
           <p class="format-note naming-preview">今の設定でのプレビュー:<strong id="pro-preview-text"></strong>.zip</p>
         </div>
       </div>
+    </div>
+
+    <!-- カテゴリ: ご利用の前に -->
+    <div id="category-terms" class="category-panel">
+      <div class="category-header">
+        <span class="category-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <span>
+          <h2 class="category-title">ご利用の前に</h2>
+          <p class="category-desc">ご利用前にお読みください</p>
+        </span>
+      </div>
 
       <div class="card settings-block">
-        <h3>ご利用の前に</h3>
-        <p class="desc">本サイトのご利用によって生じたいかなる損害についても運営者は責任を負いかねますので、大切なファイルは事前にバックアップを取ったうえでご利用ください。</p>
+        <h3>プライバシーについて</h3>
+        <p class="desc">アップロードいただいた画像等のファイルは、すべてお使いのブラウザ内で処理されます。サーバーへの送信・保存は一切行っておりませんので、安心してご利用いただけます。</p>
+      </div>
+
+      <div class="card settings-block">
+        <h3>ご利用について</h3>
+        <p class="desc">個人・法人を問わず、商用利用および第三者へのご紹介を歓迎しております。また、各種制作のご依頼につきましても随時受け付けております。</p>
+      </div>
+
+      <div class="card settings-block">
+        <h3>免責事項</h3>
+        <p class="desc">本サイトのご利用によって生じたいかなる損害についても、運営者は一切の責任を負いかねます。処理結果の正確性・完全性についても保証するものではありませんので、大切なファイルは事前にバックアップを取ったうえでご利用ください。</p>
+      </div>
+
+      <div class="card settings-block">
+        <h3>禁止事項</h3>
+        <p class="desc">本サイト自体、またはその機能・コンテンツを複製・改変のうえ、有償での販売・再配布・提供を行うことを固くお断りします。</p>
+      </div>
+
+      <div class="card settings-block">
+        <h3>成果物のご利用について</h3>
+        <p class="desc">本サイトの機能を利用して生成・加工された画像等のファイル(成果物)につきましては、著作権を含む一切の権利を主張いたしません。商用・非商用を問わず、利用者様のご判断で自由にご利用いただけます。</p>
+      </div>
+
+      <div class="card settings-block">
+        <h3>サービス内容の変更について</h3>
+        <p class="desc">本サイトは予告なく、内容の変更、機能の追加・削除、提供の中断・終了を行う場合がありますので、あらかじめご了承ください。</p>
       </div>
     </div>
 
@@ -359,12 +398,12 @@
 <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="js/common.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
-<script src="js/settings.js?v=6"></script>
-<script src="js/tools/compress.js?v=6"></script>
-<script src="js/tools/convert.js?v=6"></script>
-<script src="js/tools/resize.js?v=6"></script>
-<script src="js/tools/exif.js?v=6"></script>
+<script src="js/common.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
+<script src="js/settings.js?v=7"></script>
+<script src="js/tools/compress.js?v=7"></script>
+<script src="js/tools/convert.js?v=7"></script>
+<script src="js/tools/resize.js?v=7"></script>
+<script src="js/tools/exif.js?v=7"></script>
 </body>
 </html>

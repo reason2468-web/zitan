@@ -148,44 +148,6 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-size: 0.68rem;
 }
 
-.sidebar-note {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  padding: 0 4px;
-  line-height: 1.6;
-}
-
-.sidebar-note p { margin: 0; }
-
-.sidebar-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sidebar-list li {
-  position: relative;
-  padding-left: 14px;
-}
-
-.sidebar-list li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--moss);
-}
-
 .content {
   flex: 1;
   padding: 40px 44px 64px;
@@ -749,7 +711,6 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   .brand-sub { display: none; }
   .category-list { flex-direction: row; }
   .category-btn { white-space: nowrap; }
-  .sidebar-note { display: none; }
 
   .content { padding: 26px 18px 44px; }
 
