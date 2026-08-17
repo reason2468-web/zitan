@@ -5,12 +5,70 @@
   const runBtn = document.getElementById("exif-run");
   const resultArea = document.getElementById("exif-result");
   const listEl = document.getElementById("exif-list");
+  const previewArea = document.getElementById("exif-preview-area");
 
   let currentFiles = [];
+
+  function formatExifDate(date) {
+    if (!(date instanceof Date) || isNaN(date)) return String(date);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  async function describeExifFacts(file) {
+    let tags;
+    try {
+      tags = await exifr.parse(file, { gps: true });
+    } catch (err) {
+      tags = null;
+    }
+    if (!tags) return [];
+
+    const facts = [];
+    const dateTime = tags.DateTimeOriginal || tags.CreateDate || tags.ModifyDate;
+    if (dateTime) facts.push(`📅 撮影日時: ${formatExifDate(dateTime)}`);
+    if (typeof tags.latitude === "number" && typeof tags.longitude === "number") {
+      facts.push(`📍 位置情報(GPS): 緯度${tags.latitude.toFixed(4)}, 経度${tags.longitude.toFixed(4)}`);
+    }
+    const camera = [tags.Make, tags.Model].filter(Boolean).join(" ");
+    if (camera) facts.push(`📷 撮影機種: ${camera}`);
+    if (tags.Software) facts.push(`🖥️ 使用ソフト: ${tags.Software}`);
+    return facts;
+  }
+
+  async function showExifPreview(files) {
+    const maxShow = 10;
+    const shown = files.slice(0, maxShow);
+    previewArea.innerHTML = `<p>写真に含まれている情報を確認中...</p>`;
+
+    const rows = await Promise.all(shown.map(async (file) => {
+      const facts = await describeExifFacts(file);
+      const body = facts.length
+        ? `<ul class="exif-fact-list">${facts.map((f) => `<li>${f}</li>`).join("")}</ul>`
+        : `<p class="exif-none">検出された情報はありません</p>`;
+      return `<li><strong>${file.name}</strong>${body}</li>`;
+    }));
+
+    const remaining = files.length - shown.length;
+    const moreNote = remaining > 0 ? `<p class="format-note">ほか${remaining}件は表示を省略しています</p>` : "";
+
+    previewArea.innerHTML = `
+      <div class="exif-preview">
+        <h4>アップロードした写真に含まれていた情報</h4>
+        <ul class="exif-file-list">${rows.join("")}</ul>
+        ${moreNote}
+      </div>
+    `;
+  }
 
   async function loadFiles(fileList) {
     currentFiles = await loadImageFiles(fileList, { resultArea, listEl });
     runBtn.disabled = currentFiles.length === 0;
+    if (currentFiles.length) {
+      await showExifPreview(currentFiles);
+    } else {
+      previewArea.innerHTML = "";
+    }
   }
 
   setupDropzone(dropzone, input, loadFiles);

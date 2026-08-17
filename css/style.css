@@ -623,6 +623,51 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-style: italic;
 }
 
+.exif-preview {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.exif-preview h4 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.exif-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exif-file-list li strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.exif-fact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exif-none {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .result-card {
   display: flex;
   gap: 16px;
