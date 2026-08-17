@@ -719,6 +719,51 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   height: auto;
 }
 
+.charcount-textarea {
+  max-width: 100%;
+  min-height: 160px;
+  font-family: var(--font-body);
+  resize: vertical;
+}
+
+.charcount-box {
+  margin-top: 22px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 18px;
+}
+
+.charcount-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.charcount-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.charcount-list li:last-child { border-bottom: none; }
+
+.charcount-list .cc-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.charcount-list .cc-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--moss-dark, var(--ink));
+  flex-shrink: 0;
+}
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
