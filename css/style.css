@@ -1265,6 +1265,94 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 .pdfmerge-move-btn:hover:not(:disabled) { background: var(--moss-pale); }
 .pdfmerge-move-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
+.pdfsplit-thumb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.pdfsplit-thumb-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.pdfsplit-thumb-card canvas {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(30, 43, 34, 0.12);
+}
+
+.pdfsplit-thumb-num {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdfsplit-divider {
+  align-self: stretch;
+  width: 30px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.pdfsplit-divider::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: 24px;
+  left: 50%;
+  width: 2px;
+  background: var(--line);
+  transform: translateX(-50%);
+  border-radius: 2px;
+  transition: background 0.15s, width 0.15s;
+}
+
+.pdfsplit-divider:hover::before,
+.pdfsplit-divider.active::before { background: var(--moss); }
+.pdfsplit-divider.active::before { width: 3px; }
+
+.pdfsplit-divider-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pdfsplit-divider:hover .pdfsplit-divider-icon,
+.pdfsplit-divider.active .pdfsplit-divider-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.pdfsplit-divider.active .pdfsplit-divider-icon {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: #fff;
+}
+
 .crop-stage {
   max-width: 100%;
   margin-top: 16px;
