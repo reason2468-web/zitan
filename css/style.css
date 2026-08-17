@@ -585,6 +585,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   gap: 6px;
 }
 
+.preset-row[hidden], .custom-width-row[hidden] { display: none; }
+
 .preset-row {
   display: flex;
   gap: 8px;
@@ -592,6 +594,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   align-items: center;
   font-size: 0.85rem;
 }
+
+.custom-width-row { font-size: 0.9rem; }
 
 .preset-btn, .ratio-btn {
   padding: 6px 12px;

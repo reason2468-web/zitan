@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -290,16 +290,30 @@
           </div>
         </div>
         <div class="controls">
-          <div class="preset-row">
-            <span>プリセット:</span>
-            <button class="preset-btn" type="button" data-width="1080">Instagram用(1080px)</button>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="resize-mode" value="preset" checked>
+              <span>SNSなどのプリセットから選ぶ</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="resize-mode" value="custom">
+              <span>自分で数値を指定する</span>
+            </label>
+          </div>
+
+          <div class="preset-row" id="resize-preset-row">
+            <button class="preset-btn active" type="button" data-width="1080">Instagram用(1080px)</button>
             <button class="preset-btn" type="button" data-width="1200">X(Twitter)用(1200px)</button>
             <button class="preset-btn" type="button" data-width="2560">YouTubeバナー用(2560px)</button>
             <button class="preset-btn" type="button" data-width="1280">Facebook用(1280px)</button>
             <button class="preset-btn" type="button" data-width="780">LINE用(780px)</button>
             <button class="preset-btn" type="button" data-width="800">ブログ用(800px)</button>
           </div>
-          <label>最大の横幅(px): <input type="number" id="resize-width" min="1" value="1200"></label>
+
+          <div class="custom-width-row" id="resize-custom-row" hidden>
+            <label>最大の横幅(px): <input type="number" id="resize-width" min="1" value="1080"></label>
+          </div>
+
           <button id="resize-run" class="run-btn" disabled>リサイズする</button>
         </div>
         <div class="result-area" id="resize-result"></div>
@@ -340,12 +354,12 @@
 <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="js/common.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
-<script src="js/settings.js?v=4"></script>
-<script src="js/tools/compress.js?v=4"></script>
-<script src="js/tools/convert.js?v=4"></script>
-<script src="js/tools/resize.js?v=4"></script>
-<script src="js/tools/exif.js?v=4"></script>
+<script src="js/common.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
+<script src="js/settings.js?v=5"></script>
+<script src="js/tools/compress.js?v=5"></script>
+<script src="js/tools/convert.js?v=5"></script>
+<script src="js/tools/resize.js?v=5"></script>
+<script src="js/tools/exif.js?v=5"></script>
 </body>
 </html>

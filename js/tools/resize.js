@@ -4,6 +4,8 @@
   const folderInput = document.getElementById("resize-folder-input");
   const widthInput = document.getElementById("resize-width");
   const presetBtns = document.querySelectorAll("#resize .preset-btn");
+  const presetRow = document.getElementById("resize-preset-row");
+  const customRow = document.getElementById("resize-custom-row");
   const runBtn = document.getElementById("resize-run");
   const resultArea = document.getElementById("resize-result");
   const listEl = document.getElementById("resize-list");
@@ -22,9 +24,22 @@
 
   presetBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
+      presetBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
       widthInput.value = btn.dataset.width;
     });
   });
+
+  function updateResizeModeVisibility() {
+    const mode = document.querySelector('input[name="resize-mode"]:checked').value;
+    presetRow.hidden = mode !== "preset";
+    customRow.hidden = mode !== "custom";
+  }
+
+  document.querySelectorAll('input[name="resize-mode"]').forEach((radio) => {
+    radio.addEventListener("change", updateResizeModeVisibility);
+  });
+  updateResizeModeVisibility();
 
   function loadImageElement(file) {
     return new Promise((resolve, reject) => {
