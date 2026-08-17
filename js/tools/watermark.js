@@ -5,19 +5,39 @@
   const runBtn = document.getElementById("watermark-run");
   const resultArea = document.getElementById("watermark-result");
   const listEl = document.getElementById("watermark-list");
-  const previewImg = document.getElementById("watermark-preview-img");
+  const previewCanvas = document.getElementById("watermark-preview-canvas");
 
+  const textControls = document.getElementById("wm-text-controls");
+  const imageControls = document.getElementById("wm-image-controls");
   const textInput = document.getElementById("watermark-text");
-  const posBtns = document.querySelectorAll(".wm-pos-btn");
   const colorInput = document.getElementById("watermark-color");
-  const sizeInput = document.getElementById("watermark-size");
-  const sizeVal = document.getElementById("watermark-size-val");
+  const textSizeInput = document.getElementById("watermark-text-size");
+  const textSizeVal = document.getElementById("watermark-text-size-val");
+  const logoInput = document.getElementById("watermark-logo-input");
+  const logoNameEl = document.getElementById("wm-logo-name");
+  const imageSizeInput = document.getElementById("watermark-image-size");
+  const imageSizeVal = document.getElementById("watermark-image-size-val");
   const opacityInput = document.getElementById("watermark-opacity");
   const opacityVal = document.getElementById("watermark-opacity-val");
+  const posBtns = document.querySelectorAll(".wm-pos-btn");
+
+  const PRESET_POS = {
+    "top-left": { x: 0.12, y: 0.08 },
+    "top-center": { x: 0.5, y: 0.08 },
+    "top-right": { x: 0.88, y: 0.08 },
+    "middle-left": { x: 0.12, y: 0.5 },
+    "middle-center": { x: 0.5, y: 0.5 },
+    "middle-right": { x: 0.88, y: 0.5 },
+    "bottom-left": { x: 0.12, y: 0.92 },
+    "bottom-center": { x: 0.5, y: 0.92 },
+    "bottom-right": { x: 0.88, y: 0.92 },
+  };
 
   let currentFiles = [];
-  let currentPos = "bottom-right";
-  let previewToken = 0;
+  let previewBaseImg = null;
+  let logoImg = null;
+  let dragging = false;
+  const pos = { ...PRESET_POS["bottom-right"] };
 
   function loadImageElement(file) {
     return new Promise((resolve, reject) => {
@@ -29,94 +49,161 @@
     });
   }
 
+  function getMode() {
+    return document.querySelector('input[name="watermark-mode"]:checked').value;
+  }
+
   function getSettings() {
     return {
+      mode: getMode(),
       text: textInput.value.trim(),
-      pos: currentPos,
       color: colorInput.value,
-      sizeRatio: Number(sizeInput.value) / 100,
+      textSizeRatio: Number(textSizeInput.value) / 100,
+      imageSizeRatio: Number(imageSizeInput.value) / 100,
       opacity: Number(opacityInput.value) / 100,
+      x: pos.x,
+      y: pos.y,
     };
   }
 
-  function drawWatermark(canvas, ctx, img, settings) {
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    ctx.drawImage(img, 0, 0);
+  function isReady(settings) {
+    return settings.mode === "text" ? !!settings.text : !!logoImg;
+  }
 
-    if (!settings.text) return;
+  function drawWatermark(canvas, ctx, baseImg, settings) {
+    canvas.width = baseImg.naturalWidth;
+    canvas.height = baseImg.naturalHeight;
+    ctx.globalAlpha = 1;
+    ctx.drawImage(baseImg, 0, 0);
 
-    const fontSize = Math.max(10, Math.round(canvas.width * settings.sizeRatio));
-    const padding = Math.round(fontSize * 0.6);
-    ctx.font = `bold ${fontSize}px sans-serif`;
-    ctx.globalAlpha = settings.opacity;
-    ctx.lineJoin = "round";
-    ctx.lineWidth = Math.max(2, fontSize * 0.08);
-    ctx.strokeStyle = "rgba(0,0,0,0.6)";
-    ctx.fillStyle = settings.color;
+    const cx = canvas.width * settings.x;
+    const cy = canvas.height * settings.y;
 
-    const [vPos, hPos] = settings.pos.split("-");
-    let x, y;
-    if (hPos === "left") { ctx.textAlign = "left"; x = padding; }
-    else if (hPos === "right") { ctx.textAlign = "right"; x = canvas.width - padding; }
-    else { ctx.textAlign = "center"; x = canvas.width / 2; }
-
-    if (vPos === "top") { ctx.textBaseline = "top"; y = padding; }
-    else if (vPos === "bottom") { ctx.textBaseline = "bottom"; y = canvas.height - padding; }
-    else { ctx.textBaseline = "middle"; y = canvas.height / 2; }
-
-    ctx.strokeText(settings.text, x, y);
-    ctx.fillText(settings.text, x, y);
+    if (settings.mode === "text") {
+      if (!settings.text) return;
+      const fontSize = Math.max(10, Math.round(canvas.width * settings.textSizeRatio));
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.globalAlpha = settings.opacity;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(2, fontSize * 0.08);
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.fillStyle = settings.color;
+      ctx.strokeText(settings.text, cx, cy);
+      ctx.fillText(settings.text, cx, cy);
+    } else if (logoImg) {
+      const w = canvas.width * settings.imageSizeRatio;
+      const h = w * (logoImg.naturalHeight / logoImg.naturalWidth);
+      ctx.globalAlpha = settings.opacity;
+      ctx.drawImage(logoImg, cx - w / 2, cy - h / 2, w, h);
+    }
     ctx.globalAlpha = 1;
   }
 
-  async function updatePreview() {
-    const token = ++previewToken;
+  function renderPreview() {
+    if (!previewBaseImg) {
+      previewCanvas.hidden = true;
+      return;
+    }
+    const ctx = previewCanvas.getContext("2d");
+    drawWatermark(previewCanvas, ctx, previewBaseImg, getSettings());
+    previewCanvas.hidden = false;
+  }
+
+  async function refreshPreviewBaseImage() {
     if (!currentFiles.length) {
-      previewImg.hidden = true;
+      previewBaseImg = null;
+      renderPreview();
       return;
     }
     try {
-      const img = await loadImageElement(currentFiles[0]);
-      if (token !== previewToken) return;
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      drawWatermark(canvas, ctx, img, getSettings());
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
-      if (token !== previewToken) return;
-      previewImg.src = URL.createObjectURL(blob);
-      previewImg.hidden = false;
+      previewBaseImg = await loadImageElement(currentFiles[0]);
     } catch (err) {
-      previewImg.hidden = true;
+      previewBaseImg = null;
     }
+    renderPreview();
   }
 
   function updateRunState() {
-    runBtn.disabled = currentFiles.length === 0 || !textInput.value.trim();
+    runBtn.disabled = currentFiles.length === 0 || !isReady(getSettings());
   }
 
-  posBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      posBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentPos = btn.dataset.pos;
-      updatePreview();
+  document.querySelectorAll('input[name="watermark-mode"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const mode = getMode();
+      textControls.hidden = mode !== "text";
+      imageControls.hidden = mode !== "image";
+      updateRunState();
+      renderPreview();
     });
   });
 
   textInput.addEventListener("input", () => {
     updateRunState();
-    updatePreview();
+    renderPreview();
   });
-  colorInput.addEventListener("input", updatePreview);
-  sizeInput.addEventListener("input", () => {
-    sizeVal.textContent = sizeInput.value;
-    updatePreview();
+  colorInput.addEventListener("input", renderPreview);
+  textSizeInput.addEventListener("input", () => {
+    textSizeVal.textContent = textSizeInput.value;
+    renderPreview();
+  });
+  imageSizeInput.addEventListener("input", () => {
+    imageSizeVal.textContent = imageSizeInput.value;
+    renderPreview();
   });
   opacityInput.addEventListener("input", () => {
     opacityVal.textContent = opacityInput.value;
-    updatePreview();
+    renderPreview();
   });
+
+  logoInput.addEventListener("change", async () => {
+    const file = logoInput.files[0];
+    if (!file) return;
+    logoNameEl.textContent = "読み込み中...";
+    try {
+      const converted = await toDecodableImageFile(file);
+      logoImg = await loadImageElement(converted);
+      logoNameEl.textContent = `選択中の画像:${file.name}`;
+    } catch (err) {
+      logoImg = null;
+      logoNameEl.textContent = "画像を読み込めませんでした";
+    }
+    updateRunState();
+    renderPreview();
+  });
+
+  posBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      posBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const p = PRESET_POS[btn.dataset.pos];
+      pos.x = p.x;
+      pos.y = p.y;
+      renderPreview();
+    });
+  });
+
+  function setPosFromEvent(e) {
+    const rect = previewCanvas.getBoundingClientRect();
+    pos.x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    pos.y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+    posBtns.forEach((b) => b.classList.remove("active"));
+    renderPreview();
+  }
+
+  previewCanvas.addEventListener("pointerdown", (e) => {
+    if (previewCanvas.hidden) return;
+    dragging = true;
+    previewCanvas.setPointerCapture(e.pointerId);
+    setPosFromEvent(e);
+  });
+  previewCanvas.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    setPosFromEvent(e);
+  });
+  previewCanvas.addEventListener("pointerup", () => { dragging = false; });
+  previewCanvas.addEventListener("pointercancel", () => { dragging = false; });
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
@@ -126,10 +213,10 @@
       renderSelectedFiles(resultArea, currentFiles, (updated) => {
         currentFiles = updated;
         updateRunState();
-        updatePreview();
+        refreshPreviewBaseImage();
       });
     }
-    updatePreview();
+    await refreshPreviewBaseImage();
   }
 
   setupDropzone(dropzone, input, loadFiles);
@@ -139,7 +226,7 @@
 
   runBtn.addEventListener("click", async () => {
     const settings = getSettings();
-    if (!currentFiles.length || !settings.text) return;
+    if (!currentFiles.length || !isReady(settings)) return;
     runBtn.disabled = true;
     runBtn.textContent = "処理中...";
     listEl.innerHTML = "";
@@ -171,7 +258,7 @@
     if (results.length) {
       const saveResult = await saveProcessedFiles(
         results,
-        { category: "画像", tool: "ウォーターマーク" },
+        { category: "画像", tool: `ウォーターマーク.${settings.mode === "text" ? "文字" : "画像"}` },
         currentFiles.length > 1
       );
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";

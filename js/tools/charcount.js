@@ -8,6 +8,7 @@
     hiragana: document.getElementById("cc-hiragana"),
     katakana: document.getElementById("cc-katakana"),
     alnum: document.getElementById("cc-alnum"),
+    genko: document.getElementById("cc-genko"),
   };
 
   function countMatches(text, regex) {
@@ -31,6 +32,7 @@
     els.hiragana.textContent = hiragana;
     els.katakana.textContent = katakana;
     els.alnum.textContent = alnum;
+    els.genko.textContent = (total / 400).toFixed(1) + "枚";
   }
 
   textInput.addEventListener("input", update);

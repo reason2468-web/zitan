@@ -811,6 +811,19 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .slider-row-label input[type="range"] { width: 100%; }
 
+#wm-text-controls, #wm-image-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.watermark-preview-canvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+.watermark-preview-canvas:active { cursor: grabbing; }
+
 .file-remove-btn {
   flex-shrink: 0;
   display: flex;
