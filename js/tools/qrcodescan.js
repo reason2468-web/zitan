@@ -251,21 +251,50 @@
     }
   });
 
+  // QRコードは周りに余白(クワイエットゾーン)が無いと読み取りにくくなることがあるため、
+  // ドラッグで選んだ範囲より少し広めに切り出す
+  function expandRectWithMargin(rect, canvas) {
+    const marginX = Math.max(20, rect.w * 0.3);
+    const marginY = Math.max(20, rect.h * 0.3);
+    const x = Math.max(0, Math.round(rect.x - marginX));
+    const y = Math.max(0, Math.round(rect.y - marginY));
+    const right = Math.min(canvas.width, Math.round(rect.x + rect.w + marginX));
+    const bottom = Math.min(canvas.height, Math.round(rect.y + rect.h + marginY));
+    return { x, y, w: right - x, h: bottom - y };
+  }
+
+  function getScaledImageData(canvas) {
+    const scale = Math.min(1, MAX_SCAN_DIM / Math.max(canvas.width, canvas.height));
+    if (scale === 1) {
+      return canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+    }
+    const scaled = document.createElement("canvas");
+    scaled.width = Math.max(1, Math.round(canvas.width * scale));
+    scaled.height = Math.max(1, Math.round(canvas.height * scale));
+    scaled.getContext("2d").drawImage(canvas, 0, 0, scaled.width, scaled.height);
+    return scaled.getContext("2d").getImageData(0, 0, scaled.width, scaled.height);
+  }
+
   captureConfirmBtn.addEventListener("click", () => {
     if (!hasCapture || !selectRect) return;
-    const { x, y, w, h } = selectRect;
+    const { x, y, w, h } = expandRectWithMargin(selectRect, captureCanvas);
     const cropCanvas = document.createElement("canvas");
     cropCanvas.width = w;
     cropCanvas.height = h;
     cropCanvas.getContext("2d").drawImage(captureCanvas, x, y, w, h, 0, 0, w, h);
-    const imageData = cropCanvas.getContext("2d").getImageData(0, 0, w, h);
-    const codes = decodeAllQRCodes(imageData);
+    let codes = decodeAllQRCodes(cropCanvas.getContext("2d").getImageData(0, 0, w, h));
+
+    // 選んだ範囲だけで読み取れなかった場合は、キャプチャした画像全体でも試す
+    // (「画像から読み取る」モードと同じ、画像全体を読む方法にフォールバックする)
+    if (!codes.length) {
+      codes = decodeAllQRCodes(getScaledImageData(captureCanvas));
+    }
 
     if (codes.length) {
       addResults([codes[0]], "画面(選択した範囲)");
       statusEl.textContent = "読み取れました。続けて他のQRコードを読み取る場合は、もう一度範囲を選んでください。";
     } else {
-      statusEl.textContent = "選択した範囲からQRコードを読み取れませんでした。範囲を選び直してみてください。";
+      statusEl.textContent = "選択した範囲・画像全体のどちらからもQRコードを読み取れませんでした。QRコードがはっきり写るように、もう一度スクリーンショットを撮ってみてください。";
     }
   });
 
