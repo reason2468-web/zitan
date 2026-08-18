@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=65">
+<link rel="stylesheet" href="css/style.css?v=66">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -69,7 +69,7 @@
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="category-label">PDF</span>
-        <span class="category-count">3</span>
+        <span class="category-count">4</span>
       </button>
       <button class="category-btn" data-category="other">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -468,6 +468,24 @@
           <span class="tool-text">
             <span class="tool-label">PDF圧縮</span>
             <span class="tool-caption">重いPDFのファイルサイズを小さくする</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="pdf2text" style="--gem:#4C8577;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="13" y2="17"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">PDFから文字を抽出</span>
+            <span class="tool-caption">文字データが無いPDFはOCRで読み取り</span>
           </span>
         </button>
 
@@ -1471,6 +1489,24 @@
         <ul class="batch-list" id="pdfcompress-list"></ul>
       </section>
 
+      <section id="pdf2text" class="tool-panel">
+        <h2>PDFから文字を抽出</h2>
+        <p class="desc">PDFの中の文字をテキストとして取り出します。文字データがあるPDFはすぐに抽出できます。スキャンした画像だけのPDFはOCR(文字認識)で読み取ります。</p>
+        <p class="format-note">OCRで読み取る場合、1ページあたり数秒〜数十秒かかることがあります。縦書き・横書きは自動で判定します(両方試すため、その分時間がかかります)。実行前に、かかりそうな時間の目安を表示して確認します。</p>
+        <div class="dropzone" data-target="pdf2text-input">
+          <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdf2text-input" accept="application/pdf,.pdf" multiple hidden></label>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="pdf2text-run" class="run-btn" disabled>文字を抽出する</button>
+        </div>
+        <p class="format-note" id="pdf2text-status"></p>
+        <div class="result-area" id="pdf2text-result"></div>
+        <ul class="batch-list" id="pdf2text-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1482,7 +1518,9 @@
         <a href="https://github.com/fengyuanchen/cropperjs" target="_blank" rel="noopener">Cropper.js</a>,
         <a href="https://github.com/davidshimjs/qrcodejs" target="_blank" rel="noopener">qrcodejs</a>,
         <a href="https://github.com/Hopding/pdf-lib" target="_blank" rel="noopener">pdf-lib</a>,
-        <a href="https://github.com/mozilla/pdf.js" target="_blank" rel="noopener">PDF.js</a>
+        <a href="https://github.com/mozilla/pdf.js" target="_blank" rel="noopener">PDF.js</a>,
+        <a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener">jsQR</a>,
+        <a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js</a>
       </p>
     </footer>
 
@@ -1496,28 +1534,30 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=65"></script>
-<script src="js/app.js?v=65"></script>
-<script src="js/settings.js?v=65"></script>
-<script src="js/tools/compress.js?v=65"></script>
-<script src="js/tools/convert.js?v=65"></script>
-<script src="js/tools/resize.js?v=65"></script>
-<script src="js/tools/exif.js?v=65"></script>
-<script src="js/tools/rotate.js?v=65"></script>
-<script src="js/tools/crop.js?v=65"></script>
-<script src="js/tools/filter.js?v=65"></script>
-<script src="js/tools/watermark.js?v=65"></script>
-<script src="js/tools/qrcode.js?v=65"></script>
-<script src="js/tools/qrcodescan.js?v=65"></script>
-<script src="js/tools/charcount.js?v=65"></script>
-<script src="js/tools/colorpicker.js?v=65"></script>
-<script src="js/tools/unitconvert.js?v=65"></script>
-<script src="js/tools/datecalc.js?v=65"></script>
-<script src="js/tools/calculator.js?v=65"></script>
-<script src="js/tools/pdfdesk.js?v=65"></script>
-<script src="js/tools/pdf2image.js?v=65"></script>
-<script src="js/tools/pdfcompress.js?v=65"></script>
+<script src="js/common.js?v=66"></script>
+<script src="js/app.js?v=66"></script>
+<script src="js/settings.js?v=66"></script>
+<script src="js/tools/compress.js?v=66"></script>
+<script src="js/tools/convert.js?v=66"></script>
+<script src="js/tools/resize.js?v=66"></script>
+<script src="js/tools/exif.js?v=66"></script>
+<script src="js/tools/rotate.js?v=66"></script>
+<script src="js/tools/crop.js?v=66"></script>
+<script src="js/tools/filter.js?v=66"></script>
+<script src="js/tools/watermark.js?v=66"></script>
+<script src="js/tools/qrcode.js?v=66"></script>
+<script src="js/tools/qrcodescan.js?v=66"></script>
+<script src="js/tools/charcount.js?v=66"></script>
+<script src="js/tools/colorpicker.js?v=66"></script>
+<script src="js/tools/unitconvert.js?v=66"></script>
+<script src="js/tools/datecalc.js?v=66"></script>
+<script src="js/tools/calculator.js?v=66"></script>
+<script src="js/tools/pdfdesk.js?v=66"></script>
+<script src="js/tools/pdf2image.js?v=66"></script>
+<script src="js/tools/pdfcompress.js?v=66"></script>
+<script src="js/tools/pdf2text.js?v=66"></script>
 </body>
 </html>
