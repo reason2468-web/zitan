@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=71">
+<link rel="stylesheet" href="css/style.css?v=72">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -83,7 +83,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">1</span>
+        <span class="category-count">2</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -515,6 +515,24 @@
           <span class="tool-text">
             <span class="tool-label">PDFから文字を抽出</span>
             <span class="tool-caption">文字データが無いPDFはOCRで読み取り(精度は発展途上)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="rename" style="--gem:#8A5FD9;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/>
+                <line x1="8" y1="15" x2="16" y2="15"/>
+                <line x1="8" y1="18" x2="13" y2="18"/>
+                <path d="M14 9l4 4M18 9l-4 4" stroke-width="1.4"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">ファイル一括リネーム</span>
+            <span class="tool-caption">連番・置換・日付などのルールで名前をまとめて変更</span>
           </span>
         </button>
 
@@ -1549,6 +1567,94 @@
         <ul class="batch-list" id="pdf2text-list"></ul>
       </section>
 
+      <section id="rename" class="tool-panel">
+        <h2>ファイル一括リネーム</h2>
+        <p class="desc">複数のファイルの名前を、連番・文字の置換・前後への追加などのルールでまとめて変更します。</p>
+
+        <div class="radio-group mode-toggle-row">
+          <label class="radio-option">
+            <input type="radio" name="rename-mode" value="download" checked>
+            <span>ファイルを選んで名前を変更する(ダウンロード)</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="rename-mode" value="folder">
+            <span>フォルダを選んで直接名前を変更する(Chrome/Edgeのみ)</span>
+          </label>
+        </div>
+
+        <div id="rename-download-controls">
+          <div class="dropzone" data-target="rename-input">
+            <p>ここにファイルをドラッグ&ドロップ<br>または</p>
+            <div class="dropzone-buttons">
+              <label class="file-btn">ファイルを選択(複数可)<input type="file" id="rename-input" multiple hidden></label>
+            </div>
+          </div>
+        </div>
+
+        <div id="rename-folder-controls" hidden>
+          <p class="format-note">「フォルダを選ぶ」を押すとフォルダ選択の画面が出ます。選んだフォルダの中の(直下の)ファイルの名前が直接書き換わります。コピーではなく、元のファイル名は無くなります。実行前に必ずプレビューをご確認ください。</p>
+          <div class="dropzone-buttons">
+            <button type="button" class="file-btn" id="rename-folder-pick">フォルダを選ぶ</button>
+          </div>
+          <p class="format-note" id="rename-folder-unsupported" hidden>お使いのブラウザはこの機能に対応していません。Chrome・Edgeでお試しいただくか、上の「ファイルを選んで名前を変更する」をお使いください。</p>
+        </div>
+
+        <div class="controls" id="rename-rules" hidden>
+          <label class="template-label">ベースの名前を全部置き換える(空欄なら元の名前のまま)
+            <input type="text" id="rename-base" class="template-input" placeholder="例:旅行">
+          </label>
+
+          <div class="custom-width-row">
+            <label>置き換える文字: <input type="text" id="rename-find" placeholder="例:IMG"></label>
+            <label>→ 置き換え後の文字: <input type="text" id="rename-replace" placeholder="例:写真"></label>
+          </div>
+
+          <div class="custom-width-row">
+            <label>前につける文字: <input type="text" id="rename-prefix" placeholder="例:旅行_"></label>
+            <button type="button" class="file-btn-outline" id="rename-prefix-date">今日の日付を入れる</button>
+          </div>
+          <div class="custom-width-row">
+            <label>後ろにつける文字: <input type="text" id="rename-suffix" placeholder="例:_final"></label>
+            <button type="button" class="file-btn-outline" id="rename-suffix-date">今日の日付を入れる</button>
+          </div>
+
+          <div class="radio-group mode-toggle-row">
+            <label class="radio-option">
+              <input type="radio" name="rename-number-mode" value="off" checked>
+              <span>連番はつけない</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="rename-number-mode" value="on">
+              <span>連番をつける</span>
+            </label>
+          </div>
+
+          <div class="custom-width-row" id="rename-number-options" hidden>
+            <label>開始番号: <input type="number" id="rename-number-start" value="1" min="0"></label>
+            <label>桁数: <input type="number" id="rename-number-digits" value="2" min="1" max="6"></label>
+          </div>
+          <div class="radio-group mode-toggle-row" id="rename-number-position-row" hidden>
+            <label class="radio-option">
+              <input type="radio" name="rename-number-position" value="suffix" checked>
+              <span>名前の後ろにつける</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="rename-number-position" value="prefix">
+              <span>名前の前につける</span>
+            </label>
+          </div>
+
+          <p class="format-note">プレビュー(最初の数件)</p>
+          <ul class="batch-list" id="rename-preview"></ul>
+          <p class="format-note" id="rename-warning" style="color:red;"></p>
+
+          <button id="rename-run" class="run-btn" disabled>名前を変更する</button>
+        </div>
+
+        <div class="result-area" id="rename-result"></div>
+        <ul class="batch-list" id="rename-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1579,27 +1685,28 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=71"></script>
-<script src="js/app.js?v=71"></script>
-<script src="js/settings.js?v=71"></script>
-<script src="js/tools/compress.js?v=71"></script>
-<script src="js/tools/convert.js?v=71"></script>
-<script src="js/tools/resize.js?v=71"></script>
-<script src="js/tools/exif.js?v=71"></script>
-<script src="js/tools/rotate.js?v=71"></script>
-<script src="js/tools/crop.js?v=71"></script>
-<script src="js/tools/filter.js?v=71"></script>
-<script src="js/tools/watermark.js?v=71"></script>
-<script src="js/tools/qrcode.js?v=71"></script>
-<script src="js/tools/qrcodescan.js?v=71"></script>
-<script src="js/tools/charcount.js?v=71"></script>
-<script src="js/tools/colorpicker.js?v=71"></script>
-<script src="js/tools/unitconvert.js?v=71"></script>
-<script src="js/tools/datecalc.js?v=71"></script>
-<script src="js/tools/calculator.js?v=71"></script>
-<script src="js/tools/pdfdesk.js?v=71"></script>
-<script src="js/tools/pdf2image.js?v=71"></script>
-<script src="js/tools/pdfcompress.js?v=71"></script>
-<script src="js/tools/pdf2text.js?v=71"></script>
+<script src="js/common.js?v=72"></script>
+<script src="js/app.js?v=72"></script>
+<script src="js/settings.js?v=72"></script>
+<script src="js/tools/compress.js?v=72"></script>
+<script src="js/tools/convert.js?v=72"></script>
+<script src="js/tools/resize.js?v=72"></script>
+<script src="js/tools/exif.js?v=72"></script>
+<script src="js/tools/rotate.js?v=72"></script>
+<script src="js/tools/crop.js?v=72"></script>
+<script src="js/tools/filter.js?v=72"></script>
+<script src="js/tools/watermark.js?v=72"></script>
+<script src="js/tools/qrcode.js?v=72"></script>
+<script src="js/tools/qrcodescan.js?v=72"></script>
+<script src="js/tools/charcount.js?v=72"></script>
+<script src="js/tools/colorpicker.js?v=72"></script>
+<script src="js/tools/unitconvert.js?v=72"></script>
+<script src="js/tools/datecalc.js?v=72"></script>
+<script src="js/tools/calculator.js?v=72"></script>
+<script src="js/tools/pdfdesk.js?v=72"></script>
+<script src="js/tools/pdf2image.js?v=72"></script>
+<script src="js/tools/pdfcompress.js?v=72"></script>
+<script src="js/tools/pdf2text.js?v=72"></script>
+<script src="js/tools/rename.js?v=72"></script>
 </body>
 </html>
