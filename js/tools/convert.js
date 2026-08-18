@@ -6,8 +6,26 @@
   const runBtn = document.getElementById("convert-run");
   const resultArea = document.getElementById("convert-result");
   const listEl = document.getElementById("convert-list");
+  const pdfModeRow = document.getElementById("convert-pdf-mode-row");
+
+  const mergeModal = document.getElementById("convert-merge-modal");
+  const mergeModalBackdrop = document.getElementById("convert-merge-modal-backdrop");
+  const mergePreviewRow = document.getElementById("convert-merge-preview-row");
+  const mergeModalCancel = document.getElementById("convert-merge-modal-cancel");
+  const mergeModalConfirm = document.getElementById("convert-merge-modal-confirm");
 
   let currentFiles = [];
+  let mergeOrder = [];
+  let mergeToken = 0;
+
+  formatSelect.addEventListener("change", () => {
+    pdfModeRow.hidden = formatSelect.value !== "application/pdf";
+  });
+
+  function getPdfMode() {
+    const checked = document.querySelector('input[name="convert-pdf-mode"]:checked');
+    return checked ? checked.value : "separate";
+  }
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
@@ -52,27 +70,159 @@
   // 画像1枚をA4等ではなく画像自体のサイズのPDFに変換する(96dpi想定でpx→pt換算)
   const PT_PER_PX = 0.75;
 
-  async function imageFileToPdfFile(file, img, canvas, ctx) {
+  // 画像ファイルを既存のpdfDocに1ページとして追加する(単独PDF化・結合PDF化の両方から使う)
+  async function addImageAsPdfPage(pdfDoc, file) {
+    const img = await loadImageElement(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     const jpegBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
 
-    const pdfDoc = await PDFLib.PDFDocument.create();
     const jpgImage = await pdfDoc.embedJpg(jpegBytes);
     const pageWidth = canvas.width * PT_PER_PX;
     const pageHeight = canvas.height * PT_PER_PX;
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
     page.drawImage(jpgImage, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+  }
 
+  async function imageFileToPdfFile(file) {
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    await addImageAsPdfPage(pdfDoc, file);
     const pdfBytes = await pdfDoc.save();
     const newName = `${file.name.replace(/\.[^/.]+$/, "")}.pdf`;
     return new File([pdfBytes], newName, { type: "application/pdf" });
   }
 
+  // ---------- 画像→PDF結合(順番プレビュー) ----------
+
+  async function renderImageThumbCanvas(file, maxWidth, maxHeight) {
+    const img = await loadImageElement(file);
+    let scale = maxWidth / img.naturalWidth;
+    if (maxHeight && img.naturalHeight * scale > maxHeight) scale = maxHeight / img.naturalHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth * scale;
+    canvas.height = img.naturalHeight * scale;
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  function renderMergeOrder() {
+    mergePreviewRow.innerHTML = "";
+    mergeOrder.forEach((entry, i) => {
+      entry.el.querySelector(".pdfdesk-merge-preview-label").textContent = `${i + 1}. ${entry.file.name}`;
+      const [leftBtn, rightBtn] = entry.el.querySelectorAll(".pdfdesk-merge-preview-move button");
+      leftBtn.disabled = i === 0;
+      rightBtn.disabled = i === mergeOrder.length - 1;
+      mergePreviewRow.appendChild(entry.el);
+    });
+  }
+
+  function moveMergeItem(entry, delta) {
+    const idx = mergeOrder.indexOf(entry);
+    const newIdx = idx + delta;
+    if (idx === -1 || newIdx < 0 || newIdx >= mergeOrder.length) return;
+    [mergeOrder[idx], mergeOrder[newIdx]] = [mergeOrder[newIdx], mergeOrder[idx]];
+    renderMergeOrder();
+  }
+
+  async function openMergeOrderModal() {
+    mergeOrder = currentFiles.map((file) => ({ file, el: null }));
+    mergeModal.hidden = false;
+    mergeModalConfirm.disabled = false;
+    mergeModalConfirm.textContent = "結合してダウンロード";
+    mergePreviewRow.innerHTML = `<p>読み込み中...</p>`;
+    const token = ++mergeToken;
+
+    for (const entry of mergeOrder) {
+      const wrap = document.createElement("div");
+      wrap.className = "pdfsplit-thumb-card";
+      try {
+        wrap.appendChild(await renderImageThumbCanvas(entry.file, 100, 150));
+      } catch {
+        const span = document.createElement("span");
+        span.style.color = "red";
+        span.style.fontSize = "0.7rem";
+        span.textContent = "表示できません";
+        wrap.appendChild(span);
+      }
+      if (token !== mergeToken) return;
+
+      const label = document.createElement("span");
+      label.className = "pdfdesk-merge-preview-label";
+      wrap.appendChild(label);
+
+      const moveRow = document.createElement("div");
+      moveRow.className = "pdfdesk-merge-preview-move";
+      const leftBtn = document.createElement("button");
+      leftBtn.type = "button";
+      leftBtn.className = "pdfdesk-card-btn";
+      leftBtn.textContent = "◀";
+      leftBtn.setAttribute("aria-label", "順番を1つ前に");
+      leftBtn.addEventListener("click", () => moveMergeItem(entry, -1));
+      const rightBtn = document.createElement("button");
+      rightBtn.type = "button";
+      rightBtn.className = "pdfdesk-card-btn";
+      rightBtn.textContent = "▶";
+      rightBtn.setAttribute("aria-label", "順番を1つ後ろに");
+      rightBtn.addEventListener("click", () => moveMergeItem(entry, 1));
+      moveRow.appendChild(leftBtn);
+      moveRow.appendChild(rightBtn);
+      wrap.appendChild(moveRow);
+
+      entry.el = wrap;
+    }
+    renderMergeOrder();
+  }
+
+  function closeMergeOrderModal() {
+    mergeModal.hidden = true;
+    mergeOrder = [];
+    mergeToken++;
+  }
+
+  mergeModalCancel.addEventListener("click", closeMergeOrderModal);
+  mergeModalBackdrop.addEventListener("click", closeMergeOrderModal);
+
+  mergeModalConfirm.addEventListener("click", async () => {
+    if (!mergeOrder.length) return;
+    mergeModalConfirm.disabled = true;
+    mergeModalConfirm.textContent = "結合中...";
+    try {
+      const pdfDoc = await PDFLib.PDFDocument.create();
+      for (const entry of mergeOrder) {
+        await addImageAsPdfPage(pdfDoc, entry.file);
+      }
+      const pdfBytes = await pdfDoc.save();
+      const baseName = mergeOrder.length === 1 ? mergeOrder[0].file.name.replace(/\.[^/.]+$/, "") : "結合PDF";
+      const merged = new File([pdfBytes], `${baseName}.pdf`, { type: "application/pdf" });
+      await saveProcessedFiles([merged], { category: "画像", tool: "変換.PDF結合" }, false);
+      resultArea.innerHTML = `
+        <div class="result-card">
+          <div class="result-info">
+            <p>${mergeOrder.length}件の画像を1つのPDFに結合しました。</p>
+            <p>ダウンロードしました。</p>
+          </div>
+        </div>
+      `;
+    } catch {
+      resultArea.innerHTML = `<p style="color:red;">結合に失敗しました。</p>`;
+    }
+    closeMergeOrderModal();
+  });
+
   runBtn.addEventListener("click", async () => {
     if (!currentFiles.length) return;
+
+    if (formatSelect.value === "application/pdf" && getPdfMode() === "merge") {
+      openMergeOrderModal();
+      return;
+    }
+
     runBtn.disabled = true;
     runBtn.textContent = "変換中...";
     listEl.innerHTML = "";
@@ -97,18 +247,18 @@
       }
 
       try {
+        if (targetType === "application/pdf") {
+          const converted = await imageFileToPdfFile(file);
+          results.push(converted);
+          li.innerHTML = `<span>${file.name}</span><span>PDFに変換しました</span>`;
+          continue;
+        }
+
         const img = await loadImageElement(file);
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         const ctx = canvas.getContext("2d");
-
-        if (targetType === "application/pdf") {
-          const converted = await imageFileToPdfFile(file, img, canvas, ctx);
-          results.push(converted);
-          li.innerHTML = `<span>${file.name}</span><span>PDFに変換しました</span>`;
-          continue;
-        }
 
         if (targetType === "image/jpeg") {
           // JPEGは透明を扱えないため白背景で塗りつぶす
