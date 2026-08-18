@@ -610,17 +610,6 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin-left: 4px;
 }
 
-.qrcode-logo-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.qrcode-logo-btn {
-  margin-top: 0;
-}
-
 .preset-btn, .ratio-btn {
   padding: 6px 12px;
   border: 1px solid var(--line);
