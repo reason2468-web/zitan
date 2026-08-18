@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=62">
+<link rel="stylesheet" href="css/style.css?v=63">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1027,11 +1027,10 @@
         </div>
 
         <div id="qrscan-screen-controls">
-          <p class="format-note">「画面をキャプチャする」を押すと、画面共有の選択画面が出ます。QRコードが映っている画面(またはウィンドウ)を選んでください。キャプチャした画像の中から、読み取りたいQRコードの部分をドラッグして囲むと、その範囲だけを読み取ります。</p>
-          <div class="dropzone-buttons">
-            <button type="button" class="file-btn" id="qrscan-screen-start">画面をキャプチャする</button>
+          <p class="format-note">①パソコンでスクリーンショットを撮ってください(Windowsは「Windowsキー」+「Shift」+「S」で範囲を選んで撮れます。撮った画像は自動でクリップボードにコピーされます)。②下の枠をクリックしてから、「Ctrl」+「V」で貼り付けてください。画面共有のような確認画面は出ません。</p>
+          <div class="dropzone qrscan-paste-zone" id="qrscan-paste-zone" tabindex="0">
+            <p>ここをクリックしてから<br>Ctrl + V で貼り付け</p>
           </div>
-          <video id="qrscan-video" hidden muted playsinline></video>
 
           <div id="qrscan-capture-area" hidden>
             <div class="qrscan-capture-wrap" id="qrscan-capture-wrap">
@@ -1495,26 +1494,26 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=62"></script>
-<script src="js/app.js?v=62"></script>
-<script src="js/settings.js?v=62"></script>
-<script src="js/tools/compress.js?v=62"></script>
-<script src="js/tools/convert.js?v=62"></script>
-<script src="js/tools/resize.js?v=62"></script>
-<script src="js/tools/exif.js?v=62"></script>
-<script src="js/tools/rotate.js?v=62"></script>
-<script src="js/tools/crop.js?v=62"></script>
-<script src="js/tools/filter.js?v=62"></script>
-<script src="js/tools/watermark.js?v=62"></script>
-<script src="js/tools/qrcode.js?v=62"></script>
-<script src="js/tools/qrcodescan.js?v=62"></script>
-<script src="js/tools/charcount.js?v=62"></script>
-<script src="js/tools/colorpicker.js?v=62"></script>
-<script src="js/tools/unitconvert.js?v=62"></script>
-<script src="js/tools/datecalc.js?v=62"></script>
-<script src="js/tools/calculator.js?v=62"></script>
-<script src="js/tools/pdfdesk.js?v=62"></script>
-<script src="js/tools/pdf2image.js?v=62"></script>
-<script src="js/tools/pdfcompress.js?v=62"></script>
+<script src="js/common.js?v=63"></script>
+<script src="js/app.js?v=63"></script>
+<script src="js/settings.js?v=63"></script>
+<script src="js/tools/compress.js?v=63"></script>
+<script src="js/tools/convert.js?v=63"></script>
+<script src="js/tools/resize.js?v=63"></script>
+<script src="js/tools/exif.js?v=63"></script>
+<script src="js/tools/rotate.js?v=63"></script>
+<script src="js/tools/crop.js?v=63"></script>
+<script src="js/tools/filter.js?v=63"></script>
+<script src="js/tools/watermark.js?v=63"></script>
+<script src="js/tools/qrcode.js?v=63"></script>
+<script src="js/tools/qrcodescan.js?v=63"></script>
+<script src="js/tools/charcount.js?v=63"></script>
+<script src="js/tools/colorpicker.js?v=63"></script>
+<script src="js/tools/unitconvert.js?v=63"></script>
+<script src="js/tools/datecalc.js?v=63"></script>
+<script src="js/tools/calculator.js?v=63"></script>
+<script src="js/tools/pdfdesk.js?v=63"></script>
+<script src="js/tools/pdf2image.js?v=63"></script>
+<script src="js/tools/pdfcompress.js?v=63"></script>
 </body>
 </html>

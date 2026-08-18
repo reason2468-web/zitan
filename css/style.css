@@ -359,6 +359,17 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--moss-pale);
 }
 
+.qrscan-paste-zone {
+  cursor: pointer;
+}
+
+.qrscan-paste-zone:focus,
+.qrscan-paste-zone:focus-visible {
+  outline: none;
+  border-color: var(--moss);
+  background: var(--moss-pale);
+}
+
 .dropzone-small {
   padding: 14px;
   margin: 0 0 10px;

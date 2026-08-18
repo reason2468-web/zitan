@@ -1,8 +1,9 @@
 (() => {
+  const panel = document.getElementById("qrcodescan");
+  const toolDetail = document.getElementById("tool-detail");
   const screenControls = document.getElementById("qrscan-screen-controls");
   const imageControls = document.getElementById("qrscan-image-controls");
-  const screenStartBtn = document.getElementById("qrscan-screen-start");
-  const video = document.getElementById("qrscan-video");
+  const pasteZone = document.getElementById("qrscan-paste-zone");
   const captureArea = document.getElementById("qrscan-capture-area");
   const captureWrap = document.getElementById("qrscan-capture-wrap");
   const captureCanvas = document.getElementById("qrscan-capture-canvas");
@@ -148,64 +149,65 @@
     });
   });
 
-  // ---------- 画面から読み取る(1回キャプチャして、範囲を選んで1個だけ読み取る) ----------
+  // ---------- 画面から読み取る(スクリーンショットを貼り付けて、範囲を選んで1個だけ読み取る) ----------
+  //
+  // getDisplayMedia(画面共有)は必ずブラウザ標準の確認ダイアログが出る仕様で、これは
+  // ブラウザのセキュリティ上の理由により消すことができない。「怖い」という声を踏まえ、
+  // 代わりにOS標準のスクリーンショット機能(クリップボードにコピーされる)を貼り付けてもらう方式にする。
 
-  function waitForVideoFrame(videoEl) {
-    return new Promise((resolve) => {
-      if (videoEl.videoWidth) { resolve(); return; }
-      const check = () => {
-        if (videoEl.videoWidth) resolve();
-        else requestAnimationFrame(check);
-      };
-      check();
+  function loadImageFromClipboardItem(item) {
+    return new Promise((resolve, reject) => {
+      const blob = item.getAsFile();
+      if (!blob) { reject(new Error("no image")); return; }
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
     });
   }
 
-  async function startScreenCapture() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      statusEl.textContent = "お使いのブラウザは画面共有に対応していません。Chrome・Edgeなどでお試しください。";
-      return;
-    }
-    let stream;
-    try {
-      // 小さいQRコードも読み取れるよう、できるだけ高い解像度を要求する
-      // (実際の解像度は画面や環境によって変わり、ブラウザ側で調整される)
-      stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { ideal: 3840 }, height: { ideal: 2160 } },
-      });
-    } catch (err) {
-      return; // ユーザーが選択をキャンセルした場合
-    }
-
-    video.srcObject = stream;
-    try {
-      await video.play();
-      await waitForVideoFrame(video);
-    } catch (err) {
-      // 再生に失敗しても、フレームが取得できていれば続行する
-    }
-
-    // 1枚キャプチャできたら、画面共有はすぐ止める
-    stream.getTracks().forEach((t) => t.stop());
-    video.srcObject = null;
-
-    if (!video.videoWidth) {
-      statusEl.textContent = "画面をキャプチャできませんでした。もう一度お試しください。";
-      return;
-    }
-
-    captureCanvas.width = video.videoWidth;
-    captureCanvas.height = video.videoHeight;
-    captureCanvas.getContext("2d").drawImage(video, 0, 0);
+  function showCaptureImage(img) {
+    captureCanvas.width = img.naturalWidth;
+    captureCanvas.height = img.naturalHeight;
+    captureCanvas.getContext("2d").drawImage(img, 0, 0);
 
     hasCapture = true;
     selectRect = null;
     captureSelect.hidden = true;
     captureConfirmBtn.disabled = true;
     captureArea.hidden = false;
-    screenStartBtn.hidden = true;
     statusEl.textContent = "QRコードの部分をドラッグして囲み、「この範囲を読み取る」を押してください。";
   }
+
+  pasteZone.addEventListener("click", () => pasteZone.focus());
+
+  function isPanelVisible() {
+    return !toolDetail.classList.contains("hidden") && panel.classList.contains("active");
+  }
+
+  function isScreenModeActive() {
+    const checked = document.querySelector('input[name="qrscan-mode"]:checked');
+    return checked ? checked.value === "screen" : false;
+  }
+
+  // pasteZoneにフォーカスしていなくても貼り付けられるよう、document全体で拾う
+  // (このツールが表示中で、かつ「画面から読み取る」モードのときだけ反応する)
+  document.addEventListener("paste", async (e) => {
+    if (!isPanelVisible() || !isScreenModeActive()) return;
+    const items = e.clipboardData ? Array.from(e.clipboardData.items) : [];
+    const imageItem = items.find((item) => item.type.startsWith("image/"));
+    if (!imageItem) {
+      statusEl.textContent = "クリップボードに画像が見つかりませんでした。スクリーンショットを撮ってから、もう一度貼り付けてください。";
+      return;
+    }
+    try {
+      const img = await loadImageFromClipboardItem(imageItem);
+      showCaptureImage(img);
+    } catch (err) {
+      statusEl.textContent = "画像の読み込みに失敗しました。もう一度お試しください。";
+    }
+  });
 
   function canvasPointFromEvent(e) {
     const rect = captureCanvas.getBoundingClientRect();
@@ -273,15 +275,12 @@
     dragStart = null;
     captureArea.hidden = true;
     captureSelect.hidden = true;
-    screenStartBtn.hidden = false;
   }
 
   captureCancelBtn.addEventListener("click", () => {
     resetCapture();
     statusEl.textContent = "";
   });
-
-  screenStartBtn.addEventListener("click", startScreenCapture);
 
   // ---------- 画像から読み取る ----------
 
