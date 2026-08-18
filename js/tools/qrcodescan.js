@@ -9,8 +9,9 @@
   const statusEl = document.getElementById("qrscan-status");
   const resultArea = document.getElementById("qrscan-result");
 
-  const MAX_SCAN_DIM = 1400;
-  const SCAN_INTERVAL_MS = 400;
+  const MAX_SCAN_DIM = 2400;
+  const SCAN_INTERVAL_MS = 500;
+  const MAX_CODES_PER_FRAME = 25;
 
   let screenStream = null;
   let scanTimer = null;
@@ -42,7 +43,7 @@
     const { width, height } = imageData;
     let attempts = 0;
 
-    while (attempts < 10) {
+    while (attempts < MAX_CODES_PER_FRAME) {
       attempts++;
       const code = jsQR(data, width, height, { inversionAttempts: "attemptBoth" });
       if (!code || !code.data) break;
@@ -159,7 +160,11 @@
       return;
     }
     try {
-      screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      // 画面内の小さいQRコードも読み取れるよう、できるだけ高い解像度を要求する
+      // (実際の解像度は画面や環境によって変わり、ブラウザ側で調整される)
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 3840 }, height: { ideal: 2160 }, frameRate: { ideal: 5, max: 10 } },
+      });
     } catch (err) {
       return; // ユーザーが選択をキャンセルした場合
     }
@@ -188,6 +193,9 @@
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const codes = decodeAllQRCodes(imageData);
         if (codes.length) addResults(codes, "画面");
+        statusEl.textContent = found.length
+          ? `読み取り中です。ここまでに${found.length}件見つかりました。`
+          : "読み取り中です。QRコードが画面に映るようにしてください。";
       } catch (err) {
         // 1フレームの読み取り失敗は無視して続行する
       }
