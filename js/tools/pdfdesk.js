@@ -47,6 +47,8 @@
   let mergePreviewToken = 0;
   let undoStack = [];
   let redoStack = [];
+  let clipboard = [];
+  let pasteCount = 0;
 
   function isPdfFile(file) {
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -136,27 +138,34 @@
     updateCanvasContentSize();
   }
 
-  undoBtn.addEventListener("click", () => {
+  function performUndo() {
     if (!undoStack.length) return;
     redoStack.push(snapshotCards());
     restoreSnapshot(undoStack.pop());
     updateUndoRedoButtons();
-  });
+  }
 
-  redoBtn.addEventListener("click", () => {
+  function performRedo() {
     if (!redoStack.length) return;
     undoStack.push(snapshotCards());
     restoreSnapshot(redoStack.pop());
     updateUndoRedoButtons();
-  });
+  }
+
+  undoBtn.addEventListener("click", performUndo);
+  redoBtn.addEventListener("click", performRedo);
 
   // ---------- ページの描画(pdf.js) ----------
 
-  async function renderPageThumbCanvas(bytes, maxWidth) {
+  // maxHeightを指定すると、回転などで縦横比が極端になったページでもプレビューが縦に伸びすぎないようにする
+  async function renderPageThumbCanvas(bytes, maxWidth, maxHeight, pageNum) {
     const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
-    const page = await pdf.getPage(1);
+    const page = await pdf.getPage(pageNum || 1);
     const baseViewport = page.getViewport({ scale: 1 });
-    const scale = maxWidth / baseViewport.width;
+    let scale = maxWidth / baseViewport.width;
+    if (maxHeight && baseViewport.height * scale > maxHeight) {
+      scale = maxHeight / baseViewport.height;
+    }
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
     canvas.width = viewport.width;
@@ -169,7 +178,7 @@
     const thumbHost = card.el.querySelector(".pdfdesk-card-thumb");
     thumbHost.innerHTML = "";
     try {
-      thumbHost.appendChild(await renderPageThumbCanvas(card.bytes, 136));
+      thumbHost.appendChild(await renderPageThumbCanvas(card.bytes, 136, 192));
     } catch {
       thumbHost.innerHTML = `<span style="color:red;font-size:0.75rem;">表示できません</span>`;
     }
@@ -302,12 +311,14 @@
 
     el.addEventListener("dragstart", (e) => {
       const cardRect = el.getBoundingClientRect();
+      const isGroupDrag = selectedIds.has(card.id) && selectedIds.size > 1;
       dragState = {
         card,
         offsetX: (e.clientX - cardRect.left) / zoomLevel,
         offsetY: (e.clientY - cardRect.top) / zoomLevel,
         preDragSnapshot: snapshotCards(),
         blobUrl: null,
+        groupCards: isGroupDrag ? cards.filter((c) => selectedIds.has(c.id)) : null,
       };
       el.classList.add("dragging");
       e.dataTransfer.effectAllowed = "copyMove";
@@ -366,16 +377,34 @@
   scrollEl.addEventListener("drop", async (e) => {
     e.preventDefault();
     if (dragState) {
-      const { card, offsetX, offsetY, preDragSnapshot } = dragState;
+      const { card, offsetX, offsetY, preDragSnapshot, groupCards } = dragState;
       const pos = toLogical(e.clientX, e.clientY);
-      const x = Math.max(0, pos.x - offsetX);
-      const y = Math.max(0, pos.y - offsetY);
-      if (x !== card.x || y !== card.y) pushPreCapturedHistory(preDragSnapshot);
-      card.x = x;
-      card.y = y;
-      card.el.style.left = `${x}px`;
-      card.el.style.top = `${y}px`;
-      setSelection([card.id]);
+      const targetX = Math.max(0, pos.x - offsetX);
+      const targetY = Math.max(0, pos.y - offsetY);
+      const dx = targetX - card.x;
+      const dy = targetY - card.y;
+
+      if (groupCards && groupCards.length > 1) {
+        const minX = Math.min(...groupCards.map((c) => c.x));
+        const minY = Math.min(...groupCards.map((c) => c.y));
+        const clampedDx = Math.max(dx, -minX);
+        const clampedDy = Math.max(dy, -minY);
+        if (clampedDx !== 0 || clampedDy !== 0) pushPreCapturedHistory(preDragSnapshot);
+        groupCards.forEach((c) => {
+          c.x += clampedDx;
+          c.y += clampedDy;
+          c.el.style.left = `${c.x}px`;
+          c.el.style.top = `${c.y}px`;
+        });
+        setSelection(groupCards.map((c) => c.id));
+      } else {
+        if (targetX !== card.x || targetY !== card.y) pushPreCapturedHistory(preDragSnapshot);
+        card.x = targetX;
+        card.y = targetY;
+        card.el.style.left = `${targetX}px`;
+        card.el.style.top = `${targetY}px`;
+        setSelection([card.id]);
+      }
       updateCanvasContentSize();
       return;
     }
@@ -496,13 +525,67 @@
     else if (action === "split") openSplitModal(card);
   }
 
+  // ---------- コピー・切り取り・貼り付け ----------
+
+  function copySelected() {
+    const selected = cards.filter((c) => selectedIds.has(c.id));
+    if (!selected.length) return;
+    clipboard = selected.map((c) => ({ name: c.name, bytes: c.bytes, pageCount: c.pageCount, x: c.x, y: c.y }));
+    pasteCount = 0;
+  }
+
+  function cutSelected() {
+    const selected = cards.filter((c) => selectedIds.has(c.id));
+    if (!selected.length) return;
+    clipboard = selected.map((c) => ({ name: c.name, bytes: c.bytes, pageCount: c.pageCount, x: c.x, y: c.y }));
+    pasteCount = 0;
+    removeCards(selected);
+  }
+
+  function pasteClipboard() {
+    if (!clipboard.length) return;
+    pasteCount += 1;
+    pushHistory();
+    const offset = pasteCount * 24;
+    const newIds = clipboard.map((item) =>
+      addCard(
+        { name: item.name, bytes: item.bytes, pageCount: item.pageCount },
+        { x: item.x + offset, y: item.y + offset }
+      ).id
+    );
+    setSelection(newIds);
+  }
+
   document.addEventListener("keydown", (e) => {
     if (!isPanelVisible()) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
     if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.size > 0) {
-      const tag = document.activeElement && document.activeElement.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
       e.preventDefault();
       removeCards(Array.from(selectedIds).map((id) => cards.find((c) => c.id === id)).filter(Boolean));
+      return;
+    }
+
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl || !modal.hidden || !mergeModal.hidden) return;
+    const key = e.key.toLowerCase();
+    if (key === "c" && selectedIds.size > 0) {
+      e.preventDefault();
+      copySelected();
+    } else if (key === "x" && selectedIds.size > 0) {
+      e.preventDefault();
+      cutSelected();
+    } else if (key === "v" && clipboard.length) {
+      e.preventDefault();
+      pasteClipboard();
+    } else if (key === "z") {
+      e.preventDefault();
+      if (e.shiftKey) performRedo();
+      else performUndo();
+    } else if (key === "y") {
+      e.preventDefault();
+      performRedo();
     }
   });
 
@@ -531,7 +614,7 @@
       const wrap = document.createElement("div");
       wrap.className = "pdfsplit-thumb-card";
       try {
-        wrap.appendChild(await renderPageThumbCanvas(card.bytes, 100));
+        wrap.appendChild(await renderPageThumbCanvas(card.bytes, 100, 150));
       } catch {
         const span = document.createElement("span");
         span.style.color = "red";
@@ -646,7 +729,8 @@
       for (let i = 1; i <= pageCount; i++) {
         const page = await pdf.getPage(i);
         const baseViewport = page.getViewport({ scale: 1 });
-        const scale = 110 / baseViewport.width;
+        let scale = 110 / baseViewport.width;
+        if (baseViewport.height * scale > 160) scale = 160 / baseViewport.height;
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
