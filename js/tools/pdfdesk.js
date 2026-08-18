@@ -1,32 +1,49 @@
 (() => {
+  const panel = document.getElementById("pdftools");
+  const toolDetail = document.getElementById("tool-detail");
   const dropzone = document.querySelector('[data-target="pdfdesk-input"]');
   const input = document.getElementById("pdfdesk-input");
   const canvasEl = document.getElementById("pdfdesk-canvas");
   const emptyMsg = document.getElementById("pdfdesk-empty");
   const resultArea = document.getElementById("pdfdesk-result");
 
+  const undoBtn = document.getElementById("pdfdesk-undo-btn");
+  const redoBtn = document.getElementById("pdfdesk-redo-btn");
+  const downloadAllBtn = document.getElementById("pdfdesk-download-all-btn");
+  const fullscreenBtn = document.getElementById("pdfdesk-fullscreen-btn");
+
   const modal = document.getElementById("pdfdesk-modal");
   const modalBackdrop = document.getElementById("pdfdesk-modal-backdrop");
   const modalThumbRow = document.getElementById("pdfdesk-modal-thumb-row");
   const modalCancel = document.getElementById("pdfdesk-modal-cancel");
   const modalConfirm = document.getElementById("pdfdesk-modal-confirm");
+  const modalSplitAll = document.getElementById("pdfdesk-modal-split-all");
 
   const MAX_VISUAL_PAGES = 60;
+  const MAX_HISTORY = 30;
 
   let cards = [];
   let nextId = 1;
   let dragState = null;
   let mergeTargetId = null;
+  let selectedId = null;
   let modalCard = null;
   let modalSplitPoints = new Set();
   let modalToken = 0;
+  let undoStack = [];
+  let redoStack = [];
 
   function isPdfFile(file) {
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
   }
 
+  function isPanelVisible() {
+    return !toolDetail.classList.contains("hidden") && panel.classList.contains("active");
+  }
+
   function updateEmptyState() {
     emptyMsg.hidden = cards.length > 0;
+    downloadAllBtn.disabled = cards.length === 0;
   }
 
   function nextCascadePosition(index) {
@@ -34,6 +51,46 @@
     const row = Math.floor(index / 5);
     return { x: 16 + col * 172, y: 16 + row * 210 };
   }
+
+  // ---------- 元に戻す・やり直す ----------
+
+  function snapshotCards() {
+    return cards.map((c) => ({ id: c.id, name: c.name, bytes: c.bytes, pageCount: c.pageCount, x: c.x, y: c.y }));
+  }
+
+  function updateUndoRedoButtons() {
+    undoBtn.disabled = undoStack.length === 0;
+    redoBtn.disabled = redoStack.length === 0;
+  }
+
+  function pushHistory() {
+    undoStack.push(snapshotCards());
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+
+  function restoreSnapshot(snapshot) {
+    cards.forEach((c) => c.el && c.el.remove());
+    selectedId = null;
+    cards = snapshot.map((s) => ({ ...s, el: null }));
+    cards.forEach((c) => createCardElement(c));
+    updateEmptyState();
+  }
+
+  undoBtn.addEventListener("click", () => {
+    if (!undoStack.length) return;
+    redoStack.push(snapshotCards());
+    restoreSnapshot(undoStack.pop());
+    updateUndoRedoButtons();
+  });
+
+  redoBtn.addEventListener("click", () => {
+    if (!redoStack.length) return;
+    undoStack.push(snapshotCards());
+    restoreSnapshot(redoStack.pop());
+    updateUndoRedoButtons();
+  });
 
   // ---------- カードの表示 ----------
 
@@ -57,6 +114,15 @@
     card.el.querySelector(".pdfdesk-card-pages").textContent = `1/${card.pageCount}`;
   }
 
+  function selectCard(card) {
+    if (selectedId !== null) {
+      const prev = cards.find((c) => c.id === selectedId);
+      if (prev && prev.el) prev.el.classList.remove("selected");
+    }
+    selectedId = card ? card.id : null;
+    if (card) card.el.classList.add("selected");
+  }
+
   function createCardElement(card) {
     const el = document.createElement("div");
     el.className = "pdfdesk-card";
@@ -72,7 +138,7 @@
       <div class="pdfdesk-card-thumb"></div>
       <div class="pdfdesk-card-name">${card.name}</div>
       <div class="pdfdesk-card-actions">
-        <button type="button" class="pdfdesk-card-btn" data-action="split">分解</button>
+        <button type="button" class="pdfdesk-card-btn" data-action="split">分割</button>
         <button type="button" class="pdfdesk-card-btn" data-action="download">保存</button>
         <button type="button" class="file-remove-btn" data-action="remove" aria-label="このカードを削除">${TRASH_ICON}</button>
       </div>
@@ -101,7 +167,8 @@
     return card;
   }
 
-  function removeCard(card) {
+  function removeCardSilently(card) {
+    if (selectedId === card.id) selectedId = null;
     card.el.remove();
     cards = cards.filter((c) => c.id !== card.id);
     updateEmptyState();
@@ -155,6 +222,10 @@
       card,
       offsetX: e.clientX - cardRect.left,
       offsetY: e.clientY - cardRect.top,
+      startX: card.x,
+      startY: card.y,
+      preDragSnapshot: snapshotCards(),
+      moved: false,
     };
     card.el.classList.add("dragging");
     card.el.setPointerCapture(e.pointerId);
@@ -173,6 +244,7 @@
     let y = e.clientY - canvasRect.top - dragState.offsetY;
     x = Math.max(0, Math.min(x, canvasRect.width - cardW));
     y = Math.max(0, Math.min(y, canvasRect.height - cardH));
+    if (x !== card.x || y !== card.y) dragState.moved = true;
     card.x = x;
     card.y = y;
     card.el.style.left = `${x}px`;
@@ -183,24 +255,41 @@
   function onDragEnd(e) {
     if (!dragState) return;
     const card = dragState.card;
+    const wasMoved = dragState.moved;
+    const preDragSnapshot = dragState.preDragSnapshot;
     card.el.releasePointerCapture(e.pointerId);
     card.el.removeEventListener("pointermove", onDragMove);
     card.el.removeEventListener("pointerup", onDragEnd);
     card.el.removeEventListener("pointercancel", onDragEnd);
     card.el.classList.remove("dragging");
     dragState = null;
+    selectCard(card);
 
     const targetId = mergeTargetId;
     clearMergeTarget();
     if (targetId) {
       const targetCard = cards.find((c) => c.id === targetId);
-      if (targetCard) mergeCards(card, targetCard);
+      if (targetCard) {
+        undoStack.push(preDragSnapshot);
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        updateUndoRedoButtons();
+        mergeCards(card, targetCard);
+        return;
+      }
+    }
+    if (wasMoved) {
+      undoStack.push(preDragSnapshot);
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack = [];
+      updateUndoRedoButtons();
     }
   }
 
-  // ---------- カードの操作(回転・結合・分解・保存・削除) ----------
+  // ---------- カードの操作(回転・結合・分割・保存・削除) ----------
 
   async function rotateCard(card, delta) {
+    pushHistory();
     const { PDFDocument, degrees } = PDFLib;
     try {
       const doc = await PDFDocument.load(card.bytes, { ignoreEncryption: true });
@@ -215,17 +304,22 @@
     }
   }
 
+  // カードAをカードBに重ねたとき、上に乗せたA(ドラッグしていた側)のページが先頭にくるようにする
   async function mergeCards(draggedCard, targetCard) {
     resultArea.innerHTML = "";
     try {
       const { PDFDocument } = PDFLib;
-      const targetDoc = await PDFDocument.load(targetCard.bytes, { ignoreEncryption: true });
       const draggedDoc = await PDFDocument.load(draggedCard.bytes, { ignoreEncryption: true });
-      const newPages = await targetDoc.copyPages(draggedDoc, draggedDoc.getPageIndices());
-      newPages.forEach((p) => targetDoc.addPage(p));
-      targetCard.bytes = await targetDoc.save();
-      targetCard.pageCount = targetDoc.getPageCount();
-      removeCard(draggedCard);
+      const targetDoc = await PDFDocument.load(targetCard.bytes, { ignoreEncryption: true });
+      const mergedDoc = await PDFDocument.create();
+      const topPages = await mergedDoc.copyPages(draggedDoc, draggedDoc.getPageIndices());
+      topPages.forEach((p) => mergedDoc.addPage(p));
+      const restPages = await mergedDoc.copyPages(targetDoc, targetDoc.getPageIndices());
+      restPages.forEach((p) => mergedDoc.addPage(p));
+      targetCard.bytes = await mergedDoc.save();
+      targetCard.pageCount = mergedDoc.getPageCount();
+      removeCardSilently(draggedCard);
+      selectCard(targetCard);
       await renderCardThumb(targetCard);
       resultArea.innerHTML = `<p>「${draggedCard.name}」を「${targetCard.name}」に結合しました。</p>`;
     } catch {
@@ -237,6 +331,11 @@
     downloadFile(new File([card.bytes], card.name, { type: "application/pdf" }));
   }
 
+  function removeCard(card) {
+    pushHistory();
+    removeCardSilently(card);
+  }
+
   function handleCardAction(card, action) {
     if (action === "rotate-left") rotateCard(card, -90);
     else if (action === "rotate-right") rotateCard(card, 90);
@@ -245,7 +344,52 @@
     else if (action === "split") openSplitModal(card);
   }
 
-  // ---------- 分解モーダル(ページを見ながら分ける) ----------
+  canvasEl.addEventListener("click", (e) => {
+    if (e.target === canvasEl) selectCard(null);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (!isPanelVisible()) return;
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const card = cards.find((c) => c.id === selectedId);
+      if (card) {
+        e.preventDefault();
+        removeCard(card);
+      }
+    }
+  });
+
+  // ---------- すべてダウンロード ----------
+
+  downloadAllBtn.addEventListener("click", async () => {
+    if (!cards.length) return;
+    const files = cards.map((c) => new File([c.bytes], c.name, { type: "application/pdf" }));
+    const saveResult = await saveProcessedFiles(files, { category: "PDF", tool: "自由に操作する" }, true);
+    const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
+    resultArea.innerHTML = `<p>${files.length}件のPDFを${savedMsg}</p>`;
+  });
+
+  // ---------- 全画面 ----------
+
+  function setFullscreen(on) {
+    panel.classList.toggle("pdfdesk-fullscreen", on);
+    fullscreenBtn.textContent = on ? "✕ 全画面を閉じる" : "⛶ 全画面で開く";
+  }
+
+  fullscreenBtn.addEventListener("click", () => {
+    setFullscreen(!panel.classList.contains("pdfdesk-fullscreen"));
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (!isPanelVisible()) return;
+    if (e.key === "Escape" && panel.classList.contains("pdfdesk-fullscreen")) {
+      setFullscreen(false);
+    }
+  });
+
+  // ---------- 分割モーダル(ページを見ながら分ける・1ページずつ) ----------
 
   function updateModalConfirmLabel() {
     const count = modalSplitPoints.size + 1;
@@ -263,10 +407,12 @@
 
       if (pageCount < 2) {
         modalThumbRow.innerHTML = `<p>このカードは1ページしかないため、分けられません。</p>`;
+        modalSplitAll.disabled = true;
         return;
       }
+      modalSplitAll.disabled = false;
       if (pageCount > MAX_VISUAL_PAGES) {
-        modalThumbRow.innerHTML = `<p style="color:red;">ページ数が多いため(${MAX_VISUAL_PAGES}ページ超)、この画面では分けられません。</p>`;
+        modalThumbRow.innerHTML = `<p style="color:red;">ページ数が多いため(${MAX_VISUAL_PAGES}ページ超)、この画面では表示できません。「1ページずつ分割する」はそのまま使えます。</p>`;
         return;
       }
 
@@ -298,6 +444,7 @@
           divider.title = "ここで分割";
           divider.setAttribute("aria-label", `${i}ページ目の後ろで分ける`);
           divider.innerHTML = `<span class="pdfsplit-divider-icon">✂</span>`;
+          divider.dataset.page = i;
           divider.addEventListener("click", () => {
             if (modalSplitPoints.has(i)) modalSplitPoints.delete(i);
             else modalSplitPoints.add(i);
@@ -310,6 +457,7 @@
     } catch {
       if (token !== modalToken) return;
       modalThumbRow.innerHTML = `<p style="color:red;">ページを読み込めませんでした。</p>`;
+      modalSplitAll.disabled = true;
     }
   }
 
@@ -331,22 +479,18 @@
   modalCancel.addEventListener("click", closeModal);
   modalBackdrop.addEventListener("click", closeModal);
 
-  modalConfirm.addEventListener("click", async () => {
-    if (!modalCard || !modalSplitPoints.size) return;
-    const card = modalCard;
-    modalConfirm.disabled = true;
-    modalConfirm.textContent = "分けています...";
-
+  async function applySplit(card, splitPointsArr) {
+    pushHistory();
     try {
       const { PDFDocument } = PDFLib;
       const srcDoc = await PDFDocument.load(card.bytes, { ignoreEncryption: true });
       const pageCount = srcDoc.getPageCount();
-      const sorted = Array.from(modalSplitPoints).sort((a, b) => a - b);
+      const sorted = [...splitPointsArr].sort((a, b) => a - b);
       const boundaries = [0, ...sorted, pageCount];
       const baseNoExt = card.name.replace(/\.pdf$/i, "");
       const originIndex = cards.findIndex((c) => c.id === card.id);
 
-      removeCard(card);
+      removeCardSilently(card);
 
       for (let i = 0; i < boundaries.length - 1; i++) {
         const group = [];
@@ -366,6 +510,30 @@
       modalConfirm.disabled = false;
       modalConfirm.textContent = "もう一度試す";
     }
+  }
+
+  modalConfirm.addEventListener("click", () => {
+    if (!modalCard || !modalSplitPoints.size) return;
+    modalConfirm.disabled = true;
+    modalConfirm.textContent = "分けています...";
+    applySplit(modalCard, Array.from(modalSplitPoints));
+  });
+
+  modalSplitAll.addEventListener("click", async () => {
+    if (!modalCard) return;
+    modalSplitAll.disabled = true;
+    const { PDFDocument } = PDFLib;
+    try {
+      const doc = await PDFDocument.load(modalCard.bytes, { ignoreEncryption: true });
+      const pageCount = doc.getPageCount();
+      if (pageCount < 2) return;
+      const allPoints = [];
+      for (let i = 1; i < pageCount; i++) allPoints.push(i);
+      await applySplit(modalCard, allPoints);
+    } catch {
+      modalThumbRow.innerHTML = `<p style="color:red;">分割に失敗しました。</p>`;
+      modalSplitAll.disabled = false;
+    }
   });
 
   // ---------- ファイル読み込み ----------
@@ -378,6 +546,7 @@
       return;
     }
     resultArea.innerHTML = "";
+    pushHistory();
     const { PDFDocument } = PDFLib;
     for (const file of pdfFiles) {
       try {
@@ -391,4 +560,7 @@
   }
 
   setupDropzone(dropzone, input, addCardsFromFiles);
+
+  updateEmptyState();
+  updateUndoRedoButtons();
 })();
