@@ -175,6 +175,23 @@
     return canvas;
   }
 
+  // Tesseract.jsのワーカー通信で、日本語などの結果がUTF-8のままLatin-1として
+  // 誤読され文字化けすることがあるため、その場合は元の文字列を復元する
+  // (文字化けでなければ何もせずそのまま返す、安全なフォールバック付き)
+  function fixMojibakeUtf8(str) {
+    if (!str) return str;
+    try {
+      const bytes = new Uint8Array([...str].map((ch) => {
+        const code = ch.codePointAt(0);
+        if (code > 0xff) throw new Error("not mojibake");
+        return code;
+      }));
+      return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      return str;
+    }
+  }
+
   // 縦書き・横書きの両方でOCRを試し、読み取り精度(confidence)が高いほうを採用する
   async function ocrPageCanvas(canvas) {
     const { horizontal, vertical } = await getOcrWorkers();
@@ -185,7 +202,7 @@
     const hConf = hRes?.data?.confidence ?? -1;
     const vConf = vRes?.data?.confidence ?? -1;
     const best = hConf >= vConf ? hRes : vRes;
-    return best?.data?.text ?? "";
+    return fixMojibakeUtf8(best?.data?.text ?? "");
   }
 
   async function extractTextFromAnalysis(analysis, onStatus) {
