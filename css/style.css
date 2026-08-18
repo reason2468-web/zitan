@@ -1016,6 +1016,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   color: color-mix(in srgb, var(--paper) 60%, transparent);
   min-height: 1.2em;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -1027,6 +1028,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-variant-numeric: tabular-nums;
   min-height: 1.2em;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
   margin-top: 4px;
 }
@@ -1585,6 +1587,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
     padding: 14px 16px;
     gap: 12px;
     overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .brand { padding: 0; border-bottom: none; white-space: nowrap; }
