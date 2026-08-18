@@ -1365,6 +1365,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   overflow: hidden;
 }
 
+.pdfdesk-empty[hidden] { display: none; }
+
 .pdfdesk-empty {
   position: absolute;
   inset: 0;
@@ -1467,6 +1469,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .pdfdesk-card-actions .pdfdesk-card-btn { width: auto; flex: 1; padding: 0 4px; font-size: 0.7rem; gap: 2px; }
 .pdfdesk-card-actions .file-remove-btn { flex-shrink: 0; border: 1px solid var(--line); border-radius: 6px; width: 24px; height: 24px; padding: 0; }
+
+.pdfdesk-modal[hidden] { display: none; }
 
 .pdfdesk-modal {
   position: fixed;
