@@ -69,7 +69,7 @@
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="category-label">PDF</span>
-        <span class="category-count">1</span>
+        <span class="category-count">2</span>
       </button>
       <button class="category-btn" data-category="other">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -413,6 +413,23 @@
           <span class="tool-text">
             <span class="tool-label">PDF結合・分割</span>
             <span class="tool-caption">複数のPDFを1つに、1つのPDFを複数に</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="pdf2image" style="--gem:#C0392B;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">PDF→画像変換</span>
+            <span class="tool-caption">PDFの各ページをJPG・PNG画像として書き出す</span>
           </span>
         </button>
 
@@ -1296,6 +1313,39 @@
         </div>
       </section>
 
+      <section id="pdf2image" class="tool-panel">
+        <h2>PDF→画像変換</h2>
+        <p class="desc">PDFの各ページをJPG・PNGの画像に変換します。複数のPDFをまとめて処理できます。</p>
+        <p class="format-note">1ページごとに1枚の画像になります(複数ページ・複数ファイルの場合はZIPでまとめてダウンロードされます)</p>
+        <div class="dropzone" data-target="pdf2image-input">
+          <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdf2image-input" accept="application/pdf,.pdf" multiple hidden></label>
+          </div>
+        </div>
+        <div class="controls">
+          <label>画像の形式:
+            <select id="pdf2image-format">
+              <option value="image/jpeg">JPEG(.jpg)</option>
+              <option value="image/png">PNG</option>
+            </select>
+          </label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="pdf2image-quality" value="standard" checked>
+              <span>標準画質</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="pdf2image-quality" value="high">
+              <span>高画質(ファイルサイズは大きくなります)</span>
+            </label>
+          </div>
+          <button id="pdf2image-run" class="run-btn" disabled>変換する</button>
+        </div>
+        <div class="result-area" id="pdf2image-result"></div>
+        <ul class="batch-list" id="pdf2image-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1340,5 +1390,6 @@
 <script src="js/tools/datecalc.js?v=60"></script>
 <script src="js/tools/calculator.js?v=60"></script>
 <script src="js/tools/pdfdesk.js?v=60"></script>
+<script src="js/tools/pdf2image.js?v=60"></script>
 </body>
 </html>
