@@ -9,6 +9,7 @@
 
   const undoBtn = document.getElementById("pdfdesk-undo-btn");
   const redoBtn = document.getElementById("pdfdesk-redo-btn");
+  const mergeSelectedBtn = document.getElementById("pdfdesk-merge-selected-btn");
   const downloadAllBtn = document.getElementById("pdfdesk-download-all-btn");
   const fullscreenBtn = document.getElementById("pdfdesk-fullscreen-btn");
 
@@ -19,17 +20,26 @@
   const modalConfirm = document.getElementById("pdfdesk-modal-confirm");
   const modalSplitAll = document.getElementById("pdfdesk-modal-split-all");
 
+  const mergeModal = document.getElementById("pdfdesk-merge-modal");
+  const mergeModalBackdrop = document.getElementById("pdfdesk-merge-modal-backdrop");
+  const mergePreviewRow = document.getElementById("pdfdesk-merge-preview-row");
+  const mergeModalCancel = document.getElementById("pdfdesk-merge-modal-cancel");
+  const mergeModalConfirm = document.getElementById("pdfdesk-merge-modal-confirm");
+
   const MAX_VISUAL_PAGES = 60;
   const MAX_HISTORY = 30;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js";
 
   let cards = [];
   let nextId = 1;
   let dragState = null;
-  let mergeTargetId = null;
-  let selectedId = null;
+  let selectedIds = new Set();
   let modalCard = null;
   let modalSplitPoints = new Set();
   let modalToken = 0;
+  let mergePreviewOrder = [];
+  let mergePreviewToken = 0;
   let undoStack = [];
   let redoStack = [];
 
@@ -70,12 +80,20 @@
     updateUndoRedoButtons();
   }
 
+  function pushPreCapturedHistory(snapshot) {
+    undoStack.push(snapshot);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+
   function restoreSnapshot(snapshot) {
     cards.forEach((c) => c.el && c.el.remove());
-    selectedId = null;
+    selectedIds = new Set();
     cards = snapshot.map((s) => ({ ...s, el: null }));
     cards.forEach((c) => createCardElement(c));
     updateEmptyState();
+    updateSelectionUI();
   }
 
   undoBtn.addEventListener("click", () => {
@@ -92,68 +110,123 @@
     updateUndoRedoButtons();
   });
 
-  // ---------- カードの表示 ----------
+  // ---------- ページの描画(pdf.js) ----------
+
+  async function renderPageThumbCanvas(bytes, maxWidth) {
+    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+    const page = await pdf.getPage(1);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = maxWidth / baseViewport.width;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    return canvas;
+  }
 
   async function renderCardThumb(card) {
     const thumbHost = card.el.querySelector(".pdfdesk-card-thumb");
     thumbHost.innerHTML = "";
     try {
-      const pdf = await pdfjsLib.getDocument({ data: card.bytes.slice() }).promise;
-      const page = await pdf.getPage(1);
-      const baseViewport = page.getViewport({ scale: 1 });
-      const scale = Math.min(120 / baseViewport.width, 130 / baseViewport.height);
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-      thumbHost.appendChild(canvas);
+      thumbHost.appendChild(await renderPageThumbCanvas(card.bytes, 136));
     } catch {
       thumbHost.innerHTML = `<span style="color:red;font-size:0.75rem;">表示できません</span>`;
     }
     card.el.querySelector(".pdfdesk-card-pages").textContent = `1/${card.pageCount}`;
   }
 
-  function selectCard(card) {
-    if (selectedId !== null) {
-      const prev = cards.find((c) => c.id === selectedId);
-      if (prev && prev.el) prev.el.classList.remove("selected");
-    }
-    selectedId = card ? card.id : null;
-    if (card) card.el.classList.add("selected");
+  // ---------- 選択 ----------
+
+  function setSelection(ids) {
+    const idSet = new Set(ids);
+    cards.forEach((c) => c.el.classList.toggle("selected", idSet.has(c.id)));
+    selectedIds = idSet;
+    updateSelectionUI();
   }
+
+  function clearSelection() {
+    setSelection([]);
+  }
+
+  function updateSelectionUI() {
+    mergeSelectedBtn.disabled = selectedIds.size < 2;
+  }
+
+  // ---------- 名前の変更 ----------
+
+  function enterRenameMode(card) {
+    const nameEl = card.el.querySelector(".pdfdesk-card-name");
+    if (nameEl.querySelector("input")) return;
+    const oldName = card.name;
+    nameEl.innerHTML = `<input type="text" class="pdfdesk-card-name-input" draggable="false">`;
+    const nameInput = nameEl.querySelector("input");
+    nameInput.value = oldName;
+    nameInput.focus();
+    nameInput.select();
+
+    let finished = false;
+    function finish(commit) {
+      if (finished) return;
+      finished = true;
+      const newName = nameInput.value.trim();
+      if (commit && newName && newName !== oldName) {
+        pushHistory();
+        card.name = newName;
+      }
+      nameEl.textContent = card.name;
+    }
+
+    nameInput.addEventListener("blur", () => finish(true));
+    nameInput.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") { e.preventDefault(); nameInput.blur(); }
+      else if (e.key === "Escape") { e.preventDefault(); finish(false); }
+    });
+  }
+
+  // ---------- カードの表示 ----------
 
   function createCardElement(card) {
     const el = document.createElement("div");
     el.className = "pdfdesk-card";
+    el.draggable = true;
     el.dataset.id = card.id;
     el.style.left = `${card.x}px`;
     el.style.top = `${card.y}px`;
     el.innerHTML = `
       <div class="pdfdesk-card-toolbar">
-        <button type="button" class="pdfdesk-card-btn" data-action="rotate-left" title="左に90度回転" aria-label="左に90度回転">⟲</button>
+        <button type="button" class="pdfdesk-card-btn" data-action="rotate-left" draggable="false" title="左に90度回転" aria-label="左に90度回転">⟲</button>
         <span class="pdfdesk-card-pages">1/${card.pageCount}</span>
-        <button type="button" class="pdfdesk-card-btn" data-action="rotate-right" title="右に90度回転" aria-label="右に90度回転">⟳</button>
+        <button type="button" class="pdfdesk-card-btn" data-action="rotate-right" draggable="false" title="右に90度回転" aria-label="右に90度回転">⟳</button>
       </div>
       <div class="pdfdesk-card-thumb"></div>
-      <div class="pdfdesk-card-name">${card.name}</div>
+      <div class="pdfdesk-card-name" draggable="false" title="クリックして名前を変更">${card.name}</div>
       <div class="pdfdesk-card-actions">
-        <button type="button" class="pdfdesk-card-btn" data-action="split">分割</button>
-        <button type="button" class="pdfdesk-card-btn" data-action="download">保存</button>
-        <button type="button" class="file-remove-btn" data-action="remove" aria-label="このカードを削除">${TRASH_ICON}</button>
+        <button type="button" class="pdfdesk-card-btn" data-action="split" draggable="false">分割</button>
+        <button type="button" class="pdfdesk-card-btn" data-action="download" draggable="false">保存</button>
+        <button type="button" class="file-remove-btn" data-action="remove" draggable="false" aria-label="このカードを削除">${TRASH_ICON}</button>
       </div>
     `;
     card.el = el;
     canvasEl.appendChild(el);
 
-    el.addEventListener("pointerdown", (e) => startDrag(e, card));
     el.querySelectorAll("button[data-action]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         handleCardAction(card, btn.dataset.action);
       });
     });
+    el.querySelector(".pdfdesk-card-name").addEventListener("click", (e) => {
+      e.stopPropagation();
+      enterRenameMode(card);
+    });
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("button") || e.target.closest(".pdfdesk-card-name")) return;
+      setSelection([card.id]);
+    });
 
+    attachDragHandlers(card);
     renderCardThumb(card);
     return el;
   }
@@ -168,123 +241,158 @@
   }
 
   function removeCardSilently(card) {
-    if (selectedId === card.id) selectedId = null;
+    if (selectedIds.has(card.id)) {
+      const next = new Set(selectedIds);
+      next.delete(card.id);
+      setSelection(Array.from(next));
+    }
     card.el.remove();
     cards = cards.filter((c) => c.id !== card.id);
     updateEmptyState();
   }
 
-  // ---------- ドラッグ移動・結合判定 ----------
+  // ---------- ドラッグ(パソコンのマウス専用・ネイティブドラッグ&ドロップ) ----------
+  // カードのドラッグはOSのネイティブ機能を使うため、デスクトップへそのままドラッグして保存することもできる
 
-  function rectOverlapArea(a, b) {
-    const left = Math.max(a.x, b.x);
-    const right = Math.min(a.x + a.w, b.x + b.w);
-    const top = Math.max(a.y, b.y);
-    const bottom = Math.min(a.y + a.h, b.y + b.h);
-    if (right <= left || bottom <= top) return 0;
-    return (right - left) * (bottom - top);
-  }
+  function attachDragHandlers(card) {
+    const el = card.el;
 
-  function clearMergeTarget() {
-    if (mergeTargetId) {
-      const target = cards.find((c) => c.id === mergeTargetId);
-      if (target) target.el.classList.remove("merge-target");
-    }
-    mergeTargetId = null;
-  }
-
-  function updateMergeTarget(draggingCard) {
-    clearMergeTarget();
-    const a = { x: draggingCard.x, y: draggingCard.y, w: draggingCard.el.offsetWidth, h: draggingCard.el.offsetHeight };
-    let best = null;
-    let bestArea = 0;
-    for (const other of cards) {
-      if (other.id === draggingCard.id) continue;
-      const b = { x: other.x, y: other.y, w: other.el.offsetWidth, h: other.el.offsetHeight };
-      const area = rectOverlapArea(a, b);
-      const threshold = 0.35 * Math.min(a.w * a.h, b.w * b.h);
-      if (area > threshold && area > bestArea) {
-        best = other;
-        bestArea = area;
+    el.addEventListener("dragstart", (e) => {
+      const cardRect = el.getBoundingClientRect();
+      dragState = {
+        card,
+        offsetX: e.clientX - cardRect.left,
+        offsetY: e.clientY - cardRect.top,
+        preDragSnapshot: snapshotCards(),
+        blobUrl: null,
+      };
+      el.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "copyMove";
+      e.dataTransfer.setData("text/plain", String(card.id));
+      try {
+        const blobUrl = URL.createObjectURL(new Blob([card.bytes], { type: "application/pdf" }));
+        dragState.blobUrl = blobUrl;
+        e.dataTransfer.setData("DownloadURL", `application/pdf:${card.name}:${blobUrl}`);
+      } catch {
+        // DownloadURL未対応ブラウザでは通常のドラッグ移動のみになる
       }
-    }
-    if (best) {
-      mergeTargetId = best.id;
-      best.el.classList.add("merge-target");
-    }
+    });
+
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      cards.forEach((c) => c.el.classList.remove("merge-target"));
+      if (dragState && dragState.blobUrl) {
+        const url = dragState.blobUrl;
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+      dragState = null;
+    });
+
+    el.addEventListener("dragenter", (e) => {
+      if (!dragState || dragState.card.id === card.id) return;
+      e.preventDefault();
+      el.classList.add("merge-target");
+    });
+
+    el.addEventListener("dragover", (e) => {
+      if (!dragState || dragState.card.id === card.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    el.addEventListener("dragleave", () => {
+      el.classList.remove("merge-target");
+    });
+
+    el.addEventListener("drop", (e) => {
+      if (!dragState || dragState.card.id === card.id) return;
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.remove("merge-target");
+      const draggedCard = dragState.card;
+      pushPreCapturedHistory(dragState.preDragSnapshot);
+      mergeCards(draggedCard, card);
+    });
   }
 
-  function startDrag(e, card) {
-    if (e.target.closest("button")) return;
+  canvasEl.addEventListener("dragover", (e) => {
     e.preventDefault();
-    const cardRect = card.el.getBoundingClientRect();
-    dragState = {
-      card,
-      offsetX: e.clientX - cardRect.left,
-      offsetY: e.clientY - cardRect.top,
-      startX: card.x,
-      startY: card.y,
-      preDragSnapshot: snapshotCards(),
-      moved: false,
-    };
-    card.el.classList.add("dragging");
-    card.el.setPointerCapture(e.pointerId);
-    card.el.addEventListener("pointermove", onDragMove);
-    card.el.addEventListener("pointerup", onDragEnd);
-    card.el.addEventListener("pointercancel", onDragEnd);
+    if (dragState) e.dataTransfer.dropEffect = "move";
+  });
+
+  canvasEl.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    if (dragState) {
+      const { card, offsetX, offsetY, preDragSnapshot } = dragState;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      let x = e.clientX - canvasRect.left - offsetX;
+      let y = e.clientY - canvasRect.top - offsetY;
+      x = Math.max(0, Math.min(x, canvasRect.width - card.el.offsetWidth));
+      y = Math.max(0, Math.min(y, canvasRect.height - card.el.offsetHeight));
+      if (x !== card.x || y !== card.y) pushPreCapturedHistory(preDragSnapshot);
+      card.x = x;
+      card.y = y;
+      card.el.style.left = `${x}px`;
+      card.el.style.top = `${y}px`;
+      setSelection([card.id]);
+      return;
+    }
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      const files = await getFilesFromDataTransfer(e.dataTransfer);
+      addCardsFromFiles(files);
+    }
+  });
+
+  // ---------- 範囲選択(空いている場所をドラッグ) ----------
+
+  let marqueeState = null;
+
+  function rectsTouch(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
 
-  function onDragMove(e) {
-    if (!dragState) return;
+  canvasEl.addEventListener("pointerdown", (e) => {
+    if (e.target !== canvasEl) return;
+    e.preventDefault();
     const canvasRect = canvasEl.getBoundingClientRect();
-    const card = dragState.card;
-    const cardW = card.el.offsetWidth;
-    const cardH = card.el.offsetHeight;
-    let x = e.clientX - canvasRect.left - dragState.offsetX;
-    let y = e.clientY - canvasRect.top - dragState.offsetY;
-    x = Math.max(0, Math.min(x, canvasRect.width - cardW));
-    y = Math.max(0, Math.min(y, canvasRect.height - cardH));
-    if (x !== card.x || y !== card.y) dragState.moved = true;
-    card.x = x;
-    card.y = y;
-    card.el.style.left = `${x}px`;
-    card.el.style.top = `${y}px`;
-    updateMergeTarget(card);
-  }
+    const startX = e.clientX - canvasRect.left;
+    const startY = e.clientY - canvasRect.top;
+    const marqueeEl = document.createElement("div");
+    marqueeEl.className = "pdfdesk-marquee";
+    canvasEl.appendChild(marqueeEl);
+    marqueeState = { startX, startY, el: marqueeEl, rect: null };
+    canvasEl.setPointerCapture(e.pointerId);
+  });
 
-  function onDragEnd(e) {
-    if (!dragState) return;
-    const card = dragState.card;
-    const wasMoved = dragState.moved;
-    const preDragSnapshot = dragState.preDragSnapshot;
-    card.el.releasePointerCapture(e.pointerId);
-    card.el.removeEventListener("pointermove", onDragMove);
-    card.el.removeEventListener("pointerup", onDragEnd);
-    card.el.removeEventListener("pointercancel", onDragEnd);
-    card.el.classList.remove("dragging");
-    dragState = null;
-    selectCard(card);
+  canvasEl.addEventListener("pointermove", (e) => {
+    if (!marqueeState) return;
+    const canvasRect = canvasEl.getBoundingClientRect();
+    const curX = Math.max(0, Math.min(e.clientX - canvasRect.left, canvasRect.width));
+    const curY = Math.max(0, Math.min(e.clientY - canvasRect.top, canvasRect.height));
+    const x = Math.min(marqueeState.startX, curX);
+    const y = Math.min(marqueeState.startY, curY);
+    const w = Math.abs(curX - marqueeState.startX);
+    const h = Math.abs(curY - marqueeState.startY);
+    marqueeState.el.style.left = `${x}px`;
+    marqueeState.el.style.top = `${y}px`;
+    marqueeState.el.style.width = `${w}px`;
+    marqueeState.el.style.height = `${h}px`;
+    marqueeState.rect = { x, y, w, h };
+  });
 
-    const targetId = mergeTargetId;
-    clearMergeTarget();
-    if (targetId) {
-      const targetCard = cards.find((c) => c.id === targetId);
-      if (targetCard) {
-        undoStack.push(preDragSnapshot);
-        if (undoStack.length > MAX_HISTORY) undoStack.shift();
-        redoStack = [];
-        updateUndoRedoButtons();
-        mergeCards(card, targetCard);
-        return;
-      }
+  canvasEl.addEventListener("pointerup", (e) => {
+    if (!marqueeState) return;
+    canvasEl.releasePointerCapture(e.pointerId);
+    const rect = marqueeState.rect;
+    marqueeState.el.remove();
+    marqueeState = null;
+    if (!rect || (rect.w < 3 && rect.h < 3)) {
+      clearSelection();
+      return;
     }
-    if (wasMoved) {
-      undoStack.push(preDragSnapshot);
-      if (undoStack.length > MAX_HISTORY) undoStack.shift();
-      redoStack = [];
-      updateUndoRedoButtons();
-    }
-  }
+    const hits = cards.filter((c) => rectsTouch(rect, { x: c.x, y: c.y, w: c.el.offsetWidth, h: c.el.offsetHeight }));
+    setSelection(hits.map((c) => c.id));
+  });
 
   // ---------- カードの操作(回転・結合・分割・保存・削除) ----------
 
@@ -319,7 +427,7 @@
       targetCard.bytes = await mergedDoc.save();
       targetCard.pageCount = mergedDoc.getPageCount();
       removeCardSilently(draggedCard);
-      selectCard(targetCard);
+      setSelection([targetCard.id]);
       await renderCardThumb(targetCard);
       resultArea.innerHTML = `<p>「${draggedCard.name}」を「${targetCard.name}」に結合しました。</p>`;
     } catch {
@@ -336,6 +444,12 @@
     removeCardSilently(card);
   }
 
+  function removeCards(cardList) {
+    if (!cardList.length) return;
+    pushHistory();
+    cardList.forEach((c) => removeCardSilently(c));
+  }
+
   function handleCardAction(card, action) {
     if (action === "rotate-left") rotateCard(card, -90);
     else if (action === "rotate-right") rotateCard(card, 90);
@@ -344,21 +458,95 @@
     else if (action === "split") openSplitModal(card);
   }
 
-  canvasEl.addEventListener("click", (e) => {
-    if (e.target === canvasEl) selectCard(null);
-  });
-
   document.addEventListener("keydown", (e) => {
     if (!isPanelVisible()) return;
-    if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.size > 0) {
       const tag = document.activeElement && document.activeElement.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
-      const card = cards.find((c) => c.id === selectedId);
-      if (card) {
-        e.preventDefault();
-        removeCard(card);
-      }
+      e.preventDefault();
+      removeCards(Array.from(selectedIds).map((id) => cards.find((c) => c.id === id)).filter(Boolean));
     }
+  });
+
+  // ---------- 選択したカードをまとめて結合 ----------
+
+  function sortByPosition(cardList) {
+    return [...cardList].sort((a, b) => a.x - b.x || a.y - b.y);
+  }
+
+  mergeSelectedBtn.addEventListener("click", () => {
+    const selected = cards.filter((c) => selectedIds.has(c.id));
+    if (selected.length < 2) return;
+    openMergePreview(selected);
+  });
+
+  async function openMergePreview(selected) {
+    mergePreviewOrder = sortByPosition(selected);
+    mergeModal.hidden = false;
+    mergeModalConfirm.disabled = false;
+    mergeModalConfirm.textContent = "この順番で結合する";
+    mergePreviewRow.innerHTML = `<p>読み込み中...</p>`;
+    const token = ++mergePreviewToken;
+    const elements = [];
+    for (let i = 0; i < mergePreviewOrder.length; i++) {
+      const card = mergePreviewOrder[i];
+      const wrap = document.createElement("div");
+      wrap.className = "pdfsplit-thumb-card";
+      try {
+        wrap.appendChild(await renderPageThumbCanvas(card.bytes, 100));
+      } catch {
+        const span = document.createElement("span");
+        span.style.color = "red";
+        span.style.fontSize = "0.7rem";
+        span.textContent = "表示できません";
+        wrap.appendChild(span);
+      }
+      if (token !== mergePreviewToken) return;
+      const label = document.createElement("span");
+      label.className = "pdfdesk-merge-preview-label";
+      label.textContent = `${i + 1}. ${card.name}`;
+      wrap.appendChild(label);
+      elements.push(wrap);
+    }
+    mergePreviewRow.innerHTML = "";
+    elements.forEach((el) => mergePreviewRow.appendChild(el));
+  }
+
+  function closeMergeModal() {
+    mergeModal.hidden = true;
+    mergePreviewOrder = [];
+    mergePreviewToken++;
+  }
+
+  mergeModalCancel.addEventListener("click", closeMergeModal);
+  mergeModalBackdrop.addEventListener("click", closeMergeModal);
+
+  mergeModalConfirm.addEventListener("click", async () => {
+    if (mergePreviewOrder.length < 2) return;
+    pushHistory();
+    mergeModalConfirm.disabled = true;
+    mergeModalConfirm.textContent = "結合中...";
+    const order = mergePreviewOrder;
+    try {
+      const { PDFDocument } = PDFLib;
+      const mergedDoc = await PDFDocument.create();
+      for (const card of order) {
+        const srcDoc = await PDFDocument.load(card.bytes, { ignoreEncryption: true });
+        const pages = await mergedDoc.copyPages(srcDoc, srcDoc.getPageIndices());
+        pages.forEach((p) => mergedDoc.addPage(p));
+      }
+      const primary = order[0];
+      const rest = order.slice(1);
+      primary.bytes = await mergedDoc.save();
+      primary.pageCount = mergedDoc.getPageCount();
+      rest.forEach((c) => removeCardSilently(c));
+      setSelection([primary.id]);
+      await renderCardThumb(primary);
+      resultArea.innerHTML = `<p>${order.length}件のPDFを結合しました。</p>`;
+    } catch {
+      resultArea.innerHTML = `<p style="color:red;">結合に失敗しました。</p>`;
+    }
+    closeMergeModal();
   });
 
   // ---------- すべてダウンロード ----------
@@ -444,7 +632,6 @@
           divider.title = "ここで分割";
           divider.setAttribute("aria-label", `${i}ページ目の後ろで分ける`);
           divider.innerHTML = `<span class="pdfsplit-divider-icon">✂</span>`;
-          divider.dataset.page = i;
           divider.addEventListener("click", () => {
             if (modalSplitPoints.has(i)) modalSplitPoints.delete(i);
             else modalSplitPoints.add(i);
@@ -563,4 +750,5 @@
 
   updateEmptyState();
   updateUndoRedoButtons();
+  updateSelectionUI();
 })();

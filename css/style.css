@@ -1384,22 +1384,56 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .pdfdesk-card-thumb {
   display: flex;
-  align-items: center;
   justify-content: center;
-  height: 140px;
   background: var(--paper);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .pdfdesk-card-thumb canvas {
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
+  width: 100%;
+  height: auto;
   box-shadow: 0 2px 6px rgba(30, 43, 34, 0.15);
 }
 
 .pdfdesk-card-name {
   font-size: 0.76rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+  border-radius: 4px;
+  padding: 2px 3px;
+  margin: 0 -3px;
+}
+
+.pdfdesk-card-name:hover { background: var(--moss-pale); }
+
+.pdfdesk-card-name-input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.76rem;
+  padding: 2px 4px;
+  border: 1px solid var(--moss);
+  border-radius: 4px;
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.pdfdesk-marquee {
+  position: absolute;
+  border: 1.5px dashed var(--moss);
+  background: rgba(47, 107, 79, 0.12);
+  pointer-events: none;
+  z-index: 15;
+}
+
+.pdfdesk-merge-preview-label {
+  display: block;
+  font-size: 0.72rem;
+  text-align: center;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
