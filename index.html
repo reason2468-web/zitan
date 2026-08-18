@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=57">
+<link rel="stylesheet" href="css/style.css?v=58">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -611,17 +611,17 @@
               <option value="application/pdf">PDF(.pdf)</option>
             </select>
           </label>
+          <div class="radio-group" id="convert-pdf-mode-row" hidden>
+            <label class="radio-option">
+              <input type="radio" name="convert-pdf-mode" value="separate" checked>
+              <span>ばらばらのまま(1枚ずつPDFにする)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="convert-pdf-mode" value="merge">
+              <span>1つのPDFに結合する</span>
+            </label>
+          </div>
           <button id="convert-run" class="run-btn" disabled>変換する</button>
-        </div>
-        <div class="radio-group mode-toggle-row" id="convert-pdf-mode-row" hidden>
-          <label class="radio-option">
-            <input type="radio" name="convert-pdf-mode" value="separate" checked>
-            <span>ばらばらのまま(1枚ずつPDFにする)</span>
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="convert-pdf-mode" value="merge">
-            <span>1つのPDFに結合する</span>
-          </label>
         </div>
         <div class="result-area" id="convert-result"></div>
         <ul class="batch-list" id="convert-list"></ul>
@@ -1302,23 +1302,23 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=57"></script>
-<script src="js/app.js?v=57"></script>
-<script src="js/settings.js?v=57"></script>
-<script src="js/tools/compress.js?v=57"></script>
-<script src="js/tools/convert.js?v=57"></script>
-<script src="js/tools/resize.js?v=57"></script>
-<script src="js/tools/exif.js?v=57"></script>
-<script src="js/tools/rotate.js?v=57"></script>
-<script src="js/tools/crop.js?v=57"></script>
-<script src="js/tools/filter.js?v=57"></script>
-<script src="js/tools/watermark.js?v=57"></script>
-<script src="js/tools/qrcode.js?v=57"></script>
-<script src="js/tools/charcount.js?v=57"></script>
-<script src="js/tools/colorpicker.js?v=57"></script>
-<script src="js/tools/unitconvert.js?v=57"></script>
-<script src="js/tools/datecalc.js?v=57"></script>
-<script src="js/tools/calculator.js?v=57"></script>
-<script src="js/tools/pdfdesk.js?v=57"></script>
+<script src="js/common.js?v=58"></script>
+<script src="js/app.js?v=58"></script>
+<script src="js/settings.js?v=58"></script>
+<script src="js/tools/compress.js?v=58"></script>
+<script src="js/tools/convert.js?v=58"></script>
+<script src="js/tools/resize.js?v=58"></script>
+<script src="js/tools/exif.js?v=58"></script>
+<script src="js/tools/rotate.js?v=58"></script>
+<script src="js/tools/crop.js?v=58"></script>
+<script src="js/tools/filter.js?v=58"></script>
+<script src="js/tools/watermark.js?v=58"></script>
+<script src="js/tools/qrcode.js?v=58"></script>
+<script src="js/tools/charcount.js?v=58"></script>
+<script src="js/tools/colorpicker.js?v=58"></script>
+<script src="js/tools/unitconvert.js?v=58"></script>
+<script src="js/tools/datecalc.js?v=58"></script>
+<script src="js/tools/calculator.js?v=58"></script>
+<script src="js/tools/pdfdesk.js?v=58"></script>
 </body>
 </html>
