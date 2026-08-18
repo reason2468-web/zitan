@@ -1218,6 +1218,55 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   color: var(--moss-dark);
 }
 
+.pdf2text-notice {
+  background: var(--moss-pale);
+  border: 1px solid var(--moss);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin: 16px 0;
+}
+
+.pdf2text-notice-title {
+  margin: 0 0 12px;
+  font-weight: bold;
+  color: var(--moss-dark);
+  font-size: 1rem;
+}
+
+.pdf2text-notice ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pdf2text-notice li {
+  position: relative;
+  padding-left: 1.4em;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.pdf2text-notice li:last-child {
+  margin-bottom: 0;
+}
+
+.pdf2text-notice li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--moss-dark);
+}
+
+.pdf2text-notice strong {
+  color: var(--moss-dark);
+}
+
 .qrscan-capture-wrap {
   position: relative;
   display: inline-block;

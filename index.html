@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=67">
+<link rel="stylesheet" href="css/style.css?v=68">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1491,8 +1491,17 @@
 
       <section id="pdf2text" class="tool-panel">
         <h2>PDFから文字を抽出</h2>
-        <p class="desc">PDFの中の文字をテキストとして取り出します。文字データがあるPDFはすぐに抽出できます。スキャンした画像だけのPDFはOCR(文字認識)で読み取ります。</p>
-        <p class="format-note">OCRで読み取る場合、1ページあたり数秒〜数十秒かかることがあります。縦書き・横書きは自動で判定します(両方試すため、その分時間がかかります)。実行前に、かかりそうな時間の目安を表示して確認します。OCRは、白い紙に印刷された文字のスキャンは得意ですが、デザイン性の高いスライドや写真に重なった文字などは読み間違いが多くなります。</p>
+        <p class="desc">PDFの中の文字をテキストとして取り出します。文字データがあるPDFはすぐに抽出でき、行の折り返しも自然な文章になるよう自動で整えます。スキャンした画像だけのPDFはOCR(文字認識)で読み取ります。</p>
+        <p class="format-note">OCRで読み取る場合、1ページあたり数秒〜数十秒かかることがあります。縦書き・横書きは自動で判定します(両方試すため、その分時間がかかります)。実行前に、かかりそうな時間の目安を表示して確認します。</p>
+        <div class="pdf2text-notice">
+          <p class="pdf2text-notice-title">読み取り精度についてのご案内</p>
+          <ul>
+            <li><strong>得意なPDF</strong>:白い紙にまっすぐ印刷された文章、スキャン書類、シンプルな段組みの資料は高い精度で読み取れます。</li>
+            <li><strong>苦手なPDF</strong>:装飾的なデザインのスライド、写真やイラストに重なった文字、斜め・複雑なレイアウトのポスターや雑誌風のPDF、手書き文字は誤読が増える傾向があります。</li>
+            <li><strong>精度について</strong>:OCR(文字認識)は100%正確ではありません。誤字や、まれに文字化けが発生することがあるため、抽出後は内容のご確認をおすすめします。</li>
+            <li><strong>縦書き・横書きの自動判定</strong>:両方を試して精度の高いほうを採用していますが、判定を誤ることもあります。</li>
+          </ul>
+        </div>
         <div class="dropzone" data-target="pdf2text-input">
           <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
           <div class="dropzone-buttons">
@@ -1537,27 +1546,27 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=67"></script>
-<script src="js/app.js?v=67"></script>
-<script src="js/settings.js?v=67"></script>
-<script src="js/tools/compress.js?v=67"></script>
-<script src="js/tools/convert.js?v=67"></script>
-<script src="js/tools/resize.js?v=67"></script>
-<script src="js/tools/exif.js?v=67"></script>
-<script src="js/tools/rotate.js?v=67"></script>
-<script src="js/tools/crop.js?v=67"></script>
-<script src="js/tools/filter.js?v=67"></script>
-<script src="js/tools/watermark.js?v=67"></script>
-<script src="js/tools/qrcode.js?v=67"></script>
-<script src="js/tools/qrcodescan.js?v=67"></script>
-<script src="js/tools/charcount.js?v=67"></script>
-<script src="js/tools/colorpicker.js?v=67"></script>
-<script src="js/tools/unitconvert.js?v=67"></script>
-<script src="js/tools/datecalc.js?v=67"></script>
-<script src="js/tools/calculator.js?v=67"></script>
-<script src="js/tools/pdfdesk.js?v=67"></script>
-<script src="js/tools/pdf2image.js?v=67"></script>
-<script src="js/tools/pdfcompress.js?v=67"></script>
-<script src="js/tools/pdf2text.js?v=67"></script>
+<script src="js/common.js?v=68"></script>
+<script src="js/app.js?v=68"></script>
+<script src="js/settings.js?v=68"></script>
+<script src="js/tools/compress.js?v=68"></script>
+<script src="js/tools/convert.js?v=68"></script>
+<script src="js/tools/resize.js?v=68"></script>
+<script src="js/tools/exif.js?v=68"></script>
+<script src="js/tools/rotate.js?v=68"></script>
+<script src="js/tools/crop.js?v=68"></script>
+<script src="js/tools/filter.js?v=68"></script>
+<script src="js/tools/watermark.js?v=68"></script>
+<script src="js/tools/qrcode.js?v=68"></script>
+<script src="js/tools/qrcodescan.js?v=68"></script>
+<script src="js/tools/charcount.js?v=68"></script>
+<script src="js/tools/colorpicker.js?v=68"></script>
+<script src="js/tools/unitconvert.js?v=68"></script>
+<script src="js/tools/datecalc.js?v=68"></script>
+<script src="js/tools/calculator.js?v=68"></script>
+<script src="js/tools/pdfdesk.js?v=68"></script>
+<script src="js/tools/pdf2image.js?v=68"></script>
+<script src="js/tools/pdfcompress.js?v=68"></script>
+<script src="js/tools/pdf2text.js?v=68"></script>
 </body>
 </html>

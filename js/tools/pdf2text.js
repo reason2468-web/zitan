@@ -120,7 +120,34 @@
     return `${fmt(lowSec)}〜${fmt(highSec)}`;
   }
 
-  // ---------- ②文字データがあるページ:pdf.jsのテキスト情報からそのまま組み立てる ----------
+  // ---------- ②文字データがあるページ:pdf.jsのテキスト情報から読みやすい文章に組み立てる ----------
+
+  const SENTENCE_END_RE = /[。!?！？」』)）]\s*$/;
+
+  // PDFの1行は見た目上の折り返しでしかないため、行の右端が本文の最大幅に近く
+  // かつ文末の句読点で終わっていない行は「まだ文が続いている」とみなして
+  // 次の行と直接つなげる。それ以外(短い行や句読点で終わる行)は段落の区切りとして
+  // 改行を残す。これにより、PDFの折り返し位置ではなく自然な文の切れ目で改行される。
+  function reflowRowsToParagraphs(rows) {
+    if (!rows.length) return "";
+    const maxRight = Math.max(...rows.map((r) => r.right));
+    const widthTolerance = Math.max(10, maxRight * 0.04);
+
+    const paragraphs = [];
+    let current = "";
+    rows.forEach((row, i) => {
+      current += row.text;
+      const isLastRow = i === rows.length - 1;
+      const isNearFullWidth = row.right >= maxRight - widthTolerance;
+      const endsWithSentenceEnd = SENTENCE_END_RE.test(row.text.trim());
+      if (isLastRow || !isNearFullWidth || endsWithSentenceEnd) {
+        paragraphs.push(current);
+        current = "";
+      }
+    });
+    if (current) paragraphs.push(current);
+    return paragraphs.join("\n\n");
+  }
 
   function extractPlainTextFromItems(items) {
     // 同じ行(Y座標がほぼ同じ)ごとにまとめてから、上→下、各行は左→右の順に並べる
@@ -136,12 +163,14 @@
       row.items.push(item);
     });
     rows.sort((a, b) => b.y - a.y);
-    return rows
-      .map((row) => {
-        row.items.sort((a, b) => a.transform[4] - b.transform[4]);
-        return row.items.map((it) => it.str).join("");
-      })
-      .join("\n");
+    rows.forEach((row) => {
+      row.items.sort((a, b) => a.transform[4] - b.transform[4]);
+      row.text = row.items.map((it) => it.str).join("");
+      row.right = Math.max(...row.items.map((it) => it.transform[4] + (it.width || 0)));
+    });
+
+    const nonEmptyRows = rows.filter((r) => r.text.trim().length > 0);
+    return reflowRowsToParagraphs(nonEmptyRows);
   }
 
   // ---------- ③文字データが無いページ:OCR(Tesseract.js)で読み取る ----------
@@ -192,6 +221,23 @@
     }
   }
 
+  // Tesseractの日本語OCRは、単語の区切りごとに余分な半角スペースを入れる癖があるため、
+  // 漢字・ひらがな・カタカナ同士の間に挟まったスペースを削除する
+  // (英単語・数字まわりの意味のあるスペースはCJK文字が隣にないので残る)
+  const CJK_RANGE = "\\u3000-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF";
+  const CJK_SPACE_RE = new RegExp(`([${CJK_RANGE}])[ \\t]+(?=[${CJK_RANGE}])`, "g");
+
+  // 空行だらけになりやすいOCR結果を、各行の前後の空白を削って空行を詰めた状態に整える
+  function cleanupOcrText(text) {
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    let joined = lines.join("\n");
+    joined = joined.replace(CJK_SPACE_RE, "$1");
+    return joined;
+  }
+
   // 縦書き・横書きの両方でOCRを試し、読み取り精度(confidence)が高いほうを採用する
   async function ocrPageCanvas(canvas) {
     const { horizontal, vertical } = await getOcrWorkers();
@@ -202,7 +248,7 @@
     const hConf = hRes?.data?.confidence ?? -1;
     const vConf = vRes?.data?.confidence ?? -1;
     const best = hConf >= vConf ? hRes : vRes;
-    return fixMojibakeUtf8(best?.data?.text ?? "");
+    return cleanupOcrText(fixMojibakeUtf8(best?.data?.text ?? ""));
   }
 
   async function extractTextFromAnalysis(analysis, onStatus) {
