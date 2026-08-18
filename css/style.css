@@ -593,6 +593,34 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .custom-width-row { font-size: 0.9rem; }
 
+.qrcode-color-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.qrcode-color-row input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.qrcode-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qrcode-logo-btn {
+  margin-top: 0;
+}
+
 .preset-btn, .ratio-btn {
   padding: 6px 12px;
   border: 1px solid var(--line);
