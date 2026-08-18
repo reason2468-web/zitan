@@ -1194,6 +1194,30 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 .result-info { font-size: 0.9rem; }
 .result-info .reduction { color: var(--moss); font-weight: bold; }
 
+.qrscan-steps {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--moss-pale);
+  border: 1px solid var(--moss);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin: 16px 0;
+}
+
+.qrscan-steps li {
+  margin-bottom: 10px;
+}
+
+.qrscan-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.qrscan-steps li::marker {
+  font-weight: bold;
+  color: var(--moss-dark);
+}
+
 .qrscan-capture-wrap {
   position: relative;
   display: inline-block;
