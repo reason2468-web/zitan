@@ -3,7 +3,8 @@
   const toolDetail = document.getElementById("tool-detail");
   const dropzone = document.querySelector('[data-target="pdfdesk-input"]');
   const input = document.getElementById("pdfdesk-input");
-  const canvasEl = document.getElementById("pdfdesk-canvas");
+  const scrollEl = document.getElementById("pdfdesk-canvas-scroll");
+  const innerEl = document.getElementById("pdfdesk-canvas-inner");
   const emptyMsg = document.getElementById("pdfdesk-empty");
   const resultArea = document.getElementById("pdfdesk-result");
 
@@ -12,6 +13,9 @@
   const mergeSelectedBtn = document.getElementById("pdfdesk-merge-selected-btn");
   const downloadAllBtn = document.getElementById("pdfdesk-download-all-btn");
   const fullscreenBtn = document.getElementById("pdfdesk-fullscreen-btn");
+  const zoomInBtn = document.getElementById("pdfdesk-zoom-in");
+  const zoomOutBtn = document.getElementById("pdfdesk-zoom-out");
+  const zoomLabel = document.getElementById("pdfdesk-zoom-label");
 
   const modal = document.getElementById("pdfdesk-modal");
   const modalBackdrop = document.getElementById("pdfdesk-modal-backdrop");
@@ -35,6 +39,7 @@
   let nextId = 1;
   let dragState = null;
   let selectedIds = new Set();
+  let zoomLevel = 1;
   let modalCard = null;
   let modalSplitPoints = new Set();
   let modalToken = 0;
@@ -61,6 +66,40 @@
     const row = Math.floor(index / 5);
     return { x: 16 + col * 172, y: 16 + row * 210 };
   }
+
+  // カードが増えても取り出せるよう、キャンバス内側の大きさを実際のカード配置に合わせて広げる
+  function updateCanvasContentSize() {
+    if (!cards.length) {
+      innerEl.style.width = "";
+      innerEl.style.height = "";
+      return;
+    }
+    let maxX = 0;
+    let maxY = 0;
+    cards.forEach((c) => {
+      maxX = Math.max(maxX, c.x + (c.el.offsetWidth || 152));
+      maxY = Math.max(maxY, c.y + (c.el.offsetHeight || 200));
+    });
+    innerEl.style.width = `${maxX + 20}px`;
+    innerEl.style.height = `${maxY + 20}px`;
+  }
+
+  // 画面上の座標(マウス位置など)を、拡大縮小・スクロールを考慮した実際のカード座標に変換する
+  function toLogical(clientX, clientY) {
+    const rect = innerEl.getBoundingClientRect();
+    return { x: (clientX - rect.left) / zoomLevel, y: (clientY - rect.top) / zoomLevel };
+  }
+
+  // ---------- 拡大縮小 ----------
+
+  function setZoom(level) {
+    zoomLevel = Math.max(0.5, Math.min(2, Math.round(level * 100) / 100));
+    innerEl.style.transform = `scale(${zoomLevel})`;
+    zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+  }
+
+  zoomInBtn.addEventListener("click", () => setZoom(zoomLevel + 0.1));
+  zoomOutBtn.addEventListener("click", () => setZoom(zoomLevel - 0.1));
 
   // ---------- 元に戻す・やり直す ----------
 
@@ -94,6 +133,7 @@
     cards.forEach((c) => createCardElement(c));
     updateEmptyState();
     updateSelectionUI();
+    updateCanvasContentSize();
   }
 
   undoBtn.addEventListener("click", () => {
@@ -209,7 +249,7 @@
       </div>
     `;
     card.el = el;
-    canvasEl.appendChild(el);
+    innerEl.appendChild(el);
 
     el.querySelectorAll("button[data-action]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -231,12 +271,14 @@
     return el;
   }
 
-  function addCard({ name, bytes, pageCount }, cascadeIndex) {
-    const pos = nextCascadePosition(cascadeIndex != null ? cascadeIndex : cards.length);
-    const card = { id: nextId++, name, bytes, pageCount, x: pos.x, y: pos.y, el: null };
+  // position を渡すとその座標に配置(分割結果の少し重ねた配置用)、渡さなければ通常のカスケード配置
+  function addCard({ name, bytes, pageCount }, position) {
+    const pos = position || nextCascadePosition(cards.length);
+    const card = { id: nextId++, name, bytes, pageCount, x: Math.max(0, pos.x), y: Math.max(0, pos.y), el: null };
     cards.push(card);
     createCardElement(card);
     updateEmptyState();
+    updateCanvasContentSize();
     return card;
   }
 
@@ -249,6 +291,7 @@
     card.el.remove();
     cards = cards.filter((c) => c.id !== card.id);
     updateEmptyState();
+    updateCanvasContentSize();
   }
 
   // ---------- ドラッグ(パソコンのマウス専用・ネイティブドラッグ&ドロップ) ----------
@@ -261,8 +304,8 @@
       const cardRect = el.getBoundingClientRect();
       dragState = {
         card,
-        offsetX: e.clientX - cardRect.left,
-        offsetY: e.clientY - cardRect.top,
+        offsetX: (e.clientX - cardRect.left) / zoomLevel,
+        offsetY: (e.clientY - cardRect.top) / zoomLevel,
         preDragSnapshot: snapshotCards(),
         blobUrl: null,
       };
@@ -315,26 +358,25 @@
     });
   }
 
-  canvasEl.addEventListener("dragover", (e) => {
+  scrollEl.addEventListener("dragover", (e) => {
     e.preventDefault();
     if (dragState) e.dataTransfer.dropEffect = "move";
   });
 
-  canvasEl.addEventListener("drop", async (e) => {
+  scrollEl.addEventListener("drop", async (e) => {
     e.preventDefault();
     if (dragState) {
       const { card, offsetX, offsetY, preDragSnapshot } = dragState;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      let x = e.clientX - canvasRect.left - offsetX;
-      let y = e.clientY - canvasRect.top - offsetY;
-      x = Math.max(0, Math.min(x, canvasRect.width - card.el.offsetWidth));
-      y = Math.max(0, Math.min(y, canvasRect.height - card.el.offsetHeight));
+      const pos = toLogical(e.clientX, e.clientY);
+      const x = Math.max(0, pos.x - offsetX);
+      const y = Math.max(0, pos.y - offsetY);
       if (x !== card.x || y !== card.y) pushPreCapturedHistory(preDragSnapshot);
       card.x = x;
       card.y = y;
       card.el.style.left = `${x}px`;
       card.el.style.top = `${y}px`;
       setSelection([card.id]);
+      updateCanvasContentSize();
       return;
     }
     if (e.dataTransfer.files && e.dataTransfer.files.length) {
@@ -351,28 +393,24 @@
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
 
-  canvasEl.addEventListener("pointerdown", (e) => {
-    if (e.target !== canvasEl) return;
+  scrollEl.addEventListener("pointerdown", (e) => {
+    if (e.target !== scrollEl && e.target !== innerEl) return;
     e.preventDefault();
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const startX = e.clientX - canvasRect.left;
-    const startY = e.clientY - canvasRect.top;
+    const pos = toLogical(e.clientX, e.clientY);
     const marqueeEl = document.createElement("div");
     marqueeEl.className = "pdfdesk-marquee";
-    canvasEl.appendChild(marqueeEl);
-    marqueeState = { startX, startY, el: marqueeEl, rect: null };
-    canvasEl.setPointerCapture(e.pointerId);
+    innerEl.appendChild(marqueeEl);
+    marqueeState = { startX: pos.x, startY: pos.y, el: marqueeEl, rect: null };
+    scrollEl.setPointerCapture(e.pointerId);
   });
 
-  canvasEl.addEventListener("pointermove", (e) => {
+  scrollEl.addEventListener("pointermove", (e) => {
     if (!marqueeState) return;
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const curX = Math.max(0, Math.min(e.clientX - canvasRect.left, canvasRect.width));
-    const curY = Math.max(0, Math.min(e.clientY - canvasRect.top, canvasRect.height));
-    const x = Math.min(marqueeState.startX, curX);
-    const y = Math.min(marqueeState.startY, curY);
-    const w = Math.abs(curX - marqueeState.startX);
-    const h = Math.abs(curY - marqueeState.startY);
+    const pos = toLogical(e.clientX, e.clientY);
+    const x = Math.min(marqueeState.startX, pos.x);
+    const y = Math.min(marqueeState.startY, pos.y);
+    const w = Math.abs(pos.x - marqueeState.startX);
+    const h = Math.abs(pos.y - marqueeState.startY);
     marqueeState.el.style.left = `${x}px`;
     marqueeState.el.style.top = `${y}px`;
     marqueeState.el.style.width = `${w}px`;
@@ -380,9 +418,9 @@
     marqueeState.rect = { x, y, w, h };
   });
 
-  canvasEl.addEventListener("pointerup", (e) => {
+  scrollEl.addEventListener("pointerup", (e) => {
     if (!marqueeState) return;
-    canvasEl.releasePointerCapture(e.pointerId);
+    scrollEl.releasePointerCapture(e.pointerId);
     const rect = marqueeState.rect;
     marqueeState.el.remove();
     marqueeState = null;
@@ -675,7 +713,9 @@
       const sorted = [...splitPointsArr].sort((a, b) => a - b);
       const boundaries = [0, ...sorted, pageCount];
       const baseNoExt = card.name.replace(/\.pdf$/i, "");
-      const originIndex = cards.findIndex((c) => c.id === card.id);
+      const originX = card.x;
+      const originY = card.y;
+      const FAN_OFFSET = 14;
 
       removeCardSilently(card);
 
@@ -689,7 +729,11 @@
         const start = group[0] + 1;
         const end = group[group.length - 1] + 1;
         const label = start === end ? `p${start}` : `p${start}-${end}`;
-        addCard({ name: `${baseNoExt}_${label}.pdf`, bytes, pageCount: group.length }, originIndex + i);
+        // 元の書類が少しずつ重なって分かれたように見えるよう、斜めにずらして配置する
+        addCard(
+          { name: `${baseNoExt}_${label}.pdf`, bytes, pageCount: group.length },
+          { x: originX + i * FAN_OFFSET, y: originY + i * FAN_OFFSET }
+        );
       }
       closeModal();
     } catch {
@@ -751,4 +795,5 @@
   updateEmptyState();
   updateUndoRedoButtons();
   updateSelectionUI();
+  updateCanvasContentSize();
 })();

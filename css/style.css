@@ -1281,10 +1281,62 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   min-height: 460px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background:
-    radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0 / 22px 22px,
-    var(--paper);
   overflow: hidden;
+}
+
+.pdfdesk-canvas-scroll {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background:
+    radial-gradient(circle, rgba(30, 43, 34, 0.1) 1px, transparent 1px) 0 0 / 22px 22px,
+    #E9E5D9;
+}
+
+.pdfdesk-canvas-inner {
+  position: relative;
+  transform-origin: 0 0;
+}
+
+.pdfdesk-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 6px 16px -6px rgba(30, 43, 34, 0.35);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.pdfdesk-zoom-btn {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 0.85rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdfdesk-zoom-btn:hover { background: var(--moss-pale); }
+
+.pdfdesk-zoom-label {
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 #pdftools.pdfdesk-fullscreen {
