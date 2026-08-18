@@ -1183,17 +1183,33 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 .result-info { font-size: 0.9rem; }
 .result-info .reduction { color: var(--moss); font-weight: bold; }
 
-.qrscan-video {
-  display: block;
-  max-width: 360px;
-  width: 100%;
+.qrscan-capture-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
   margin: 12px 0;
   border-radius: 10px;
   border: 1px solid var(--line);
+  overflow: hidden;
   background: #000;
+  cursor: crosshair;
+  touch-action: none;
 }
 
-.qrscan-video[hidden] {
+.qrscan-capture-wrap canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.qrscan-capture-select {
+  position: absolute;
+  border: 2px dashed var(--moss);
+  background: rgba(47, 107, 79, 0.18);
+  pointer-events: none;
+}
+
+.qrscan-capture-select[hidden] {
   display: none;
 }
 

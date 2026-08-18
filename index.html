@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=61">
+<link rel="stylesheet" href="css/style.css?v=62">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1013,7 +1013,7 @@
 
       <section id="qrcodescan" class="tool-panel">
         <h2>QRコード読み取り</h2>
-        <p class="desc">QRコードの中身を読み取ります。パソコンの画面から読み取るか、画像ファイルから読み取るか選べます。複数のQRコードがある場合は、見つかった分だけ一覧で表示します。</p>
+        <p class="desc">QRコードの中身を読み取ります。パソコンの画面から読み取るか、画像ファイルから読み取るか選べます。画面から読み取る場合は、範囲を選んで1つずつ読み取ります。画像から読み取る場合は、複数のQRコードがあれば見つかった分だけ一覧で表示します。</p>
 
         <div class="radio-group mode-toggle-row">
           <label class="radio-option">
@@ -1027,12 +1027,22 @@
         </div>
 
         <div id="qrscan-screen-controls">
-          <p class="format-note">「画面を選択して読み取る」を押すと、画面共有の選択画面が出ます。QRコードが映っている画面(またはウィンドウ)を選んでください。QRコードが小さすぎたり、たくさん並んでいたりすると読み取れないことがあります。うまくいかない場合は、画面を拡大する(Ctrl+ +)か、読み取りたいQRコードだけを大きく表示してお試しください。</p>
+          <p class="format-note">「画面をキャプチャする」を押すと、画面共有の選択画面が出ます。QRコードが映っている画面(またはウィンドウ)を選んでください。キャプチャした画像の中から、読み取りたいQRコードの部分をドラッグして囲むと、その範囲だけを読み取ります。</p>
           <div class="dropzone-buttons">
-            <button type="button" class="file-btn" id="qrscan-screen-start">画面を選択して読み取る</button>
-            <button type="button" class="file-btn-outline" id="qrscan-screen-stop" hidden>読み取りを終了する</button>
+            <button type="button" class="file-btn" id="qrscan-screen-start">画面をキャプチャする</button>
           </div>
-          <video id="qrscan-video" class="qrscan-video" hidden muted playsinline></video>
+          <video id="qrscan-video" hidden muted playsinline></video>
+
+          <div id="qrscan-capture-area" hidden>
+            <div class="qrscan-capture-wrap" id="qrscan-capture-wrap">
+              <canvas id="qrscan-capture-canvas"></canvas>
+              <div class="qrscan-capture-select" id="qrscan-capture-select" hidden></div>
+            </div>
+            <div class="dropzone-buttons">
+              <button type="button" class="run-btn" id="qrscan-capture-confirm" disabled>この範囲を読み取る</button>
+              <button type="button" class="file-btn-outline" id="qrscan-capture-cancel">やり直す</button>
+            </div>
+          </div>
         </div>
 
         <div id="qrscan-image-controls" hidden>
@@ -1485,26 +1495,26 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=61"></script>
-<script src="js/app.js?v=61"></script>
-<script src="js/settings.js?v=61"></script>
-<script src="js/tools/compress.js?v=61"></script>
-<script src="js/tools/convert.js?v=61"></script>
-<script src="js/tools/resize.js?v=61"></script>
-<script src="js/tools/exif.js?v=61"></script>
-<script src="js/tools/rotate.js?v=61"></script>
-<script src="js/tools/crop.js?v=61"></script>
-<script src="js/tools/filter.js?v=61"></script>
-<script src="js/tools/watermark.js?v=61"></script>
-<script src="js/tools/qrcode.js?v=61"></script>
-<script src="js/tools/qrcodescan.js?v=61"></script>
-<script src="js/tools/charcount.js?v=61"></script>
-<script src="js/tools/colorpicker.js?v=61"></script>
-<script src="js/tools/unitconvert.js?v=61"></script>
-<script src="js/tools/datecalc.js?v=61"></script>
-<script src="js/tools/calculator.js?v=61"></script>
-<script src="js/tools/pdfdesk.js?v=61"></script>
-<script src="js/tools/pdf2image.js?v=61"></script>
-<script src="js/tools/pdfcompress.js?v=61"></script>
+<script src="js/common.js?v=62"></script>
+<script src="js/app.js?v=62"></script>
+<script src="js/settings.js?v=62"></script>
+<script src="js/tools/compress.js?v=62"></script>
+<script src="js/tools/convert.js?v=62"></script>
+<script src="js/tools/resize.js?v=62"></script>
+<script src="js/tools/exif.js?v=62"></script>
+<script src="js/tools/rotate.js?v=62"></script>
+<script src="js/tools/crop.js?v=62"></script>
+<script src="js/tools/filter.js?v=62"></script>
+<script src="js/tools/watermark.js?v=62"></script>
+<script src="js/tools/qrcode.js?v=62"></script>
+<script src="js/tools/qrcodescan.js?v=62"></script>
+<script src="js/tools/charcount.js?v=62"></script>
+<script src="js/tools/colorpicker.js?v=62"></script>
+<script src="js/tools/unitconvert.js?v=62"></script>
+<script src="js/tools/datecalc.js?v=62"></script>
+<script src="js/tools/calculator.js?v=62"></script>
+<script src="js/tools/pdfdesk.js?v=62"></script>
+<script src="js/tools/pdf2image.js?v=62"></script>
+<script src="js/tools/pdfcompress.js?v=62"></script>
 </body>
 </html>

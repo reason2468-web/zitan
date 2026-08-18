@@ -2,19 +2,24 @@
   const screenControls = document.getElementById("qrscan-screen-controls");
   const imageControls = document.getElementById("qrscan-image-controls");
   const screenStartBtn = document.getElementById("qrscan-screen-start");
-  const screenStopBtn = document.getElementById("qrscan-screen-stop");
   const video = document.getElementById("qrscan-video");
+  const captureArea = document.getElementById("qrscan-capture-area");
+  const captureWrap = document.getElementById("qrscan-capture-wrap");
+  const captureCanvas = document.getElementById("qrscan-capture-canvas");
+  const captureSelect = document.getElementById("qrscan-capture-select");
+  const captureConfirmBtn = document.getElementById("qrscan-capture-confirm");
+  const captureCancelBtn = document.getElementById("qrscan-capture-cancel");
   const dropzone = document.querySelector('[data-target="qrscan-image-input"]');
   const imageInput = document.getElementById("qrscan-image-input");
   const statusEl = document.getElementById("qrscan-status");
   const resultArea = document.getElementById("qrscan-result");
 
   const MAX_SCAN_DIM = 2400;
-  const SCAN_INTERVAL_MS = 500;
   const MAX_CODES_PER_FRAME = 25;
 
-  let screenStream = null;
-  let scanTimer = null;
+  let hasCapture = false;
+  let selectRect = null; // キャプチャ画像内での選択範囲(キャンバスのピクセル座標)
+  let dragStart = null;
   const found = []; // { text, source }
   const seenTexts = new Set();
 
@@ -139,94 +144,144 @@
       screenControls.hidden = mode !== "screen";
       imageControls.hidden = mode !== "image";
       statusEl.textContent = "";
-      if (mode !== "screen") stopScreenScan();
+      if (mode !== "screen") resetCapture();
     });
   });
 
-  // ---------- 画面から読み取る ----------
+  // ---------- 画面から読み取る(1回キャプチャして、範囲を選んで1個だけ読み取る) ----------
 
-  function drawVideoToCanvas(canvas, ctx) {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    const scale = Math.min(1, MAX_SCAN_DIM / Math.max(vw, vh));
-    canvas.width = Math.max(1, Math.round(vw * scale));
-    canvas.height = Math.max(1, Math.round(vh * scale));
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  function waitForVideoFrame(videoEl) {
+    return new Promise((resolve) => {
+      if (videoEl.videoWidth) { resolve(); return; }
+      const check = () => {
+        if (videoEl.videoWidth) resolve();
+        else requestAnimationFrame(check);
+      };
+      check();
+    });
   }
 
-  async function startScreenScan() {
+  async function startScreenCapture() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
       statusEl.textContent = "お使いのブラウザは画面共有に対応していません。Chrome・Edgeなどでお試しください。";
       return;
     }
+    let stream;
     try {
-      // 画面内の小さいQRコードも読み取れるよう、できるだけ高い解像度を要求する
+      // 小さいQRコードも読み取れるよう、できるだけ高い解像度を要求する
       // (実際の解像度は画面や環境によって変わり、ブラウザ側で調整される)
-      screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { ideal: 3840 }, height: { ideal: 2160 }, frameRate: { ideal: 5, max: 10 } },
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 3840 }, height: { ideal: 2160 } },
       });
     } catch (err) {
       return; // ユーザーが選択をキャンセルした場合
     }
 
-    video.srcObject = screenStream;
-    video.hidden = false;
+    video.srcObject = stream;
     try {
       await video.play();
+      await waitForVideoFrame(video);
     } catch (err) {
-      // 一部環境で自動再生がブロックされても、映像自体は取得できていれば読み取りは続行する
+      // 再生に失敗しても、フレームが取得できていれば続行する
     }
 
-    screenStartBtn.hidden = true;
-    screenStopBtn.hidden = false;
-    statusEl.textContent = "読み取り中です。QRコードが画面に映るようにしてください。";
-
-    screenStream.getVideoTracks()[0].addEventListener("ended", stopScreenScan);
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-    scanTimer = setInterval(() => {
-      if (!video.videoWidth) return;
-      try {
-        drawVideoToCanvas(canvas, ctx);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const codes = decodeAllQRCodes(imageData);
-        if (codes.length) addResults(codes, "画面");
-        statusEl.textContent = found.length
-          ? `読み取り中です。ここまでに${found.length}件見つかりました。`
-          : "読み取り中です。QRコードが画面に映るようにしてください。";
-      } catch (err) {
-        // 1フレームの読み取り失敗は無視して続行する
-      }
-    }, SCAN_INTERVAL_MS);
-  }
-
-  function stopScreenScan() {
-    if (scanTimer) {
-      clearInterval(scanTimer);
-      scanTimer = null;
-    }
-    if (screenStream) {
-      screenStream.getTracks().forEach((t) => t.stop());
-      screenStream = null;
-    }
-    video.pause();
+    // 1枚キャプチャできたら、画面共有はすぐ止める
+    stream.getTracks().forEach((t) => t.stop());
     video.srcObject = null;
-    video.hidden = true;
-    screenStartBtn.hidden = false;
-    screenStopBtn.hidden = true;
-    statusEl.textContent = "";
+
+    if (!video.videoWidth) {
+      statusEl.textContent = "画面をキャプチャできませんでした。もう一度お試しください。";
+      return;
+    }
+
+    captureCanvas.width = video.videoWidth;
+    captureCanvas.height = video.videoHeight;
+    captureCanvas.getContext("2d").drawImage(video, 0, 0);
+
+    hasCapture = true;
+    selectRect = null;
+    captureSelect.hidden = true;
+    captureConfirmBtn.disabled = true;
+    captureArea.hidden = false;
+    screenStartBtn.hidden = true;
+    statusEl.textContent = "QRコードの部分をドラッグして囲み、「この範囲を読み取る」を押してください。";
   }
 
-  screenStartBtn.addEventListener("click", startScreenScan);
-  screenStopBtn.addEventListener("click", stopScreenScan);
+  function canvasPointFromEvent(e) {
+    const rect = captureCanvas.getBoundingClientRect();
+    const x = Math.min(captureCanvas.width, Math.max(0, Math.round((e.clientX - rect.left) / rect.width * captureCanvas.width)));
+    const y = Math.min(captureCanvas.height, Math.max(0, Math.round((e.clientY - rect.top) / rect.height * captureCanvas.height)));
+    return { x, y };
+  }
 
-  // ツールを離れるときは画面共有を止める(消し忘れ防止)
-  document.getElementById("tool-back")?.addEventListener("click", stopScreenScan);
-  document.querySelectorAll(".category-btn, .tool-card").forEach((el) => {
-    el.addEventListener("click", stopScreenScan);
+  function updateSelectBox(rect) {
+    captureSelect.style.left = `${(rect.x / captureCanvas.width) * 100}%`;
+    captureSelect.style.top = `${(rect.y / captureCanvas.height) * 100}%`;
+    captureSelect.style.width = `${(rect.w / captureCanvas.width) * 100}%`;
+    captureSelect.style.height = `${(rect.h / captureCanvas.height) * 100}%`;
+    captureSelect.hidden = false;
+  }
+
+  captureWrap.addEventListener("pointerdown", (e) => {
+    if (!hasCapture) return;
+    dragStart = canvasPointFromEvent(e);
+    captureWrap.setPointerCapture(e.pointerId);
+    captureConfirmBtn.disabled = true;
   });
+
+  captureWrap.addEventListener("pointermove", (e) => {
+    if (!dragStart) return;
+    const pos = canvasPointFromEvent(e);
+    const rect = {
+      x: Math.min(dragStart.x, pos.x),
+      y: Math.min(dragStart.y, pos.y),
+      w: Math.abs(pos.x - dragStart.x),
+      h: Math.abs(pos.y - dragStart.y),
+    };
+    selectRect = rect;
+    updateSelectBox(rect);
+  });
+
+  captureWrap.addEventListener("pointerup", () => {
+    dragStart = null;
+    if (selectRect && selectRect.w > 5 && selectRect.h > 5) {
+      captureConfirmBtn.disabled = false;
+    }
+  });
+
+  captureConfirmBtn.addEventListener("click", () => {
+    if (!hasCapture || !selectRect) return;
+    const { x, y, w, h } = selectRect;
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = w;
+    cropCanvas.height = h;
+    cropCanvas.getContext("2d").drawImage(captureCanvas, x, y, w, h, 0, 0, w, h);
+    const imageData = cropCanvas.getContext("2d").getImageData(0, 0, w, h);
+    const codes = decodeAllQRCodes(imageData);
+
+    if (codes.length) {
+      addResults([codes[0]], "画面(選択した範囲)");
+      statusEl.textContent = "読み取れました。続けて他のQRコードを読み取る場合は、もう一度範囲を選んでください。";
+    } else {
+      statusEl.textContent = "選択した範囲からQRコードを読み取れませんでした。範囲を選び直してみてください。";
+    }
+  });
+
+  function resetCapture() {
+    hasCapture = false;
+    selectRect = null;
+    dragStart = null;
+    captureArea.hidden = true;
+    captureSelect.hidden = true;
+    screenStartBtn.hidden = false;
+  }
+
+  captureCancelBtn.addEventListener("click", () => {
+    resetCapture();
+    statusEl.textContent = "";
+  });
+
+  screenStartBtn.addEventListener("click", startScreenCapture);
 
   // ---------- 画像から読み取る ----------
 
