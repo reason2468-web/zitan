@@ -8,6 +8,7 @@
   const listEl = document.getElementById("convert-list");
   const pdfModeRow = document.getElementById("convert-pdf-mode-row");
   const pdfSizeRow = document.getElementById("convert-pdf-size-row");
+  const pdfOrientationRow = document.getElementById("convert-pdf-orientation-row");
 
   const mergeModal = document.getElementById("convert-merge-modal");
   const mergeModalBackdrop = document.getElementById("convert-merge-modal-backdrop");
@@ -29,14 +30,21 @@
     return checked ? checked.value : "keep";
   }
 
+  function getPdfOrientation() {
+    const checked = document.querySelector('input[name="convert-pdf-orientation"]:checked');
+    return checked ? checked.value : "portrait";
+  }
+
   function updatePdfOptionVisibility() {
     const isPdf = formatSelect.value === "application/pdf";
+    const isMerge = isPdf && getPdfMode() === "merge";
     pdfModeRow.hidden = !isPdf;
-    pdfSizeRow.hidden = !(isPdf && getPdfMode() === "merge");
+    pdfSizeRow.hidden = !isMerge;
+    pdfOrientationRow.hidden = !(isMerge && getPdfSizeMode() === "a4");
   }
 
   formatSelect.addEventListener("change", updatePdfOptionVisibility);
-  document.querySelectorAll('input[name="convert-pdf-mode"]').forEach((radio) => {
+  document.querySelectorAll('input[name="convert-pdf-mode"], input[name="convert-pdf-size"]').forEach((radio) => {
     radio.addEventListener("change", updatePdfOptionVisibility);
   });
 
@@ -88,7 +96,8 @@
 
   // 画像ファイルを既存のpdfDocに1ページとして追加する(単独PDF化・結合PDF化の両方から使う)
   // sizeMode: "keep"(元のサイズのまま) または "a4"(A4に収まるよう縮小して中央配置)
-  async function addImageAsPdfPage(pdfDoc, file, sizeMode = "keep") {
+  // orientation: sizeMode==="a4"のときのみ使用。"portrait"(縦) または "landscape"(横)
+  async function addImageAsPdfPage(pdfDoc, file, sizeMode = "keep", orientation = "portrait") {
     const img = await loadImageElement(file);
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
@@ -105,7 +114,7 @@
     const imgHeightPt = canvas.height * PT_PER_PX;
 
     if (sizeMode === "a4") {
-      const isLandscape = canvas.width >= canvas.height;
+      const isLandscape = orientation === "landscape";
       const pageWidth = isLandscape ? A4_LONG : A4_SHORT;
       const pageHeight = isLandscape ? A4_SHORT : A4_LONG;
       const scale = Math.min(pageWidth / imgWidthPt, pageHeight / imgHeightPt);
@@ -229,9 +238,10 @@
     mergeModalConfirm.textContent = "結合中...";
     try {
       const sizeMode = getPdfSizeMode();
+      const orientation = getPdfOrientation();
       const pdfDoc = await PDFLib.PDFDocument.create();
       for (const entry of mergeOrder) {
-        await addImageAsPdfPage(pdfDoc, entry.file, sizeMode);
+        await addImageAsPdfPage(pdfDoc, entry.file, sizeMode, orientation);
       }
       const pdfBytes = await pdfDoc.save();
       const baseName = mergeOrder.length === 1 ? mergeOrder[0].file.name.replace(/\.[^/.]+$/, "") : "結合PDF";

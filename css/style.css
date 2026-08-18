@@ -413,6 +413,12 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   display: none;
 }
 
+.radio-group + .radio-group {
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
 .radio-option {
   display: flex;
   align-items: center;

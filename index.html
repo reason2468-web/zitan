@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=59">
+<link rel="stylesheet" href="css/style.css?v=60">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -629,6 +629,16 @@
             <label class="radio-option">
               <input type="radio" name="convert-pdf-size" value="a4">
               <span>A4サイズに合わせる(余白ができる場合があります)</span>
+            </label>
+          </div>
+          <div class="radio-group" id="convert-pdf-orientation-row" hidden>
+            <label class="radio-option">
+              <input type="radio" name="convert-pdf-orientation" value="portrait" checked>
+              <span>A4縦</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="convert-pdf-orientation" value="landscape">
+              <span>A4横</span>
             </label>
           </div>
           <button id="convert-run" class="run-btn" disabled>変換する</button>
@@ -1312,23 +1322,23 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=59"></script>
-<script src="js/app.js?v=59"></script>
-<script src="js/settings.js?v=59"></script>
-<script src="js/tools/compress.js?v=59"></script>
-<script src="js/tools/convert.js?v=59"></script>
-<script src="js/tools/resize.js?v=59"></script>
-<script src="js/tools/exif.js?v=59"></script>
-<script src="js/tools/rotate.js?v=59"></script>
-<script src="js/tools/crop.js?v=59"></script>
-<script src="js/tools/filter.js?v=59"></script>
-<script src="js/tools/watermark.js?v=59"></script>
-<script src="js/tools/qrcode.js?v=59"></script>
-<script src="js/tools/charcount.js?v=59"></script>
-<script src="js/tools/colorpicker.js?v=59"></script>
-<script src="js/tools/unitconvert.js?v=59"></script>
-<script src="js/tools/datecalc.js?v=59"></script>
-<script src="js/tools/calculator.js?v=59"></script>
-<script src="js/tools/pdfdesk.js?v=59"></script>
+<script src="js/common.js?v=60"></script>
+<script src="js/app.js?v=60"></script>
+<script src="js/settings.js?v=60"></script>
+<script src="js/tools/compress.js?v=60"></script>
+<script src="js/tools/convert.js?v=60"></script>
+<script src="js/tools/resize.js?v=60"></script>
+<script src="js/tools/exif.js?v=60"></script>
+<script src="js/tools/rotate.js?v=60"></script>
+<script src="js/tools/crop.js?v=60"></script>
+<script src="js/tools/filter.js?v=60"></script>
+<script src="js/tools/watermark.js?v=60"></script>
+<script src="js/tools/qrcode.js?v=60"></script>
+<script src="js/tools/charcount.js?v=60"></script>
+<script src="js/tools/colorpicker.js?v=60"></script>
+<script src="js/tools/unitconvert.js?v=60"></script>
+<script src="js/tools/datecalc.js?v=60"></script>
+<script src="js/tools/calculator.js?v=60"></script>
+<script src="js/tools/pdfdesk.js?v=60"></script>
 </body>
 </html>
