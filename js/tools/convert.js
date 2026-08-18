@@ -40,7 +40,35 @@
     if (mimeType === "image/png") return "png";
     if (mimeType === "image/webp") return "webp";
     if (mimeType === "image/avif") return "avif";
+    if (mimeType === "application/pdf") return "pdf";
     return "jpg";
+  }
+
+  function labelFor(mimeType) {
+    if (mimeType === "application/pdf") return "PDF";
+    return mimeType.replace("image/", "").toUpperCase();
+  }
+
+  // 画像1枚をA4等ではなく画像自体のサイズのPDFに変換する(96dpi想定でpx→pt換算)
+  const PT_PER_PX = 0.75;
+
+  async function imageFileToPdfFile(file, img, canvas, ctx) {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const jpegBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
+
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    const jpgImage = await pdfDoc.embedJpg(jpegBytes);
+    const pageWidth = canvas.width * PT_PER_PX;
+    const pageHeight = canvas.height * PT_PER_PX;
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    page.drawImage(jpgImage, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+
+    const pdfBytes = await pdfDoc.save();
+    const newName = `${file.name.replace(/\.[^/.]+$/, "")}.pdf`;
+    return new File([pdfBytes], newName, { type: "application/pdf" });
   }
 
   runBtn.addEventListener("click", async () => {
@@ -51,7 +79,7 @@
     resultArea.innerHTML = "";
 
     const targetType = formatSelect.value;
-    const targetLabel = targetType.replace("image/", "").toUpperCase();
+    const targetLabel = labelFor(targetType);
     const ext = extensionFor(targetType);
     const results = [];
     const skipped = [];
@@ -74,6 +102,13 @@
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         const ctx = canvas.getContext("2d");
+
+        if (targetType === "application/pdf") {
+          const converted = await imageFileToPdfFile(file, img, canvas, ctx);
+          results.push(converted);
+          li.innerHTML = `<span>${file.name}</span><span>PDFに変換しました</span>`;
+          continue;
+        }
 
         if (targetType === "image/jpeg") {
           // JPEGは透明を扱えないため白背景で塗りつぶす
