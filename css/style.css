@@ -409,6 +409,10 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   gap: 10px;
 }
 
+.radio-group[hidden] {
+  display: none;
+}
+
 .radio-option {
   display: flex;
   align-items: center;
