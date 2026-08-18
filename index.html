@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=52">
+<link rel="stylesheet" href="css/style.css?v=53">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1170,16 +1170,17 @@
           </div>
         </div>
 
-        <p class="format-note">カードを別のカードの上に重ねて離すと結合、「分割」ボタンでページを取り出せます。回転もその場でできます。名前をクリックすると変更できます。空いている場所をドラッグすると範囲選択、Deleteキーで削除できます。(このツールはパソコンのマウス操作専用です)</p>
+        <p class="format-note">カードを別のカードの上に重ねて離すと結合、「分割」ボタンでページを取り出せます。回転もその場でできます。名前をクリックすると変更できます。空いている場所をドラッグすると範囲選択、重なったカードはCtrl(⌘)クリックで1枚ずつ選択できます。Deleteキーで削除できます。(このツールはパソコンのマウス操作専用です)</p>
 
         <div class="pdfdesk-toolbar">
           <button type="button" class="file-btn-outline" id="pdfdesk-undo-btn" disabled>↶ 元に戻す</button>
           <button type="button" class="file-btn-outline" id="pdfdesk-redo-btn" disabled>↷ やり直す</button>
-          <button type="button" class="file-btn-outline" id="pdfdesk-merge-selected-btn" disabled>選択したカードを結合</button>
+          <button type="button" class="file-btn-outline" id="pdfdesk-merge-selected-btn" disabled title="カードを2枚以上選ぶと押せるようになります">選択したカードを結合</button>
           <button type="button" class="file-btn-outline" id="pdfdesk-download-all-btn" disabled>すべてダウンロード</button>
           <button type="button" class="file-btn-outline" id="pdfdesk-fullscreen-btn">⛶ 全画面で開く</button>
         </div>
 
+        <input type="range" class="pdfdesk-hscroll" id="pdfdesk-hscroll" min="0" max="0" value="0" step="1" aria-label="横方向にスクロール" hidden>
         <div class="pdfdesk-canvas" id="pdfdesk-canvas">
           <div class="pdfdesk-canvas-scroll" id="pdfdesk-canvas-scroll">
             <p class="pdfdesk-empty" id="pdfdesk-empty">ここにPDFのカードが並びます</p>
@@ -1264,23 +1265,23 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script src="js/common.js?v=52"></script>
-<script src="js/app.js?v=52"></script>
-<script src="js/settings.js?v=52"></script>
-<script src="js/tools/compress.js?v=52"></script>
-<script src="js/tools/convert.js?v=52"></script>
-<script src="js/tools/resize.js?v=52"></script>
-<script src="js/tools/exif.js?v=52"></script>
-<script src="js/tools/rotate.js?v=52"></script>
-<script src="js/tools/crop.js?v=52"></script>
-<script src="js/tools/filter.js?v=52"></script>
-<script src="js/tools/watermark.js?v=52"></script>
-<script src="js/tools/qrcode.js?v=52"></script>
-<script src="js/tools/charcount.js?v=52"></script>
-<script src="js/tools/colorpicker.js?v=52"></script>
-<script src="js/tools/unitconvert.js?v=52"></script>
-<script src="js/tools/datecalc.js?v=52"></script>
-<script src="js/tools/calculator.js?v=52"></script>
-<script src="js/tools/pdfdesk.js?v=52"></script>
+<script src="js/common.js?v=53"></script>
+<script src="js/app.js?v=53"></script>
+<script src="js/settings.js?v=53"></script>
+<script src="js/tools/compress.js?v=53"></script>
+<script src="js/tools/convert.js?v=53"></script>
+<script src="js/tools/resize.js?v=53"></script>
+<script src="js/tools/exif.js?v=53"></script>
+<script src="js/tools/rotate.js?v=53"></script>
+<script src="js/tools/crop.js?v=53"></script>
+<script src="js/tools/filter.js?v=53"></script>
+<script src="js/tools/watermark.js?v=53"></script>
+<script src="js/tools/qrcode.js?v=53"></script>
+<script src="js/tools/charcount.js?v=53"></script>
+<script src="js/tools/colorpicker.js?v=53"></script>
+<script src="js/tools/unitconvert.js?v=53"></script>
+<script src="js/tools/datecalc.js?v=53"></script>
+<script src="js/tools/calculator.js?v=53"></script>
+<script src="js/tools/pdfdesk.js?v=53"></script>
 </body>
 </html>

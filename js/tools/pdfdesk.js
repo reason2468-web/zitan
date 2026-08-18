@@ -5,6 +5,7 @@
   const input = document.getElementById("pdfdesk-input");
   const scrollEl = document.getElementById("pdfdesk-canvas-scroll");
   const innerEl = document.getElementById("pdfdesk-canvas-inner");
+  const hscroll = document.getElementById("pdfdesk-hscroll");
   const emptyMsg = document.getElementById("pdfdesk-empty");
   const resultArea = document.getElementById("pdfdesk-result");
 
@@ -86,6 +87,7 @@
     });
     innerEl.style.width = `${maxX + 20}px`;
     innerEl.style.height = `${maxY + 20}px`;
+    updateHScroll();
   }
 
   // 画面上の座標(マウス位置など)を、拡大縮小・スクロールを考慮した実際のカード座標に変換する
@@ -94,12 +96,30 @@
     return { x: (clientX - rect.left) / zoomLevel, y: (clientY - rect.top) / zoomLevel };
   }
 
+  // ---------- 横スクロール用のバー(作業画面の上に表示) ----------
+
+  function updateHScroll() {
+    const max = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+    hscroll.hidden = max <= 1;
+    hscroll.max = String(max);
+    hscroll.value = String(scrollEl.scrollLeft);
+  }
+
+  hscroll.addEventListener("input", () => {
+    scrollEl.scrollLeft = Number(hscroll.value);
+  });
+
+  scrollEl.addEventListener("scroll", () => {
+    hscroll.value = String(scrollEl.scrollLeft);
+  });
+
   // ---------- 拡大縮小 ----------
 
   function setZoom(level) {
     zoomLevel = Math.max(0.5, Math.min(2, Math.round(level * 100) / 100));
     innerEl.style.transform = `scale(${zoomLevel})`;
     zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+    updateHScroll();
   }
 
   zoomInBtn.addEventListener("click", () => setZoom(zoomLevel + 0.1));
@@ -202,6 +222,9 @@
 
   function updateSelectionUI() {
     mergeSelectedBtn.disabled = selectedIds.size < 2;
+    mergeSelectedBtn.title = selectedIds.size < 2
+      ? "カードを2枚以上選ぶと押せるようになります"
+      : `${selectedIds.size}枚のカードを選択中`;
   }
 
   // ---------- 名前の変更 ----------
@@ -274,7 +297,15 @@
     });
     el.addEventListener("click", (e) => {
       if (e.target.closest("button") || e.target.closest(".pdfdesk-card-name")) return;
-      setSelection([card.id]);
+      // 重なったカードの束からは範囲選択で個別に選びにくいので、Ctrl(⌘)/Shiftクリックで1枚ずつ追加・解除できるようにする
+      if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        const next = new Set(selectedIds);
+        if (next.has(card.id)) next.delete(card.id);
+        else next.add(card.id);
+        setSelection(Array.from(next));
+      } else {
+        setSelection([card.id]);
+      }
     });
 
     attachDragHandlers(card);
@@ -553,13 +584,23 @@
     return nextCascadePosition(cards.length);
   }
 
+  // コピーした束をバラバラに配らず、元の並び(重なり方)を保ったまま1つの束として空いている場所に貼り付ける
   function pasteClipboard() {
     if (!clipboard.length) return;
     pushHistory();
-    const newIds = clipboard.map((item) => {
-      const pos = findFreeSpot(152, 220);
-      return addCard({ name: item.name, bytes: item.bytes, pageCount: item.pageCount }, pos).id;
-    });
+    const minX = Math.min(...clipboard.map((c) => c.x));
+    const minY = Math.min(...clipboard.map((c) => c.y));
+    const maxX = Math.max(...clipboard.map((c) => c.x)) + 152;
+    const maxY = Math.max(...clipboard.map((c) => c.y)) + 220;
+    const spot = findFreeSpot(maxX - minX, maxY - minY);
+    const dx = spot.x - minX;
+    const dy = spot.y - minY;
+    const newIds = clipboard.map((item) =>
+      addCard(
+        { name: item.name, bytes: item.bytes, pageCount: item.pageCount },
+        { x: item.x + dx, y: item.y + dy }
+      ).id
+    );
     setSelection(newIds);
   }
 
@@ -730,10 +771,15 @@
   function setFullscreen(on) {
     panel.classList.toggle("pdfdesk-fullscreen", on);
     fullscreenBtn.textContent = on ? "✕ 全画面を閉じる" : "⛶ 全画面で開く";
+    updateHScroll();
   }
 
   fullscreenBtn.addEventListener("click", () => {
     setFullscreen(!panel.classList.contains("pdfdesk-fullscreen"));
+  });
+
+  window.addEventListener("resize", () => {
+    if (isPanelVisible()) updateHScroll();
   });
 
   document.addEventListener("keydown", (e) => {
