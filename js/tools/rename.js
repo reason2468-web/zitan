@@ -131,19 +131,48 @@
 
   // ---------- 選択中ファイルの表示 ----------
 
+  function buildFileListPreview(files) {
+    const maxShow = 10;
+    const shown = files.slice(0, maxShow);
+    const remaining = files.length - shown.length;
+    const items = shown.map((f, i) => {
+      const sizeLabel = f.ref instanceof File ? `<span class="file-size">${formatBytes(f.ref.size)}</span>` : "";
+      return `
+        <li data-index="${i}">
+          <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
+          <span class="file-thumb pdf-file-icon" aria-hidden="true">📄</span>
+          <span class="file-name">${escapeHtml(f.name)}</span>
+          ${sizeLabel}
+        </li>
+      `;
+    }).join("");
+    const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";
+    return `
+      <div class="selected-file-header">
+        <p>${files.length}件のファイルを選択中</p>
+        <button type="button" class="clear-all-btn">すべて削除</button>
+      </div>
+      <ul class="selected-file-list">${items}${moreItem}</ul>
+    `;
+  }
+
   function renderFileList() {
     rulesArea.hidden = currentFiles.length === 0;
     if (!currentFiles.length) {
       resultArea.innerHTML = "";
       return;
     }
-    resultArea.innerHTML = `
-      <div class="selected-file-header">
-        <p>${currentFiles.length}件のファイルを選択中</p>
-        <button type="button" class="clear-all-btn" id="rename-clear-btn">すべて削除</button>
-      </div>
-    `;
-    document.getElementById("rename-clear-btn").addEventListener("click", resetFiles);
+    resultArea.innerHTML = buildFileListPreview(currentFiles);
+    resultArea.querySelectorAll(".file-remove-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.index);
+        currentFiles = currentFiles.slice(0, idx).concat(currentFiles.slice(idx + 1));
+        renderFileList();
+        updatePreview();
+      });
+    });
+    const clearBtn = resultArea.querySelector(".clear-all-btn");
+    if (clearBtn) clearBtn.addEventListener("click", resetFiles);
   }
 
   // ---------- リネームルール ----------
