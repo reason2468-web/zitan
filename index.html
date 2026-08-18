@@ -69,7 +69,7 @@
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="category-label">PDF</span>
-        <span class="category-count">2</span>
+        <span class="category-count">3</span>
       </button>
       <button class="category-btn" data-category="other">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -430,6 +430,25 @@
           <span class="tool-text">
             <span class="tool-label">PDF→画像変換</span>
             <span class="tool-caption">PDFの各ページをJPG・PNG画像として書き出す</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="pdfcompress" style="--gem:#2E8FE6;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="5.8"/>
+                <polygon points="8.5,5.8 15.5,5.8 12,9.3" fill="currentColor" stroke="none"/>
+                <path d="M8,9 Q12,11 16,9 Q17.3,12 16,15 Q12,13 8,15 Q6.7,12 8,9 Z"/>
+                <polygon points="8.5,18.2 15.5,18.2 12,14.7" fill="currentColor" stroke="none"/>
+                <line x1="12" y1="23" x2="12" y2="18.2"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">PDF圧縮</span>
+            <span class="tool-caption">重いPDFのファイルサイズを小さくする</span>
           </span>
         </button>
 
@@ -1346,6 +1365,43 @@
         <ul class="batch-list" id="pdf2image-list"></ul>
       </section>
 
+      <section id="pdfcompress" class="tool-panel">
+        <h2>PDF圧縮</h2>
+        <p class="desc">PDFのファイルサイズを小さくします。複数ファイルをまとめて処理できます。</p>
+        <div class="dropzone" data-target="pdfcompress-input">
+          <p>ここにPDFファイルをドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pdfcompress-input" accept="application/pdf,.pdf" multiple hidden></label>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="pdfcompress-mode" value="images" checked>
+              <span>写真だけ軽くする(文字はそのままコピー・検索できます)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="pdfcompress-mode" value="rasterize">
+              <span>ページ全体を写真にして軽くする(文字のコピー・検索はできなくなります)</span>
+            </label>
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="pdfcompress-level" value="recommended" checked>
+              <span>おすすめ画質</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="pdfcompress-level" value="strong">
+              <span>しっかり圧縮(画質は下がります)</span>
+            </label>
+          </div>
+          <button id="pdfcompress-run" class="run-btn" disabled>圧縮する</button>
+        </div>
+        <p class="format-note">「写真だけ軽くする」は、写真が少ないPDFには効果が薄いことがあります。効果がない場合は元のファイルのまま保存されます。</p>
+        <div class="result-area" id="pdfcompress-result"></div>
+        <ul class="batch-list" id="pdfcompress-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1391,5 +1447,6 @@
 <script src="js/tools/calculator.js?v=60"></script>
 <script src="js/tools/pdfdesk.js?v=60"></script>
 <script src="js/tools/pdf2image.js?v=60"></script>
+<script src="js/tools/pdfcompress.js?v=60"></script>
 </body>
 </html>
