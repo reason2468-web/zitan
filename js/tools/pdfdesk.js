@@ -13,6 +13,7 @@
   const redoBtn = document.getElementById("pdfdesk-redo-btn");
   const mergeSelectedBtn = document.getElementById("pdfdesk-merge-selected-btn");
   const downloadAllBtn = document.getElementById("pdfdesk-download-all-btn");
+  const clearAllBtn = document.getElementById("pdfdesk-clear-all-btn");
   const fullscreenBtn = document.getElementById("pdfdesk-fullscreen-btn");
   const zoomInBtn = document.getElementById("pdfdesk-zoom-in");
   const zoomOutBtn = document.getElementById("pdfdesk-zoom-out");
@@ -32,6 +33,12 @@
   const mergeModalCancel = document.getElementById("pdfdesk-merge-modal-cancel");
   const mergeModalConfirm = document.getElementById("pdfdesk-merge-modal-confirm");
 
+  const previewModal = document.getElementById("pdfdesk-preview-modal");
+  const previewModalBackdrop = document.getElementById("pdfdesk-preview-modal-backdrop");
+  const previewNote = document.getElementById("pdfdesk-preview-note");
+  const previewRow = document.getElementById("pdfdesk-preview-row");
+  const previewClose = document.getElementById("pdfdesk-preview-close");
+
   const MAX_VISUAL_PAGES = 60;
   const MAX_HISTORY = 30;
 
@@ -49,6 +56,7 @@
   let modalToken = 0;
   let mergePreviewOrder = [];
   let mergePreviewToken = 0;
+  let previewToken = 0;
   let undoStack = [];
   let redoStack = [];
   let clipboard = [];
@@ -64,6 +72,7 @@
   function updateEmptyState() {
     emptyMsg.hidden = cards.length > 0;
     downloadAllBtn.disabled = cards.length === 0;
+    clearAllBtn.disabled = cards.length === 0;
   }
 
   function nextCascadePosition(index) {
@@ -277,6 +286,7 @@
       <div class="pdfdesk-card-thumb"></div>
       <div class="pdfdesk-card-name" draggable="false" title="クリックして名前を変更">${card.name}</div>
       <div class="pdfdesk-card-actions">
+        <button type="button" class="pdfdesk-card-btn" data-action="preview" draggable="false">確認</button>
         <button type="button" class="pdfdesk-card-btn" data-action="split" draggable="false">分割</button>
         <button type="button" class="pdfdesk-card-btn" data-action="download" draggable="false">保存</button>
         <button type="button" class="file-remove-btn" data-action="remove" draggable="false" aria-label="このカードを削除">${TRASH_ICON}</button>
@@ -556,7 +566,61 @@
     else if (action === "remove") removeCard(card);
     else if (action === "download") downloadCard(card);
     else if (action === "split") openSplitModal(card);
+    else if (action === "preview") openPreviewModal(card);
   }
+
+  // ---------- 中身を確認(重ねて結合したカードのページ順を見る) ----------
+
+  async function openPreviewModal(card) {
+    previewModal.hidden = false;
+    previewNote.textContent = `${card.name}(全${card.pageCount}ページ)`;
+    previewRow.innerHTML = `<p>読み込み中...</p>`;
+    const token = ++previewToken;
+    try {
+      const pdf = await pdfjsLib.getDocument({ data: card.bytes.slice() }).promise;
+      if (token !== previewToken) return;
+      const pageCount = pdf.numPages;
+
+      if (pageCount > MAX_VISUAL_PAGES) {
+        previewRow.innerHTML = `<p style="color:red;">ページ数が多いため(${MAX_VISUAL_PAGES}ページ超)、この画面では表示できません。</p>`;
+        return;
+      }
+
+      previewRow.innerHTML = "";
+      for (let i = 1; i <= pageCount; i++) {
+        const page = await pdf.getPage(i);
+        const baseViewport = page.getViewport({ scale: 1 });
+        let scale = 110 / baseViewport.width;
+        if (baseViewport.height * scale > 160) scale = 160 / baseViewport.height;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        if (token !== previewToken) return;
+
+        const thumbCard = document.createElement("div");
+        thumbCard.className = "pdfsplit-thumb-card";
+        thumbCard.appendChild(canvas);
+        const num = document.createElement("span");
+        num.className = "pdfsplit-thumb-num";
+        num.textContent = i;
+        thumbCard.appendChild(num);
+        previewRow.appendChild(thumbCard);
+      }
+    } catch {
+      if (token !== previewToken) return;
+      previewRow.innerHTML = `<p style="color:red;">ページを読み込めませんでした。</p>`;
+    }
+  }
+
+  function closePreviewModal() {
+    previewModal.hidden = true;
+    previewToken++;
+  }
+
+  previewClose.addEventListener("click", closePreviewModal);
+  previewModalBackdrop.addEventListener("click", closePreviewModal);
 
   // ---------- コピー・切り取り・貼り付け ----------
 
@@ -764,6 +828,15 @@
     const saveResult = await saveProcessedFiles(files, { category: "PDF", tool: "自由に操作する" }, true);
     const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
     resultArea.innerHTML = `<p>${files.length}件のPDFを${savedMsg}</p>`;
+  });
+
+  // ---------- すべて削除 ----------
+
+  clearAllBtn.addEventListener("click", () => {
+    if (!cards.length) return;
+    if (!confirm(`作業スペースのカードを全部(${cards.length}件)削除しますか?(「元に戻す」でやり直せます)`)) return;
+    removeCards([...cards]);
+    resultArea.innerHTML = "";
   });
 
   // ---------- 全画面 ----------

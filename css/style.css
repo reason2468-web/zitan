@@ -1573,6 +1573,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .pdfdesk-card-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
 }
