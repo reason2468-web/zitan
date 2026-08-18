@@ -7,6 +7,7 @@
   const resultArea = document.getElementById("convert-result");
   const listEl = document.getElementById("convert-list");
   const pdfModeRow = document.getElementById("convert-pdf-mode-row");
+  const pdfSizeRow = document.getElementById("convert-pdf-size-row");
 
   const mergeModal = document.getElementById("convert-merge-modal");
   const mergeModalBackdrop = document.getElementById("convert-merge-modal-backdrop");
@@ -18,14 +19,26 @@
   let mergeOrder = [];
   let mergeToken = 0;
 
-  formatSelect.addEventListener("change", () => {
-    pdfModeRow.hidden = formatSelect.value !== "application/pdf";
-  });
-
   function getPdfMode() {
     const checked = document.querySelector('input[name="convert-pdf-mode"]:checked');
     return checked ? checked.value : "separate";
   }
+
+  function getPdfSizeMode() {
+    const checked = document.querySelector('input[name="convert-pdf-size"]:checked');
+    return checked ? checked.value : "keep";
+  }
+
+  function updatePdfOptionVisibility() {
+    const isPdf = formatSelect.value === "application/pdf";
+    pdfModeRow.hidden = !isPdf;
+    pdfSizeRow.hidden = !(isPdf && getPdfMode() === "merge");
+  }
+
+  formatSelect.addEventListener("change", updatePdfOptionVisibility);
+  document.querySelectorAll('input[name="convert-pdf-mode"]').forEach((radio) => {
+    radio.addEventListener("change", updatePdfOptionVisibility);
+  });
 
   async function loadFiles(fileList) {
     const newFiles = await loadImageFiles(fileList, { resultArea, listEl });
@@ -69,9 +82,13 @@
 
   // 画像1枚をA4等ではなく画像自体のサイズのPDFに変換する(96dpi想定でpx→pt換算)
   const PT_PER_PX = 0.75;
+  // A4サイズ(ポイント単位、210mm×297mm)
+  const A4_SHORT = 595.28;
+  const A4_LONG = 841.89;
 
   // 画像ファイルを既存のpdfDocに1ページとして追加する(単独PDF化・結合PDF化の両方から使う)
-  async function addImageAsPdfPage(pdfDoc, file) {
+  // sizeMode: "keep"(元のサイズのまま) または "a4"(A4に収まるよう縮小して中央配置)
+  async function addImageAsPdfPage(pdfDoc, file, sizeMode = "keep") {
     const img = await loadImageElement(file);
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
@@ -82,12 +99,30 @@
     ctx.drawImage(img, 0, 0);
     const jpegBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
-
     const jpgImage = await pdfDoc.embedJpg(jpegBytes);
-    const pageWidth = canvas.width * PT_PER_PX;
-    const pageHeight = canvas.height * PT_PER_PX;
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    page.drawImage(jpgImage, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+
+    const imgWidthPt = canvas.width * PT_PER_PX;
+    const imgHeightPt = canvas.height * PT_PER_PX;
+
+    if (sizeMode === "a4") {
+      const isLandscape = canvas.width >= canvas.height;
+      const pageWidth = isLandscape ? A4_LONG : A4_SHORT;
+      const pageHeight = isLandscape ? A4_SHORT : A4_LONG;
+      const scale = Math.min(pageWidth / imgWidthPt, pageHeight / imgHeightPt);
+      const drawWidth = imgWidthPt * scale;
+      const drawHeight = imgHeightPt * scale;
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      page.drawImage(jpgImage, {
+        x: (pageWidth - drawWidth) / 2,
+        y: (pageHeight - drawHeight) / 2,
+        width: drawWidth,
+        height: drawHeight,
+      });
+      return;
+    }
+
+    const page = pdfDoc.addPage([imgWidthPt, imgHeightPt]);
+    page.drawImage(jpgImage, { x: 0, y: 0, width: imgWidthPt, height: imgHeightPt });
   }
 
   async function imageFileToPdfFile(file) {
@@ -193,9 +228,10 @@
     mergeModalConfirm.disabled = true;
     mergeModalConfirm.textContent = "結合中...";
     try {
+      const sizeMode = getPdfSizeMode();
       const pdfDoc = await PDFLib.PDFDocument.create();
       for (const entry of mergeOrder) {
-        await addImageAsPdfPage(pdfDoc, entry.file);
+        await addImageAsPdfPage(pdfDoc, entry.file, sizeMode);
       }
       const pdfBytes = await pdfDoc.save();
       const baseName = mergeOrder.length === 1 ? mergeOrder[0].file.name.replace(/\.[^/.]+$/, "") : "結合PDF";
