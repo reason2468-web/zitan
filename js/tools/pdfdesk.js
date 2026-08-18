@@ -19,10 +19,11 @@
 
   const modal = document.getElementById("pdfdesk-modal");
   const modalBackdrop = document.getElementById("pdfdesk-modal-backdrop");
+  const modalSingleNote = document.getElementById("pdfdesk-modal-single-note");
+  const modalCustomArea = document.getElementById("pdfdesk-modal-custom-area");
   const modalThumbRow = document.getElementById("pdfdesk-modal-thumb-row");
   const modalCancel = document.getElementById("pdfdesk-modal-cancel");
   const modalConfirm = document.getElementById("pdfdesk-modal-confirm");
-  const modalSplitAll = document.getElementById("pdfdesk-modal-split-all");
 
   const mergeModal = document.getElementById("pdfdesk-merge-modal");
   const mergeModalBackdrop = document.getElementById("pdfdesk-merge-modal-backdrop");
@@ -41,6 +42,8 @@
   let selectedIds = new Set();
   let zoomLevel = 1;
   let modalCard = null;
+  let modalPageCount = 0;
+  let modalThumbsRendered = false;
   let modalSplitPoints = new Set();
   let modalToken = 0;
   let mergePreviewOrder = [];
@@ -48,7 +51,6 @@
   let undoStack = [];
   let redoStack = [];
   let clipboard = [];
-  let pasteCount = 0;
 
   function isPdfFile(file) {
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -531,28 +533,33 @@
     const selected = cards.filter((c) => selectedIds.has(c.id));
     if (!selected.length) return;
     clipboard = selected.map((c) => ({ name: c.name, bytes: c.bytes, pageCount: c.pageCount, x: c.x, y: c.y }));
-    pasteCount = 0;
   }
 
   function cutSelected() {
     const selected = cards.filter((c) => selectedIds.has(c.id));
     if (!selected.length) return;
     clipboard = selected.map((c) => ({ name: c.name, bytes: c.bytes, pageCount: c.pageCount, x: c.x, y: c.y }));
-    pasteCount = 0;
     removeCards(selected);
+  }
+
+  // 既存のカードに重ならない場所を、カスケードの並びから順番に探す
+  function findFreeSpot(width, height) {
+    for (let i = 0; i < 400; i++) {
+      const pos = nextCascadePosition(i);
+      const candidate = { x: pos.x, y: pos.y, w: width, h: height };
+      const overlaps = cards.some((c) => rectsTouch(candidate, { x: c.x, y: c.y, w: c.el.offsetWidth, h: c.el.offsetHeight }));
+      if (!overlaps) return pos;
+    }
+    return nextCascadePosition(cards.length);
   }
 
   function pasteClipboard() {
     if (!clipboard.length) return;
-    pasteCount += 1;
     pushHistory();
-    const offset = pasteCount * 24;
-    const newIds = clipboard.map((item) =>
-      addCard(
-        { name: item.name, bytes: item.bytes, pageCount: item.pageCount },
-        { x: item.x + offset, y: item.y + offset }
-      ).id
-    );
+    const newIds = clipboard.map((item) => {
+      const pos = findFreeSpot(152, 220);
+      return addCard({ name: item.name, bytes: item.bytes, pageCount: item.pageCount }, pos).id;
+    });
     setSelection(newIds);
   }
 
@@ -601,20 +608,40 @@
     openMergePreview(selected);
   });
 
+  // mergePreviewOrderは { card, el } の配列。矢印ボタンで並び替えるとき、
+  // サムネイルを再描画せずに配列とDOMの並びだけ入れ替える。
+  function renderMergePreviewOrder() {
+    mergePreviewRow.innerHTML = "";
+    mergePreviewOrder.forEach((entry, i) => {
+      entry.el.querySelector(".pdfdesk-merge-preview-label").textContent = `${i + 1}. ${entry.card.name}`;
+      const [leftBtn, rightBtn] = entry.el.querySelectorAll(".pdfdesk-merge-preview-move button");
+      leftBtn.disabled = i === 0;
+      rightBtn.disabled = i === mergePreviewOrder.length - 1;
+      mergePreviewRow.appendChild(entry.el);
+    });
+  }
+
+  function moveMergePreviewItem(entry, delta) {
+    const idx = mergePreviewOrder.indexOf(entry);
+    const newIdx = idx + delta;
+    if (idx === -1 || newIdx < 0 || newIdx >= mergePreviewOrder.length) return;
+    [mergePreviewOrder[idx], mergePreviewOrder[newIdx]] = [mergePreviewOrder[newIdx], mergePreviewOrder[idx]];
+    renderMergePreviewOrder();
+  }
+
   async function openMergePreview(selected) {
-    mergePreviewOrder = sortByPosition(selected);
+    mergePreviewOrder = sortByPosition(selected).map((card) => ({ card, el: null }));
     mergeModal.hidden = false;
     mergeModalConfirm.disabled = false;
     mergeModalConfirm.textContent = "この順番で結合する";
     mergePreviewRow.innerHTML = `<p>読み込み中...</p>`;
     const token = ++mergePreviewToken;
-    const elements = [];
-    for (let i = 0; i < mergePreviewOrder.length; i++) {
-      const card = mergePreviewOrder[i];
+
+    for (const entry of mergePreviewOrder) {
       const wrap = document.createElement("div");
       wrap.className = "pdfsplit-thumb-card";
       try {
-        wrap.appendChild(await renderPageThumbCanvas(card.bytes, 100, 150));
+        wrap.appendChild(await renderPageThumbCanvas(entry.card.bytes, 100, 150));
       } catch {
         const span = document.createElement("span");
         span.style.color = "red";
@@ -623,14 +650,32 @@
         wrap.appendChild(span);
       }
       if (token !== mergePreviewToken) return;
+
       const label = document.createElement("span");
       label.className = "pdfdesk-merge-preview-label";
-      label.textContent = `${i + 1}. ${card.name}`;
       wrap.appendChild(label);
-      elements.push(wrap);
+
+      const moveRow = document.createElement("div");
+      moveRow.className = "pdfdesk-merge-preview-move";
+      const leftBtn = document.createElement("button");
+      leftBtn.type = "button";
+      leftBtn.className = "pdfdesk-card-btn";
+      leftBtn.textContent = "◀";
+      leftBtn.setAttribute("aria-label", "順番を1つ前に");
+      leftBtn.addEventListener("click", () => moveMergePreviewItem(entry, -1));
+      const rightBtn = document.createElement("button");
+      rightBtn.type = "button";
+      rightBtn.className = "pdfdesk-card-btn";
+      rightBtn.textContent = "▶";
+      rightBtn.setAttribute("aria-label", "順番を1つ後ろに");
+      rightBtn.addEventListener("click", () => moveMergePreviewItem(entry, 1));
+      moveRow.appendChild(leftBtn);
+      moveRow.appendChild(rightBtn);
+      wrap.appendChild(moveRow);
+
+      entry.el = wrap;
     }
-    mergePreviewRow.innerHTML = "";
-    elements.forEach((el) => mergePreviewRow.appendChild(el));
+    renderMergePreviewOrder();
   }
 
   function closeMergeModal() {
@@ -647,7 +692,7 @@
     pushHistory();
     mergeModalConfirm.disabled = true;
     mergeModalConfirm.textContent = "結合中...";
-    const order = mergePreviewOrder;
+    const order = mergePreviewOrder.map((entry) => entry.card);
     try {
       const { PDFDocument } = PDFLib;
       const mergedDoc = await PDFDocument.create();
@@ -698,9 +743,18 @@
     }
   });
 
-  // ---------- 分割モーダル(ページを見ながら分ける・1ページずつ) ----------
+  // ---------- 分割モーダル(1ページずつ・お好みで分ける) ----------
+
+  function currentSplitModalMode() {
+    return document.querySelector('input[name="pdfdesk-split-mode"]:checked').value;
+  }
 
   function updateModalConfirmLabel() {
+    if (currentSplitModalMode() === "single") {
+      modalConfirm.textContent = "1ページずつ分割する";
+      modalConfirm.disabled = modalPageCount < 2;
+      return;
+    }
     const count = modalSplitPoints.size + 1;
     modalConfirm.textContent = modalSplitPoints.size ? `${count}枚のカードに分ける` : "分ける位置を選んでください";
     modalConfirm.disabled = modalSplitPoints.size === 0;
@@ -714,12 +768,6 @@
       if (token !== modalToken) return;
       const pageCount = pdf.numPages;
 
-      if (pageCount < 2) {
-        modalThumbRow.innerHTML = `<p>このカードは1ページしかないため、分けられません。</p>`;
-        modalSplitAll.disabled = true;
-        return;
-      }
-      modalSplitAll.disabled = false;
       if (pageCount > MAX_VISUAL_PAGES) {
         modalThumbRow.innerHTML = `<p style="color:red;">ページ数が多いため(${MAX_VISUAL_PAGES}ページ超)、この画面では表示できません。「1ページずつ分割する」はそのまま使えます。</p>`;
         return;
@@ -763,19 +811,50 @@
           modalThumbRow.appendChild(divider);
         }
       }
+      modalThumbsRendered = true;
     } catch {
       if (token !== modalToken) return;
       modalThumbRow.innerHTML = `<p style="color:red;">ページを読み込めませんでした。</p>`;
-      modalSplitAll.disabled = true;
     }
   }
 
-  function openSplitModal(card) {
+  function updateSplitModalModeUI() {
+    const isCustom = currentSplitModalMode() === "custom";
+    modalCustomArea.hidden = !isCustom;
+    modalSingleNote.hidden = isCustom;
+    if (isCustom && !modalThumbsRendered && modalCard) renderModalThumbnails(modalCard);
+    updateModalConfirmLabel();
+  }
+
+  document.querySelectorAll('input[name="pdfdesk-split-mode"]').forEach((radio) => {
+    radio.addEventListener("change", updateSplitModalModeUI);
+  });
+
+  async function openSplitModal(card) {
     modalCard = card;
     modalSplitPoints = new Set();
+    modalThumbsRendered = false;
+    modalPageCount = 0;
+    document.querySelector('input[name="pdfdesk-split-mode"][value="single"]').checked = true;
     modal.hidden = false;
+    modalCustomArea.hidden = true;
+    modalSingleNote.hidden = false;
+    modalSingleNote.textContent = "読み込み中...";
+    modalConfirm.disabled = true;
+
+    try {
+      const { PDFDocument } = PDFLib;
+      const doc = await PDFDocument.load(card.bytes, { ignoreEncryption: true });
+      modalPageCount = doc.getPageCount();
+    } catch {
+      modalPageCount = 0;
+    }
+    if (modalCard !== card) return;
+
+    modalSingleNote.textContent = modalPageCount < 2
+      ? "このカードは1ページしかないため、分けられません。"
+      : `このカードの${modalPageCount}ページすべてを、1枚ずつ別々のカードに分けます。`;
     updateModalConfirmLabel();
-    renderModalThumbnails(card);
   }
 
   function closeModal() {
@@ -821,33 +900,25 @@
       }
       closeModal();
     } catch {
-      modalThumbRow.innerHTML = `<p style="color:red;">分割に失敗しました。</p>`;
       modalConfirm.disabled = false;
       modalConfirm.textContent = "もう一度試す";
     }
   }
 
   modalConfirm.addEventListener("click", () => {
-    if (!modalCard || !modalSplitPoints.size) return;
-    modalConfirm.disabled = true;
-    modalConfirm.textContent = "分けています...";
-    applySplit(modalCard, Array.from(modalSplitPoints));
-  });
-
-  modalSplitAll.addEventListener("click", async () => {
     if (!modalCard) return;
-    modalSplitAll.disabled = true;
-    const { PDFDocument } = PDFLib;
-    try {
-      const doc = await PDFDocument.load(modalCard.bytes, { ignoreEncryption: true });
-      const pageCount = doc.getPageCount();
-      if (pageCount < 2) return;
+    if (currentSplitModalMode() === "single") {
+      if (modalPageCount < 2) return;
       const allPoints = [];
-      for (let i = 1; i < pageCount; i++) allPoints.push(i);
-      await applySplit(modalCard, allPoints);
-    } catch {
-      modalThumbRow.innerHTML = `<p style="color:red;">分割に失敗しました。</p>`;
-      modalSplitAll.disabled = false;
+      for (let i = 1; i < modalPageCount; i++) allPoints.push(i);
+      modalConfirm.disabled = true;
+      modalConfirm.textContent = "分けています...";
+      applySplit(modalCard, allPoints);
+    } else {
+      if (!modalSplitPoints.size) return;
+      modalConfirm.disabled = true;
+      modalConfirm.textContent = "分けています...";
+      applySplit(modalCard, Array.from(modalSplitPoints));
     }
   });
 
