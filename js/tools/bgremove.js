@@ -247,8 +247,10 @@
       samModelPromise = (async () => {
         const { SamModel, AutoProcessor } = await getSamModule();
         const [model, processor] = await Promise.all([
+          // fp16は端末によってはCPU側にfp16用の演算カーネルがなく、処理が極端に遅くなる/
+          // 進まなくなる報告があったため、互換性を優先してfp32を使う(その分ダウンロード量は増える)
           SamModel.from_pretrained(SAM_MODEL_ID, {
-            dtype: "fp16",
+            dtype: "fp32",
             device: "wasm",
             progress_callback: onProgress,
           }),
@@ -397,6 +399,11 @@
   });
 
   traceCancelBtn.addEventListener("click", () => {
+    // 実行中の読み込みがあれば無効化し(バックグラウンドで残っても結果を無視する)、
+    // すぐにもう一度「クリックして正確に切り抜く」を押せる状態に戻す
+    traceRunToken++;
+    traceStartInProgress = false;
+    manualStartBtn.disabled = false;
     hideTraceLoading();
     traceStage.hidden = true;
     controls.hidden = false;
@@ -407,13 +414,24 @@
     samImageEmbeddings = null;
   });
 
+  let traceStartInProgress = false;
+
   manualStartBtn.addEventListener("click", async () => {
     if (currentFiles.length !== 1) return;
+    // 読み込み中にもう一度押されると、内部処理が二重に走って状態が壊れるため、
+    // 完了(成功・失敗いずれか)するまでボタンを無効化して再入を防ぐ
+    if (traceStartInProgress) return;
+    traceStartInProgress = true;
+    manualStartBtn.disabled = true;
 
     const isFirstLoad = !samModuleLoaded;
     if (isFirstLoad) {
-      const proceed = confirm("クリックモードの前に、初回のみAIモデル(約20MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
-      if (!proceed) return;
+      const proceed = confirm("クリックモードの前に、初回のみAIモデル(約40MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      if (!proceed) {
+        traceStartInProgress = false;
+        manualStartBtn.disabled = false;
+        return;
+      }
     }
 
     const file = currentFiles[0];
@@ -437,7 +455,7 @@
 
       if (isFirstLoad) {
         modelDownloadProgress.clear();
-        showTraceLoading("AIモデルを準備しています", "初回のみ、セグメンテーションモデル(約20MB)をダウンロードします。");
+        showTraceLoading("AIモデルを準備しています", "初回のみ、セグメンテーションモデル(約40MB)をダウンロードします。");
       } else {
         showTraceLoading("画像を解析しています…");
       }
@@ -462,6 +480,9 @@
             : "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
         traceStage.hidden = true;
         controls.hidden = false;
+      } finally {
+        traceStartInProgress = false;
+        manualStartBtn.disabled = false;
       }
     };
     img.src = url;
