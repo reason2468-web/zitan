@@ -63,7 +63,9 @@
   }
 
   async function removeOneBackground(module, file) {
-    const outBlob = await module.removeBackground(file, { model: "isnet_quint8" });
+    // 実機比較の結果、軽量版(isnet_quint8)は輪郭が欠けることが多かったため、
+    // 精度を優先してisnet_fp16(標準品質・約90MB)を使う
+    const outBlob = await module.removeBackground(file, { model: "isnet_fp16" });
     return new File([outBlob], suggestRemovedName(file.name), { type: "image/png" });
   }
 
@@ -72,14 +74,14 @@
 
     const isFirstLoad = !bgRemoveModuleLoaded;
     if (isFirstLoad) {
-      const proceed = confirm("背景削除の前に、初回のみAIモデル(数十MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      const proceed = confirm("背景削除の前に、初回のみAIモデル(約90MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
       if (!proceed) return;
     }
 
     autoRunBtn.disabled = true;
     manualStartBtn.disabled = true;
     listEl.innerHTML = "";
-    statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…(数十MBのため少し時間がかかります)" : "";
+    statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…(約90MBのため少し時間がかかります)" : "";
 
     let module;
     try {
