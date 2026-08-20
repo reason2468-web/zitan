@@ -14,6 +14,20 @@
   const traceClearBtn = document.getElementById("bgremove-trace-clear");
   const traceApplyBtn = document.getElementById("bgremove-trace-apply");
   const traceCancelBtn = document.getElementById("bgremove-trace-cancel");
+  const traceStatus = document.getElementById("bgremove-trace-status");
+  const traceLoading = document.getElementById("bgremove-trace-loading");
+  const traceLoadingText = document.getElementById("bgremove-trace-loading-text");
+
+  function showTraceLoading(text) {
+    traceLoadingText.textContent = text;
+    traceLoading.hidden = false;
+    traceCanvas.style.pointerEvents = "none";
+  }
+
+  function hideTraceLoading() {
+    traceLoading.hidden = true;
+    traceCanvas.style.pointerEvents = "";
+  }
 
   let currentFiles = [];
 
@@ -279,9 +293,10 @@
       }
       currentMask = { data, width: mw, height: mh };
       traceApplyBtn.disabled = false;
+      traceStatus.textContent = "";
       redrawTraceCanvas();
     } catch (err) {
-      statusEl.textContent = "認識に失敗しました。もう一度クリックしてお試しください。";
+      traceStatus.textContent = "認識に失敗しました。もう一度クリックしてお試しください。";
     } finally {
       isDecoding = false;
       if (decodePending) {
@@ -342,19 +357,23 @@
       traceApplyBtn.disabled = true;
       drawBaseImage();
       controls.hidden = true;
+      traceStatus.textContent = "";
       traceStage.hidden = false;
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…" : "画像を解析中です…";
+      showTraceLoading(
+        isFirstLoad ? "AIモデルを読み込み中です…\n(初回のみ・約20MB)" : "画像を解析中です…"
+      );
       try {
         const { model, processor } = await getSamModel();
         const { RawImage } = await getSamModule();
         const rawImage = await RawImage.fromURL(url);
         samImageProcessed = await processor(rawImage);
         samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
-        statusEl.textContent = "";
+        hideTraceLoading();
       } catch (err) {
-        statusEl.textContent = "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+        hideTraceLoading();
+        traceStatus.textContent = "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
         traceStage.hidden = true;
         controls.hidden = false;
       }
