@@ -447,6 +447,26 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 
 .radio-option input[type="radio"]:disabled { cursor: not-allowed; }
 
+.radio-option-multiline {
+  align-items: flex-start;
+}
+
+.radio-option-multiline input[type="radio"] {
+  margin-top: 3px;
+}
+
+.radio-option-multiline span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-option-multiline small {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
 .target-size-row { margin-left: 24px; }
 
 .slider-row {

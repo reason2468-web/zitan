@@ -39,8 +39,9 @@
     return m ? m[1] : "mp4";
   }
 
-  function suggestRotatedName(originalName) {
-    return originalName.replace(/\.[^/.]+$/, "") + "_回転.mp4";
+  function suggestRotatedName(originalName, keepExt) {
+    const ext = keepExt || "mp4";
+    return originalName.replace(/\.[^/.]+$/, "") + "_回転." + ext;
   }
 
   function getRotationFilter(direction) {
@@ -49,7 +50,49 @@
     return "transpose=1";
   }
 
-  async function rotateOneFile(ffmpeg, file, direction, onProgress) {
+  // ブラウザの<video>やほとんどのアプリ・SNSは、この「表示回転」タグ(スマホの縦動画と同じ仕組み)を
+  // 見て自動で向きを変えて表示してくれるため、映像を書き換えずコピーするだけで済み、一瞬で終わる。
+  // このサイトが使っているffmpeg.wasmは少し古いバージョン(5.1.4)のため、新しい-display_rotationは
+  // 使えず、古い形式の-metadata:s:v:0 rotate=Xで書き込む(実機検証済み、向きの符号も同じ)
+  function getRotateMetadataAngle(direction) {
+    if (direction === "ccw") return "90";
+    if (direction === "180") return "180";
+    return "-90";
+  }
+
+  // MP4/MOV系のコンテナは回転タグを確実に保持できることを実機検証済み。
+  // それ以外(avi・webm・mkv等)はタグを書き込んでも消えてしまうことを確認したため、高速モードの対象外とする
+  const FAST_ROTATE_SAFE_EXTS = new Set(["mp4", "m4v", "mov", "3gp", "3g2"]);
+  function canUseFastRotation(filename) {
+    return FAST_ROTATE_SAFE_EXTS.has(getExt(filename).toLowerCase());
+  }
+
+  // タグ付けのみ(高速): ストリームコピーなので、ほぼ一瞬で終わる
+  async function rotateOneFileFast(ffmpeg, file, direction) {
+    const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const ext = getExt(file.name);
+    const inputName = `in_${uid}.${ext}`;
+    const outputName = `out_${uid}.${ext}`;
+
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      await ffmpeg.writeFile(inputName, bytes);
+      await ffmpeg.exec([
+        "-i", inputName,
+        "-c", "copy",
+        "-metadata:s:v:0", `rotate=${getRotateMetadataAngle(direction)}`,
+        outputName,
+      ]);
+      const data = await ffmpeg.readFile(outputName);
+      return new File([data], suggestRotatedName(file.name, ext), { type: file.type || "video/mp4" });
+    } finally {
+      try { await ffmpeg.deleteFile(inputName); } catch {}
+      try { await ffmpeg.deleteFile(outputName); } catch {}
+    }
+  }
+
+  // 動画を書き換え(確実): 全コマを描き直すため時間がかかる
+  async function rotateOneFileReencode(ffmpeg, file, direction, onProgress) {
     const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const inputName = `in_${uid}.${getExt(file.name)}`;
     const outputName = `out_${uid}.mp4`;
@@ -73,7 +116,7 @@
         outputName,
       ]);
       const data = await ffmpeg.readFile(outputName);
-      return new File([data], suggestRotatedName(file.name), { type: "video/mp4" });
+      return new File([data], suggestRotatedName(file.name, "mp4"), { type: "video/mp4" });
     } finally {
       ffmpeg.off("progress", progressHandler);
       try { await ffmpeg.deleteFile(inputName); } catch {}
@@ -95,15 +138,20 @@
       if (!proceed) return;
     }
 
-    statusEl.textContent = "動画の長さを確認中...";
-    const durations = await Promise.all(currentFiles.map(getVideoDuration));
-    const totalDuration = durations.reduce((sum, d) => sum + (d || 0), 0);
-    statusEl.textContent = "";
-    if (totalDuration > 180) {
-      const proceed = confirm(
-        `選択した動画の合計の長さは約${formatDuration(totalDuration)}です。\n回転もこのパソコンの処理能力だけで行うため、専用ソフトよりかなり遅く、動画の長さの数十倍の時間がかかることがあります(長い動画・高画質なほど、さらに時間がかかります)。\n途中で中断することもできます。続けますか?`
-      );
-      if (!proceed) return;
+    // 回転タグを保持できない形式(avi等)のファイルだけ、自動的に書き換え処理にまわる
+    const filesNeedingReencode = currentFiles.filter((f) => !canUseFastRotation(f.name));
+
+    if (filesNeedingReencode.length) {
+      statusEl.textContent = "動画の長さを確認中...";
+      const durations = await Promise.all(filesNeedingReencode.map(getVideoDuration));
+      const totalDuration = durations.reduce((sum, d) => sum + (d || 0), 0);
+      statusEl.textContent = "";
+      if (totalDuration > 180) {
+        const proceed = confirm(
+          `選択した中に、回転タグに対応していない形式のファイルが含まれているため、その分は動画を書き換える処理になります(合計約${formatDuration(totalDuration)})。\n書き換えはこのパソコンの処理能力だけで行うため、専用ソフトよりかなり遅く、動画の長さの数十倍の時間がかかることがあります。\n途中で中断することもできます。続けますか?`
+        );
+        if (!proceed) return;
+      }
     }
 
     const direction = getDirection();
@@ -142,19 +190,28 @@
       li.innerHTML = `<span>${file.name}</span><span>準備中...</span>`;
       listEl.appendChild(li);
 
-      const ticker = createProgressTicker(({ progress, elapsed, eta }) => {
-        const pct = Math.round(progress * 100);
-        const etaText = eta !== null ? `、残り目安 約${formatDuration(eta)}` : "";
-        li.innerHTML = `<span>${file.name}</span><span>回転中... ${pct}%(経過 ${formatDuration(elapsed)}${etaText})</span>`;
-      });
+      const useFast = canUseFastRotation(file.name);
 
       try {
-        const outFile = await rotateOneFile(ffmpeg, file, direction, (p) => ticker.setProgress(p));
-        ticker.stop();
+        let outFile;
+        if (useFast) {
+          li.innerHTML = `<span>${file.name}</span><span>回転タグを付けています...</span>`;
+          outFile = await rotateOneFileFast(ffmpeg, file, direction);
+        } else {
+          const ticker = createProgressTicker(({ progress, elapsed, eta }) => {
+            const pct = Math.round(progress * 100);
+            const etaText = eta !== null ? `、残り目安 約${formatDuration(eta)}` : "";
+            li.innerHTML = `<span>${file.name}</span><span>回転中... ${pct}%(経過 ${formatDuration(elapsed)}${etaText})</span>`;
+          });
+          try {
+            outFile = await rotateOneFileReencode(ffmpeg, file, direction, (p) => ticker.setProgress(p));
+          } finally {
+            ticker.stop();
+          }
+        }
         results.push(outFile);
         li.innerHTML = `<span>${file.name}</span><span>${formatBytes(outFile.size)}</span>`;
       } catch (err) {
-        ticker.stop();
         li.innerHTML = cancelRequested
           ? `<span>${file.name}</span><span>中断しました</span>`
           : `<span>${file.name}</span><span style="color:red;">失敗</span>`;
