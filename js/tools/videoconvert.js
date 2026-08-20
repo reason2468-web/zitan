@@ -129,13 +129,24 @@
     };
 
     const results = [];
+    let skippedCount = 0;
 
     for (const file of currentFiles) {
       if (cancelRequested) break;
 
       const li = document.createElement("li");
-      li.innerHTML = `<span>${file.name}</span><span>準備中...</span>`;
       listEl.appendChild(li);
+
+      // すでに変換先と同じ形式の場合は、再エンコードすると画質が落ちたりファイルが
+      // 大きくなったりするだけで意味がないため、変換せず元のファイルのまま扱う
+      if (getExt(file.name).toLowerCase() === format) {
+        results.push(file);
+        skippedCount++;
+        li.innerHTML = `<span>${file.name}</span><span>変換不要(すでに${format.toUpperCase()}形式です)</span>`;
+        continue;
+      }
+
+      li.innerHTML = `<span>${file.name}</span><span>準備中...</span>`;
 
       const ticker = createProgressTicker(({ progress, elapsed, eta }) => {
         const pct = Math.round(progress * 100);
@@ -163,10 +174,14 @@
     if (results.length) {
       const saveResult = await saveProcessedFiles(results, { category: "動画", tool: "形式変換" }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
+      const convertedCount = results.length - skippedCount;
+      const summaryText = skippedCount > 0
+        ? `${convertedCount}件を変換しました(${skippedCount}件はすでに同じ形式のため変換不要でした)。`
+        : `${convertedCount}件を変換しました。`;
       resultArea.innerHTML = `
         <div class="result-card">
           <div class="result-info">
-            <p>${results.length}件を変換しました。</p>
+            <p>${summaryText}</p>
             <p>${savedMsg}</p>
           </div>
         </div>
