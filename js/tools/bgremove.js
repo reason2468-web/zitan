@@ -21,8 +21,28 @@
   const traceLoadingFill = document.getElementById("bgremove-trace-loading-fill");
   const traceLoadingDetail = document.getElementById("bgremove-trace-loading-detail");
   const traceLoadingSub = document.getElementById("bgremove-trace-loading-sub");
+  const traceLoadingElapsed = document.getElementById("bgremove-trace-loading-elapsed");
 
   let traceLoadingStallTimer = null;
+  let traceElapsedTimer = null;
+  let traceElapsedStart = 0;
+
+  // 経過秒数を1秒ごとに表示し続けることで、「本当に動いているのか」を可視化する
+  function startTraceElapsed() {
+    traceElapsedStart = Date.now();
+    clearInterval(traceElapsedTimer);
+    traceLoadingElapsed.textContent = "経過時間: 0秒";
+    traceElapsedTimer = setInterval(() => {
+      const sec = Math.floor((Date.now() - traceElapsedStart) / 1000);
+      traceLoadingElapsed.textContent = `経過時間: ${sec}秒`;
+    }, 1000);
+  }
+
+  function stopTraceElapsed() {
+    clearInterval(traceElapsedTimer);
+    traceElapsedTimer = null;
+    traceLoadingElapsed.textContent = "";
+  }
 
   function showTraceLoading(text, sub) {
     traceLoadingText.textContent = text;
@@ -35,12 +55,13 @@
 
     clearTimeout(traceLoadingStallTimer);
     traceLoadingStallTimer = setTimeout(() => {
-      traceLoadingSub.textContent = "通信環境によっては数十秒〜数分かかる場合があります。ページを閉じずにお待ちください。";
+      traceLoadingSub.textContent = "処理には端末の性能によって数十秒〜数分かかる場合があります。ブラウザを閉じずにそのままお待ちください。";
     }, 20000);
   }
 
   function hideTraceLoading() {
     clearTimeout(traceLoadingStallTimer);
+    stopTraceElapsed();
     traceLoading.hidden = true;
     traceCanvas.style.pointerEvents = "";
   }
@@ -66,8 +87,8 @@
     }
   }
 
-  // 通信状況などで極端に時間がかかった場合に、無限に待たせず失敗として扱うまでの上限
-  const TRACE_LOAD_TIMEOUT_MS = 90000;
+  // 通信状況や端末の性能などで極端に時間がかかった場合に、無限に待たせず失敗として扱うまでの上限
+  const TRACE_LOAD_TIMEOUT_MS = 150000;
   function withTraceLoadTimeout(promise) {
     return Promise.race([
       promise,
@@ -420,6 +441,7 @@
       } else {
         showTraceLoading("画像を解析しています…");
       }
+      startTraceElapsed();
       try {
         await withTraceLoadTimeout(
           (async () => {
@@ -436,7 +458,7 @@
         hideTraceLoading();
         traceStatus.textContent =
           err && err.message === "trace-load-timeout"
-            ? "読み込みに時間がかかりすぎているため中断しました。ページを再読み込みしてから、もう一度お試しください(広告ブロッカーなどの拡張機能が原因になっている場合もあります)。"
+            ? "処理に時間がかかりすぎているため中断しました。端末の性能によっては、このクリックモードが動作しないことがあります。お手数ですが、AIによる自動削除モードもお試しください。"
             : "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
         traceStage.hidden = true;
         controls.hidden = false;

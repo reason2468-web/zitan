@@ -1949,6 +1949,15 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   min-height: 1.2em;
 }
 
+.trace-loading-overlay p.trace-loading-elapsed {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
 .trace-loading-bar {
   width: min(240px, 80%);
   height: 6px;
