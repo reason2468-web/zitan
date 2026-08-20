@@ -551,6 +551,10 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin: 18px 0;
 }
 
+.controls[hidden] {
+  display: none;
+}
+
 .controls label {
   font-size: 0.9rem;
 }
