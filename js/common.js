@@ -420,3 +420,58 @@ function getSharedFFmpeg() {
   });
   return sharedFFmpegLoadPromise;
 }
+
+// 処理を中断したい場合に使う(ワーカーごと止めるので、次回はエンジンを読み込み直しになる)
+function terminateSharedFFmpeg() {
+  if (sharedFFmpegInstance) {
+    try { sharedFFmpegInstance.terminate(); } catch {}
+  }
+  sharedFFmpegInstance = null;
+  sharedFFmpegLoadPromise = null;
+}
+
+// 動画ファイルの長さ(秒)を、ffmpegを使わずブラウザの<video>要素だけで素早く取得する
+function getVideoDuration(file) {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : null;
+      URL.revokeObjectURL(video.src);
+      resolve(duration);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      resolve(null);
+    };
+    video.src = URL.createObjectURL(file);
+  });
+}
+
+function formatDuration(totalSeconds) {
+  const s = Math.round(totalSeconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}時間${m}分`;
+  if (m > 0) return `${m}分${sec}秒`;
+  return `${sec}秒`;
+}
+
+// 処理中であることが常に見えるよう、進捗%が動かない間も経過時間を1秒ごとに知らせる。
+// 進捗が一定以上わかったら、経過時間から残り時間の目安も計算して伝える。
+function createProgressTicker(onTick) {
+  const startTime = Date.now();
+  let currentProgress = 0;
+  const tick = () => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const eta = currentProgress > 0.03 ? elapsed * (1 / currentProgress - 1) : null;
+    onTick({ elapsed, progress: currentProgress, eta });
+  };
+  const intervalId = setInterval(tick, 1000);
+  tick();
+  return {
+    setProgress(p) { currentProgress = p; },
+    stop() { clearInterval(intervalId); },
+  };
+}

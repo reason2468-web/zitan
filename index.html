@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=81">
+<link rel="stylesheet" href="css/style.css?v=82">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1784,7 +1784,7 @@
       <section id="videocompress" class="tool-panel">
         <h2>動画圧縮</h2>
         <p class="desc">動画のファイルサイズを小さくします。変換はすべてこのブラウザの中で行われ、動画がどこかにアップロードされることはありません。出力はMP4形式になります。</p>
-        <p class="format-note">初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。動画の長さやパソコンの性能によって、圧縮に数十秒〜数分かかることがあります。</p>
+        <p class="format-note">初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。圧縮はこのパソコンの処理能力だけで行うため専用ソフトより遅く、動画の長さや画質によっては数分〜数十分かかることがあります(長い動画は実行前に目安の時間をお知らせします)。処理中はいつでも中断できます。</p>
         <div class="dropzone" data-target="videocompress-input">
           <p>ここに動画ファイルをドラッグ&ドロップ<br>または</p>
           <div class="dropzone-buttons">
@@ -1802,7 +1802,10 @@
               <span>しっかり圧縮(画質は下がります、横幅854pxまで)</span>
             </label>
           </div>
-          <button id="videocompress-run" class="run-btn" disabled>圧縮する</button>
+          <div class="dropzone-buttons">
+            <button id="videocompress-run" class="run-btn" disabled>圧縮する</button>
+            <button type="button" id="videocompress-cancel" class="file-btn-outline" hidden>中断する</button>
+          </div>
         </div>
         <p class="format-note" id="videocompress-status"></p>
         <div class="result-area" id="videocompress-result"></div>
@@ -1841,31 +1844,31 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=81"></script>
-<script src="js/app.js?v=81"></script>
-<script src="js/settings.js?v=81"></script>
-<script src="js/tools/compress.js?v=81"></script>
-<script src="js/tools/convert.js?v=81"></script>
-<script src="js/tools/resize.js?v=81"></script>
-<script src="js/tools/exif.js?v=81"></script>
-<script src="js/tools/rotate.js?v=81"></script>
-<script src="js/tools/crop.js?v=81"></script>
-<script src="js/tools/filter.js?v=81"></script>
-<script src="js/tools/watermark.js?v=81"></script>
-<script src="js/tools/qrcode.js?v=81"></script>
-<script src="js/tools/qrcodescan.js?v=81"></script>
-<script src="js/tools/charcount.js?v=81"></script>
-<script src="js/tools/colorpicker.js?v=81"></script>
-<script src="js/tools/unitconvert.js?v=81"></script>
-<script src="js/tools/datecalc.js?v=81"></script>
-<script src="js/tools/calculator.js?v=81"></script>
-<script src="js/tools/pdfdesk.js?v=81"></script>
-<script src="js/tools/pdf2image.js?v=81"></script>
-<script src="js/tools/pdfcompress.js?v=81"></script>
-<script src="js/tools/pdf2text.js?v=81"></script>
-<script src="js/tools/rename.js?v=81"></script>
-<script src="js/tools/tts.js?v=81"></script>
-<script src="js/tools/video2mp3.js?v=81"></script>
-<script src="js/tools/videocompress.js?v=81"></script>
+<script src="js/common.js?v=82"></script>
+<script src="js/app.js?v=82"></script>
+<script src="js/settings.js?v=82"></script>
+<script src="js/tools/compress.js?v=82"></script>
+<script src="js/tools/convert.js?v=82"></script>
+<script src="js/tools/resize.js?v=82"></script>
+<script src="js/tools/exif.js?v=82"></script>
+<script src="js/tools/rotate.js?v=82"></script>
+<script src="js/tools/crop.js?v=82"></script>
+<script src="js/tools/filter.js?v=82"></script>
+<script src="js/tools/watermark.js?v=82"></script>
+<script src="js/tools/qrcode.js?v=82"></script>
+<script src="js/tools/qrcodescan.js?v=82"></script>
+<script src="js/tools/charcount.js?v=82"></script>
+<script src="js/tools/colorpicker.js?v=82"></script>
+<script src="js/tools/unitconvert.js?v=82"></script>
+<script src="js/tools/datecalc.js?v=82"></script>
+<script src="js/tools/calculator.js?v=82"></script>
+<script src="js/tools/pdfdesk.js?v=82"></script>
+<script src="js/tools/pdf2image.js?v=82"></script>
+<script src="js/tools/pdfcompress.js?v=82"></script>
+<script src="js/tools/pdf2text.js?v=82"></script>
+<script src="js/tools/rename.js?v=82"></script>
+<script src="js/tools/tts.js?v=82"></script>
+<script src="js/tools/video2mp3.js?v=82"></script>
+<script src="js/tools/videocompress.js?v=82"></script>
 </body>
 </html>

@@ -2,11 +2,13 @@
   const dropzone = document.querySelector('[data-target="videocompress-input"]');
   const input = document.getElementById("videocompress-input");
   const runBtn = document.getElementById("videocompress-run");
+  const cancelBtn = document.getElementById("videocompress-cancel");
   const resultArea = document.getElementById("videocompress-result");
   const listEl = document.getElementById("videocompress-list");
   const statusEl = document.getElementById("videocompress-status");
 
   let currentFiles = [];
+  let cancelRequested = false;
 
   function getLevel() {
     const checked = document.querySelector('input[name="videocompress-level"]:checked');
@@ -42,9 +44,11 @@
   }
 
   function getSettings(level) {
+    // wasm(ブラウザ内)でのエンコードはパソコンの処理能力だけが頼りで、専用ソフトよりずっと遅いため、
+    // 圧縮率より速度を優先したプリセット(ultrafast)にしている
     return level === "strong"
-      ? { maxWidth: 854, crf: 30, audioBitrate: "96k", preset: "veryfast" }
-      : { maxWidth: 1280, crf: 26, audioBitrate: "128k", preset: "veryfast" };
+      ? { maxWidth: 854, crf: 30, audioBitrate: "96k", preset: "ultrafast" }
+      : { maxWidth: 1280, crf: 26, audioBitrate: "128k", preset: "ultrafast" };
   }
 
   async function compressOneFile(ffmpeg, file, level, onProgress) {
@@ -54,8 +58,7 @@
     const outputName = `out_${uid}.mp4`;
 
     const progressHandler = ({ progress }) => {
-      const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
-      onProgress(pct);
+      onProgress(Math.max(0, Math.min(1, progress)));
     };
     ffmpeg.on("progress", progressHandler);
 
@@ -81,6 +84,11 @@
     }
   }
 
+  function setProcessingUI(isProcessing) {
+    runBtn.hidden = isProcessing;
+    cancelBtn.hidden = !isProcessing;
+  }
+
   runBtn.addEventListener("click", async () => {
     if (!currentFiles.length) return;
 
@@ -90,10 +98,22 @@
       if (!proceed) return;
     }
 
-    const level = getLevel();
+    statusEl.textContent = "動画の長さを確認中...";
+    const durations = await Promise.all(currentFiles.map(getVideoDuration));
+    const totalDuration = durations.reduce((sum, d) => sum + (d || 0), 0);
+    statusEl.textContent = "";
+    if (totalDuration > 180) {
+      const proceed = confirm(
+        `選択した動画の合計の長さは約${formatDuration(totalDuration)}です。\n圧縮はこのパソコンの処理能力だけで行うため、専用ソフトより遅く、動画の長さの数倍〜十数倍の時間がかかることがあります(長い動画・高画質なほど時間がかかります)。\n途中で中断することもできます。続けますか?`
+      );
+      if (!proceed) return;
+    }
 
+    const level = getLevel();
+    cancelRequested = false;
+
+    setProcessingUI(true);
     runBtn.disabled = true;
-    runBtn.textContent = "圧縮中...";
     listEl.innerHTML = "";
     resultArea.innerHTML = "";
     statusEl.textContent = isFirstLoad ? "変換エンジンを読み込み中です…" : "";
@@ -103,25 +123,39 @@
       ffmpeg = await getSharedFFmpeg();
     } catch (err) {
       statusEl.textContent = "変換エンジンの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+      setProcessingUI(false);
       runBtn.disabled = false;
-      runBtn.textContent = "圧縮する";
       return;
     }
     statusEl.textContent = "";
+
+    cancelBtn.onclick = () => {
+      cancelRequested = true;
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = "中断しています...";
+      terminateSharedFFmpeg();
+    };
 
     const results = [];
     let totalBefore = 0;
     let totalAfter = 0;
 
     for (const file of currentFiles) {
+      if (cancelRequested) break;
+
       const li = document.createElement("li");
-      li.innerHTML = `<span>${file.name}</span><span>圧縮中... 0%</span>`;
+      li.innerHTML = `<span>${file.name}</span><span>準備中...</span>`;
       listEl.appendChild(li);
 
+      const ticker = createProgressTicker(({ progress, elapsed, eta }) => {
+        const pct = Math.round(progress * 100);
+        const etaText = eta !== null ? `、残り目安 約${formatDuration(eta)}` : "";
+        li.innerHTML = `<span>${file.name}</span><span>圧縮中... ${pct}%(経過 ${formatDuration(elapsed)}${etaText})</span>`;
+      });
+
       try {
-        const outFile = await compressOneFile(ffmpeg, file, level, (pct) => {
-          li.innerHTML = `<span>${file.name}</span><span>圧縮中... ${pct}%</span>`;
-        });
+        const outFile = await compressOneFile(ffmpeg, file, level, (p) => ticker.setProgress(p));
+        ticker.stop();
         // 圧縮の効果がなかった(むしろ大きくなった)場合は、元のファイルのまま残す
         const finalFile = outFile.size < file.size ? outFile : file;
 
@@ -135,8 +169,15 @@
           : `効果なし(元のファイルのまま)`;
         li.innerHTML = `<span>${file.name}</span><span>${summary}</span>`;
       } catch (err) {
-        li.innerHTML = `<span>${file.name}</span><span style="color:red;">失敗</span>`;
+        ticker.stop();
+        li.innerHTML = cancelRequested
+          ? `<span>${file.name}</span><span>中断しました</span>`
+          : `<span>${file.name}</span><span style="color:red;">失敗</span>`;
       }
+    }
+
+    if (cancelRequested) {
+      statusEl.textContent = "中断しました。もう一度「圧縮する」を押すとやり直せます。";
     }
 
     if (results.length) {
@@ -153,11 +194,13 @@
           </div>
         </div>
       `;
-    } else {
+    } else if (!cancelRequested) {
       resultArea.innerHTML = `<p style="color:red;">圧縮できたファイルがありませんでした。</p>`;
     }
 
+    setProcessingUI(false);
+    cancelBtn.disabled = false;
+    cancelBtn.textContent = "中断する";
     runBtn.disabled = false;
-    runBtn.textContent = "圧縮する";
   });
 })();
