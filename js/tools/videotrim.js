@@ -6,8 +6,12 @@
   const durationEl = document.getElementById("videotrim-duration");
   const startInput = document.getElementById("videotrim-start");
   const endInput = document.getElementById("videotrim-end");
+  const startSlider = document.getElementById("videotrim-start-slider");
+  const endSlider = document.getElementById("videotrim-end-slider");
   const startNowBtn = document.getElementById("videotrim-start-now");
   const endNowBtn = document.getElementById("videotrim-end-now");
+  const rangePreviewBtn = document.getElementById("videotrim-range-preview");
+  const miniPreview = document.getElementById("videotrim-mini-preview");
   const errorEl = document.getElementById("videotrim-error");
   const runBtn = document.getElementById("videotrim-run");
   const cancelBtn = document.getElementById("videotrim-cancel");
@@ -18,15 +22,20 @@
   let videoDuration = 0;
   let cancelRequested = false;
   let previewUrl = null;
+  let miniPreviewStopHandler = null;
 
+  // 0.01秒(センチ秒)単位の整数で扱うことで、浮動小数点の誤差を避ける
   function formatTimeInput(totalSeconds) {
-    const s = Math.max(0, Math.round(totalSeconds));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
-    const ss = String(sec).padStart(2, "0");
-    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+    const totalCentiseconds = Math.max(0, Math.round(totalSeconds * 100));
+    const cs = totalCentiseconds % 100;
+    const totalSecondsInt = Math.floor(totalCentiseconds / 100);
+    const sec = totalSecondsInt % 60;
+    const totalMinutes = Math.floor(totalSecondsInt / 60);
+    const min = totalMinutes % 60;
+    const hour = Math.floor(totalMinutes / 60);
+    const secStr = `${String(sec).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
+    const minStr = hour > 0 ? String(min).padStart(2, "0") : String(min);
+    return hour > 0 ? `${hour}:${minStr}:${secStr}` : `${minStr}:${secStr}`;
   }
 
   function parseTimeInput(str) {
@@ -66,12 +75,18 @@
     previewUrl = URL.createObjectURL(videoFile);
     preview.src = previewUrl;
     preview.hidden = false;
+    miniPreview.src = previewUrl;
+    miniPreview.hidden = false;
 
     preview.onloadedmetadata = () => {
       videoDuration = preview.duration;
       durationEl.textContent = `動画の長さ: ${formatDuration(videoDuration)}`;
       startInput.value = formatTimeInput(0);
       endInput.value = formatTimeInput(videoDuration);
+      startSlider.max = videoDuration;
+      startSlider.value = 0;
+      endSlider.max = videoDuration;
+      endSlider.value = videoDuration;
       controls.hidden = false;
       runBtn.disabled = false;
     };
@@ -81,9 +96,51 @@
 
   startNowBtn.addEventListener("click", () => {
     startInput.value = formatTimeInput(preview.currentTime);
+    startSlider.value = preview.currentTime;
   });
   endNowBtn.addEventListener("click", () => {
     endInput.value = formatTimeInput(preview.currentTime);
+    endSlider.value = preview.currentTime;
+  });
+
+  startSlider.addEventListener("input", () => {
+    const v = Number(startSlider.value);
+    startInput.value = formatTimeInput(v);
+    preview.currentTime = v;
+  });
+  endSlider.addEventListener("input", () => {
+    const v = Number(endSlider.value);
+    endInput.value = formatTimeInput(v);
+    preview.currentTime = v;
+  });
+  startInput.addEventListener("change", () => {
+    const v = parseTimeInput(startInput.value);
+    if (v !== null) startSlider.value = Math.min(Math.max(v, 0), videoDuration);
+  });
+  endInput.addEventListener("change", () => {
+    const v = parseTimeInput(endInput.value);
+    if (v !== null) endSlider.value = Math.min(Math.max(v, 0), videoDuration);
+  });
+
+  rangePreviewBtn.addEventListener("click", () => {
+    errorEl.textContent = "";
+    const start = parseTimeInput(startInput.value);
+    const end = parseTimeInput(endInput.value);
+    if (start === null || end === null || start >= end) {
+      errorEl.textContent = "開始位置・終了位置を正しく入力してから、プレビューをお試しください。";
+      return;
+    }
+    if (miniPreviewStopHandler) miniPreview.removeEventListener("timeupdate", miniPreviewStopHandler);
+    miniPreview.currentTime = start;
+    miniPreview.play();
+    miniPreviewStopHandler = () => {
+      if (miniPreview.currentTime >= end) {
+        miniPreview.pause();
+        miniPreview.removeEventListener("timeupdate", miniPreviewStopHandler);
+        miniPreviewStopHandler = null;
+      }
+    };
+    miniPreview.addEventListener("timeupdate", miniPreviewStopHandler);
   });
 
   function setProcessingUI(isProcessing) {
@@ -98,7 +155,7 @@
     const start = parseTimeInput(startInput.value);
     const end = parseTimeInput(endInput.value);
     if (start === null || end === null) {
-      errorEl.textContent = "開始・終了位置は「分:秒」の形式で入力してください(例: 1:30)。";
+      errorEl.textContent = "開始・終了位置は「分:秒」の形式で入力してください(例: 1:23.45)。";
       return;
     }
     if (start >= end) {

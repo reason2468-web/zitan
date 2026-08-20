@@ -792,13 +792,30 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 }
 
 .trim-time-row input[type="text"] {
-  width: 90px;
+  width: 110px;
   padding: 7px 10px;
   border: 1px solid var(--line);
   border-radius: 7px;
   font-family: var(--font-body);
   font-size: 0.95rem;
   text-align: center;
+}
+
+.trim-slider {
+  width: 100%;
+  accent-color: var(--moss);
+  margin: -6px 0 4px;
+}
+
+.trim-mini-preview[hidden] { display: none; }
+
+.trim-mini-preview {
+  display: block;
+  width: 280px;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #000;
 }
 
 .qrcode-canvas {
