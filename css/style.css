@@ -818,6 +818,14 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: #000;
 }
 
+.trim-preview-btn {
+  padding: 15px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-width: 2px;
+  border-radius: 11px;
+}
+
 .qrcode-canvas {
   padding: 16px;
   box-sizing: border-box;

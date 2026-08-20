@@ -140,7 +140,7 @@
 
     const isFirstLoad = !isFFmpegLoaded();
     if (isFirstLoad) {
-      const proceed = confirm("初回のみ、変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      const proceed = confirm("プレビュー再生・切り出しの前に、初回のみ変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
       if (!proceed) return;
     }
 
@@ -213,7 +213,7 @@
 
     const isFirstLoad = !isFFmpegLoaded();
     if (isFirstLoad) {
-      const proceed = confirm("初回のみ、変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      const proceed = confirm("プレビュー再生・切り出しの前に、初回のみ変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
       if (!proceed) return;
     }
 
