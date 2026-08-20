@@ -52,6 +52,32 @@
       : { ext: "mp4", mime: "video/mp4", args: ["-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-c:a", "aac", "-b:a", "192k"] };
   }
 
+  // すでに変換先のコンテナと互換性のあるコーデック(例: MOV内のH.264+AACをMP4へ)の場合、
+  // 映像・音声データは書き換えず、コンテナだけ入れ替える(ストリームコピー)ことで一瞬で終わる。
+  // 非対応の組み合わせ(例: WebM内のVP8をMP4へ)の場合、ffmpeg.wasmはエラーを投げずに
+  // 中身が空の壊れたファイルを返すことがあるため、出力サイズを入力と比較して検証している
+  async function tryRemux(ffmpeg, file, format) {
+    const { ext, mime } = getSettings(format);
+    const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const inputName = `in_${uid}.${getExt(file.name)}`;
+    const outputName = `out_${uid}.${ext}`;
+
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const inputSize = bytes.length; // writeFile()に渡すとバッファが転送され、bytes.lengthは0になってしまうため先に保存しておく
+      await ffmpeg.writeFile(inputName, bytes);
+      await ffmpeg.exec(["-i", inputName, "-c", "copy", outputName]);
+      const data = await ffmpeg.readFile(outputName);
+      if (!data || data.length < inputSize * 0.3) {
+        throw new Error("remux produced an invalid or unexpectedly small output");
+      }
+      return new File([data], suggestConvertedName(file.name, ext), { type: mime });
+    } finally {
+      try { await ffmpeg.deleteFile(inputName); } catch {}
+      try { await ffmpeg.deleteFile(outputName); } catch {}
+    }
+  }
+
   async function convertOneFile(ffmpeg, file, format, onProgress) {
     const { ext, mime, args } = getSettings(format);
     const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -144,6 +170,17 @@
         skippedCount++;
         li.innerHTML = `<span>${file.name}</span><span>変換不要(すでに${format.toUpperCase()}形式です)</span>`;
         continue;
+      }
+
+      li.innerHTML = `<span>${file.name}</span><span>コンテナの入れ替えを試しています...</span>`;
+
+      try {
+        const outFile = await tryRemux(ffmpeg, file, format);
+        results.push(outFile);
+        li.innerHTML = `<span>${file.name}</span><span>${formatBytes(file.size)} → ${formatBytes(outFile.size)}(${outFile.name.split(".").pop()}・再エンコードなし)</span>`;
+        continue;
+      } catch (err) {
+        // 互換性がない場合はここに来る。再エンコードにフォールバックする
       }
 
       li.innerHTML = `<span>${file.name}</span><span>準備中...</span>`;
