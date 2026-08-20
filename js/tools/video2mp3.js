@@ -186,7 +186,7 @@
     }
 
     if (results.length) {
-      const saveResult = await saveProcessedFiles(results, { category: "その他", tool: "動画→MP3変換" }, currentFiles.length > 1);
+      const saveResult = await saveProcessedFiles(results, { category: "動画", tool: "MP3変換" }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
       resultArea.innerHTML = `
         <div class="result-card">
