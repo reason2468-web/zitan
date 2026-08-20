@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=88">
+<link rel="stylesheet" href="css/style.css?v=89">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -95,7 +95,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">3</span>
+        <span class="category-count">4</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -631,6 +631,23 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">入力した文章をパソコンの音声で読み上げ(声・速さを選択可)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="videoconvert" style="--gem:#9B6BD9;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="9" height="9" rx="2"/>
+                <rect x="13" y="10" width="9" height="9" rx="2"/>
+                <path d="M11 9.5l2 0.5-0.5 2" stroke-width="1.4"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">動画の形式変換</span>
+            <span class="tool-caption">MP4・WebMなど別の形式に変換(初回は変換エンジンの読み込みあり)</span>
           </span>
         </button>
 
@@ -1881,6 +1898,37 @@
         <div class="result-area" id="videotrim-result"></div>
       </section>
 
+      <section id="videoconvert" class="tool-panel">
+        <h2>動画の形式変換</h2>
+        <p class="desc">動画をMP4・WebMなど別の形式に変換します。変換はすべてこのブラウザの中で行われ、動画がどこかにアップロードされることはありません。</p>
+        <p class="format-note">初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。変換はこのパソコンの処理能力だけで行うため専用ソフトより遅く、動画の長さや画質によっては数分〜数十分かかることがあります(長い動画は実行前に目安の時間をお知らせします)。処理中はいつでも中断できます。</p>
+        <div class="dropzone" data-target="videoconvert-input">
+          <p>ここに動画ファイルをドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="videoconvert-input" accept="video/*,.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,.3gp,.3g2,.mpg,.mpeg,.ts,.m2ts,.mts,.ogv,.vob,.asf,.rm,.rmvb,.divx,.f4v,.mxf,.dv" multiple hidden></label>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="videoconvert-format" value="mp4" checked>
+              <span>MP4に変換(いちばん再生できる場所が多い形式)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="videoconvert-format" value="webm">
+              <span>WebMに変換(Webサイトへの埋め込みなどに)</span>
+            </label>
+          </div>
+          <div class="dropzone-buttons">
+            <button id="videoconvert-run" class="run-btn" disabled>変換する</button>
+            <button type="button" id="videoconvert-cancel" class="file-btn-outline" hidden>中断する</button>
+          </div>
+        </div>
+        <p class="format-note" id="videoconvert-status"></p>
+        <div class="result-area" id="videoconvert-result"></div>
+        <ul class="batch-list" id="videoconvert-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1913,32 +1961,33 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=88"></script>
-<script src="js/app.js?v=88"></script>
-<script src="js/settings.js?v=88"></script>
-<script src="js/tools/compress.js?v=88"></script>
-<script src="js/tools/convert.js?v=88"></script>
-<script src="js/tools/resize.js?v=88"></script>
-<script src="js/tools/exif.js?v=88"></script>
-<script src="js/tools/rotate.js?v=88"></script>
-<script src="js/tools/crop.js?v=88"></script>
-<script src="js/tools/filter.js?v=88"></script>
-<script src="js/tools/watermark.js?v=88"></script>
-<script src="js/tools/qrcode.js?v=88"></script>
-<script src="js/tools/qrcodescan.js?v=88"></script>
-<script src="js/tools/charcount.js?v=88"></script>
-<script src="js/tools/colorpicker.js?v=88"></script>
-<script src="js/tools/unitconvert.js?v=88"></script>
-<script src="js/tools/datecalc.js?v=88"></script>
-<script src="js/tools/calculator.js?v=88"></script>
-<script src="js/tools/pdfdesk.js?v=88"></script>
-<script src="js/tools/pdf2image.js?v=88"></script>
-<script src="js/tools/pdfcompress.js?v=88"></script>
-<script src="js/tools/pdf2text.js?v=88"></script>
-<script src="js/tools/rename.js?v=88"></script>
-<script src="js/tools/tts.js?v=88"></script>
-<script src="js/tools/video2mp3.js?v=88"></script>
-<script src="js/tools/videocompress.js?v=88"></script>
-<script src="js/tools/videotrim.js?v=88"></script>
+<script src="js/common.js?v=89"></script>
+<script src="js/app.js?v=89"></script>
+<script src="js/settings.js?v=89"></script>
+<script src="js/tools/compress.js?v=89"></script>
+<script src="js/tools/convert.js?v=89"></script>
+<script src="js/tools/resize.js?v=89"></script>
+<script src="js/tools/exif.js?v=89"></script>
+<script src="js/tools/rotate.js?v=89"></script>
+<script src="js/tools/crop.js?v=89"></script>
+<script src="js/tools/filter.js?v=89"></script>
+<script src="js/tools/watermark.js?v=89"></script>
+<script src="js/tools/qrcode.js?v=89"></script>
+<script src="js/tools/qrcodescan.js?v=89"></script>
+<script src="js/tools/charcount.js?v=89"></script>
+<script src="js/tools/colorpicker.js?v=89"></script>
+<script src="js/tools/unitconvert.js?v=89"></script>
+<script src="js/tools/datecalc.js?v=89"></script>
+<script src="js/tools/calculator.js?v=89"></script>
+<script src="js/tools/pdfdesk.js?v=89"></script>
+<script src="js/tools/pdf2image.js?v=89"></script>
+<script src="js/tools/pdfcompress.js?v=89"></script>
+<script src="js/tools/pdf2text.js?v=89"></script>
+<script src="js/tools/rename.js?v=89"></script>
+<script src="js/tools/tts.js?v=89"></script>
+<script src="js/tools/video2mp3.js?v=89"></script>
+<script src="js/tools/videocompress.js?v=89"></script>
+<script src="js/tools/videotrim.js?v=89"></script>
+<script src="js/tools/videoconvert.js?v=89"></script>
 </body>
 </html>
