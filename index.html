@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=95">
+<link rel="stylesheet" href="css/style.css?v=96">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -2043,7 +2043,6 @@
             <label class="file-btn">ファイルを選択(複数可)<input type="file" id="videovolume-input" accept="video/*,.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,.3gp,.3g2,.mpg,.mpeg,.ts,.m2ts,.mts,.ogv,.vob,.asf,.rm,.rmvb,.divx,.f4v,.mxf,.dv" multiple hidden></label>
           </div>
         </div>
-        <video class="trim-preview-video" id="videovolume-preview" controls hidden></video>
         <div class="controls" id="videovolume-controls" hidden>
           <div class="trim-time-row">
             <label>音量: <span id="videovolume-level-label">100%</span>(音割れしない範囲に自動調整)</label>
@@ -2054,13 +2053,6 @@
             <input type="checkbox" id="videovolume-mute">
             <span>完全に無音にする</span>
           </label>
-
-          <p class="format-note">1つ目のファイルの、今の再生位置から数秒間だけ、この音量設定で試し聞きできます。</p>
-          <div class="trim-time-row">
-            <button type="button" class="file-btn file-btn-outline trim-preview-btn" id="videovolume-preview-btn">▶ この音量でプレビュー再生</button>
-          </div>
-          <video class="trim-mini-preview" id="videovolume-mini-preview" controls playsinline hidden></video>
-          <p class="format-note" id="videovolume-preview-error" style="color:red;"></p>
 
           <div class="dropzone-buttons">
             <button id="videovolume-run" class="run-btn" disabled>音量を変更する</button>
@@ -2104,36 +2096,36 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=95"></script>
-<script src="js/app.js?v=95"></script>
-<script src="js/settings.js?v=95"></script>
-<script src="js/tools/compress.js?v=95"></script>
-<script src="js/tools/convert.js?v=95"></script>
-<script src="js/tools/resize.js?v=95"></script>
-<script src="js/tools/exif.js?v=95"></script>
-<script src="js/tools/rotate.js?v=95"></script>
-<script src="js/tools/crop.js?v=95"></script>
-<script src="js/tools/filter.js?v=95"></script>
-<script src="js/tools/watermark.js?v=95"></script>
-<script src="js/tools/qrcode.js?v=95"></script>
-<script src="js/tools/qrcodescan.js?v=95"></script>
-<script src="js/tools/charcount.js?v=95"></script>
-<script src="js/tools/colorpicker.js?v=95"></script>
-<script src="js/tools/unitconvert.js?v=95"></script>
-<script src="js/tools/datecalc.js?v=95"></script>
-<script src="js/tools/calculator.js?v=95"></script>
-<script src="js/tools/pdfdesk.js?v=95"></script>
-<script src="js/tools/pdf2image.js?v=95"></script>
-<script src="js/tools/pdfcompress.js?v=95"></script>
-<script src="js/tools/pdf2text.js?v=95"></script>
-<script src="js/tools/rename.js?v=95"></script>
-<script src="js/tools/tts.js?v=95"></script>
-<script src="js/tools/video2mp3.js?v=95"></script>
-<script src="js/tools/videocompress.js?v=95"></script>
-<script src="js/tools/videotrim.js?v=95"></script>
-<script src="js/tools/videoconvert.js?v=95"></script>
-<script src="js/tools/videothumbnail.js?v=95"></script>
-<script src="js/tools/videorotate.js?v=95"></script>
-<script src="js/tools/videovolume.js?v=95"></script>
+<script src="js/common.js?v=96"></script>
+<script src="js/app.js?v=96"></script>
+<script src="js/settings.js?v=96"></script>
+<script src="js/tools/compress.js?v=96"></script>
+<script src="js/tools/convert.js?v=96"></script>
+<script src="js/tools/resize.js?v=96"></script>
+<script src="js/tools/exif.js?v=96"></script>
+<script src="js/tools/rotate.js?v=96"></script>
+<script src="js/tools/crop.js?v=96"></script>
+<script src="js/tools/filter.js?v=96"></script>
+<script src="js/tools/watermark.js?v=96"></script>
+<script src="js/tools/qrcode.js?v=96"></script>
+<script src="js/tools/qrcodescan.js?v=96"></script>
+<script src="js/tools/charcount.js?v=96"></script>
+<script src="js/tools/colorpicker.js?v=96"></script>
+<script src="js/tools/unitconvert.js?v=96"></script>
+<script src="js/tools/datecalc.js?v=96"></script>
+<script src="js/tools/calculator.js?v=96"></script>
+<script src="js/tools/pdfdesk.js?v=96"></script>
+<script src="js/tools/pdf2image.js?v=96"></script>
+<script src="js/tools/pdfcompress.js?v=96"></script>
+<script src="js/tools/pdf2text.js?v=96"></script>
+<script src="js/tools/rename.js?v=96"></script>
+<script src="js/tools/tts.js?v=96"></script>
+<script src="js/tools/video2mp3.js?v=96"></script>
+<script src="js/tools/videocompress.js?v=96"></script>
+<script src="js/tools/videotrim.js?v=96"></script>
+<script src="js/tools/videoconvert.js?v=96"></script>
+<script src="js/tools/videothumbnail.js?v=96"></script>
+<script src="js/tools/videorotate.js?v=96"></script>
+<script src="js/tools/videovolume.js?v=96"></script>
 </body>
 </html>

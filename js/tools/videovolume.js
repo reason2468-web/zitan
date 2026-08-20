@@ -1,14 +1,10 @@
 (() => {
   const dropzone = document.querySelector('[data-target="videovolume-input"]');
   const input = document.getElementById("videovolume-input");
-  const preview = document.getElementById("videovolume-preview");
   const controls = document.getElementById("videovolume-controls");
   const levelSlider = document.getElementById("videovolume-level");
   const levelLabel = document.getElementById("videovolume-level-label");
   const muteCheckbox = document.getElementById("videovolume-mute");
-  const previewBtn = document.getElementById("videovolume-preview-btn");
-  const miniPreview = document.getElementById("videovolume-mini-preview");
-  const previewErrorEl = document.getElementById("videovolume-preview-error");
   const runBtn = document.getElementById("videovolume-run");
   const cancelBtn = document.getElementById("videovolume-cancel");
   const resultArea = document.getElementById("videovolume-result");
@@ -17,8 +13,6 @@
 
   let currentFiles = [];
   let cancelRequested = false;
-  let previewUrl = null;
-  let miniPreviewUrl = null;
 
   function updateLevelLabel() {
     levelLabel.textContent = `${levelSlider.value}%`;
@@ -42,106 +36,18 @@
     controls.hidden = currentFiles.length === 0;
     if (currentFiles.length) {
       renderSelectedVideoFiles(resultArea, currentFiles, (updated) => {
-        const previousFirst = currentFiles[0];
         currentFiles = updated;
         runBtn.disabled = currentFiles.length === 0;
         controls.hidden = currentFiles.length === 0;
-        if (currentFiles.length && currentFiles[0] !== previousFirst) {
-          setupPreview(currentFiles[0]);
-        }
       });
-      setupPreview(currentFiles[0]);
     }
   }
 
   setupDropzone(dropzone, input, loadFiles);
 
-  function setupPreview(file) {
-    previewErrorEl.textContent = "";
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(file);
-    preview.src = previewUrl;
-    preview.hidden = false;
-
-    if (miniPreviewUrl) URL.revokeObjectURL(miniPreviewUrl);
-    miniPreviewUrl = null;
-    miniPreview.removeAttribute("src");
-    miniPreview.hidden = true;
-  }
-
   function getAudioFilter(level, isMute) {
     return isMute ? "volume=0" : `volume=${(level / 100).toFixed(2)},alimiter=limit=0.95`;
   }
-
-  // プレビュー用に、実際に音量を変更した短いクリップをその場で作って再生する
-  previewBtn.addEventListener("click", async () => {
-    if (!currentFiles.length) return;
-    previewErrorEl.textContent = "";
-
-    const isFirstLoad = !isFFmpegLoaded();
-    if (isFirstLoad) {
-      const proceed = confirm("プレビュー再生・音量変更の前に、初回のみ変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
-      if (!proceed) return;
-    }
-
-    previewBtn.disabled = true;
-    runBtn.disabled = true;
-    previewBtn.textContent = isFirstLoad ? "変換エンジンを読み込み中..." : "プレビューを準備中...";
-
-    let ffmpeg;
-    try {
-      ffmpeg = await getSharedFFmpeg();
-    } catch (err) {
-      previewErrorEl.textContent = "変換エンジンの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
-      previewBtn.disabled = false;
-      runBtn.disabled = currentFiles.length === 0;
-      previewBtn.textContent = "▶ この音量でプレビュー再生";
-      return;
-    }
-    previewBtn.textContent = "プレビューを準備中...";
-
-    const file = currentFiles[0];
-    const level = Number(levelSlider.value);
-    const isMute = muteCheckbox.checked;
-    const start = preview.currentTime || 0;
-    const duration = preview.duration && isFinite(preview.duration)
-      ? Math.max(0.5, Math.min(8, preview.duration - start))
-      : 8;
-
-    const ext = getExt(file.name);
-    const inputName = `preview_in.${ext}`;
-    const outputName = `preview_out.mp4`;
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      await ffmpeg.writeFile(inputName, bytes);
-      await ffmpeg.exec([
-        "-ss", String(start),
-        "-i", inputName,
-        "-t", String(duration),
-        "-af", getAudioFilter(level, isMute),
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        outputName,
-      ]);
-      const data = await ffmpeg.readFile(outputName);
-      const blob = new Blob([data], { type: "video/mp4" });
-
-      if (miniPreviewUrl) URL.revokeObjectURL(miniPreviewUrl);
-      miniPreviewUrl = URL.createObjectURL(blob);
-      miniPreview.src = miniPreviewUrl;
-      miniPreview.hidden = false;
-      miniPreview.play();
-    } catch (err) {
-      previewErrorEl.textContent = "プレビューの作成に失敗しました。もう一度お試しください。";
-    } finally {
-      try { await ffmpeg.deleteFile(inputName); } catch {}
-      try { await ffmpeg.deleteFile(outputName); } catch {}
-      previewBtn.disabled = false;
-      runBtn.disabled = currentFiles.length === 0;
-      previewBtn.textContent = "▶ この音量でプレビュー再生";
-    }
-  });
 
   function getExt(name) {
     const m = /\.([^/.]+)$/.exec(name);
@@ -188,7 +94,6 @@
   function setProcessingUI(isProcessing) {
     runBtn.hidden = isProcessing;
     cancelBtn.hidden = !isProcessing;
-    previewBtn.disabled = isProcessing;
   }
 
   runBtn.addEventListener("click", async () => {
