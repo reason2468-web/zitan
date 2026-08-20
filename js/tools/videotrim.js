@@ -22,7 +22,7 @@
   let videoDuration = 0;
   let cancelRequested = false;
   let previewUrl = null;
-  let miniPreviewStopHandler = null;
+  let miniPreviewUrl = null;
 
   // 0.01秒(センチ秒)単位の整数で扱うことで、浮動小数点の誤差を避ける
   function formatTimeInput(totalSeconds) {
@@ -75,8 +75,11 @@
     previewUrl = URL.createObjectURL(videoFile);
     preview.src = previewUrl;
     preview.hidden = false;
-    miniPreview.src = previewUrl;
-    miniPreview.hidden = false;
+
+    if (miniPreviewUrl) URL.revokeObjectURL(miniPreviewUrl);
+    miniPreviewUrl = null;
+    miniPreview.removeAttribute("src");
+    miniPreview.hidden = true;
 
     preview.onloadedmetadata = () => {
       videoDuration = preview.duration;
@@ -122,7 +125,11 @@
     if (v !== null) endSlider.value = Math.min(Math.max(v, 0), videoDuration);
   });
 
-  rangePreviewBtn.addEventListener("click", () => {
+  // プレビュー用に、実際に切り出したのと同じ短いクリップをその場で作って再生する
+  // (もとの動画をシークして途中で止めるだけだと、シークバーが動画全体の長さのままで
+  // 「本当にここだけ切り出されるのか」が伝わりにくいため、実物を作って見せる)
+  rangePreviewBtn.addEventListener("click", async () => {
+    if (!currentFile) return;
     errorEl.textContent = "";
     const start = parseTimeInput(startInput.value);
     const end = parseTimeInput(endInput.value);
@@ -130,22 +137,59 @@
       errorEl.textContent = "開始位置・終了位置を正しく入力してから、プレビューをお試しください。";
       return;
     }
-    if (miniPreviewStopHandler) miniPreview.removeEventListener("timeupdate", miniPreviewStopHandler);
-    miniPreview.currentTime = start;
-    miniPreview.play();
-    miniPreviewStopHandler = () => {
-      if (miniPreview.currentTime >= end) {
-        miniPreview.pause();
-        miniPreview.removeEventListener("timeupdate", miniPreviewStopHandler);
-        miniPreviewStopHandler = null;
-      }
-    };
-    miniPreview.addEventListener("timeupdate", miniPreviewStopHandler);
+
+    const isFirstLoad = !isFFmpegLoaded();
+    if (isFirstLoad) {
+      const proceed = confirm("初回のみ、変換エンジン(合計約30MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      if (!proceed) return;
+    }
+
+    rangePreviewBtn.disabled = true;
+    runBtn.disabled = true;
+    rangePreviewBtn.textContent = isFirstLoad ? "変換エンジンを読み込み中..." : "プレビューを準備中...";
+
+    let ffmpeg;
+    try {
+      ffmpeg = await getSharedFFmpeg();
+    } catch (err) {
+      errorEl.textContent = "変換エンジンの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+      rangePreviewBtn.disabled = false;
+      runBtn.disabled = false;
+      rangePreviewBtn.textContent = "切り出す範囲をプレビュー再生";
+      return;
+    }
+    rangePreviewBtn.textContent = "プレビューを準備中...";
+
+    const ext = getExt(currentFile.name);
+    const inputName = `preview_in.${ext}`;
+    const outputName = `preview_out.${ext}`;
+    try {
+      const bytes = new Uint8Array(await currentFile.arrayBuffer());
+      await ffmpeg.writeFile(inputName, bytes);
+      await ffmpeg.exec(["-ss", String(start), "-i", inputName, "-t", String(end - start), "-c", "copy", outputName]);
+      const data = await ffmpeg.readFile(outputName);
+      const blob = new Blob([data], { type: currentFile.type || "video/mp4" });
+
+      if (miniPreviewUrl) URL.revokeObjectURL(miniPreviewUrl);
+      miniPreviewUrl = URL.createObjectURL(blob);
+      miniPreview.src = miniPreviewUrl;
+      miniPreview.hidden = false;
+      miniPreview.play();
+    } catch (err) {
+      errorEl.textContent = "プレビューの作成に失敗しました。もう一度お試しください。";
+    } finally {
+      try { await ffmpeg.deleteFile(inputName); } catch {}
+      try { await ffmpeg.deleteFile(outputName); } catch {}
+      rangePreviewBtn.disabled = false;
+      runBtn.disabled = false;
+      rangePreviewBtn.textContent = "切り出す範囲をプレビュー再生";
+    }
   });
 
   function setProcessingUI(isProcessing) {
     runBtn.hidden = isProcessing;
     cancelBtn.hidden = !isProcessing;
+    rangePreviewBtn.disabled = isProcessing;
   }
 
   runBtn.addEventListener("click", async () => {
