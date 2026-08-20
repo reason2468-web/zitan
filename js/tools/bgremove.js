@@ -66,27 +66,6 @@
     traceCanvas.style.pointerEvents = "";
   }
 
-  // モデルのダウンロード進捗(バイト数)をファイル単位で受け取り、合算して表示する
-  const modelDownloadProgress = new Map();
-  function onModelDownloadProgress(e) {
-    if (e.status !== "progress" || !(e.total > 0)) return;
-    modelDownloadProgress.set(e.file, { loaded: e.loaded, total: e.total });
-    let loaded = 0;
-    let total = 0;
-    for (const p of modelDownloadProgress.values()) {
-      loaded += p.loaded;
-      total += p.total;
-    }
-    const pct = Math.min(100, Math.round((loaded / total) * 100));
-    traceLoadingBar.hidden = false;
-    traceLoadingFill.style.width = `${pct}%`;
-    traceLoadingDetail.textContent = `${pct}%(${formatBytes(loaded)} / ${formatBytes(total)})`;
-    if (pct >= 100) {
-      traceLoadingText.textContent = "AIモデルを初期化しています";
-      traceLoadingSub.textContent = "ダウンロードは完了しました。もうしばらくお待ちください。";
-    }
-  }
-
   // 通信状況や端末の性能などで極端に時間がかかった場合に、無限に待たせず失敗として扱うまでの上限
   const TRACE_LOAD_TIMEOUT_MS = 150000;
   function withTraceLoadTimeout(promise) {
@@ -242,17 +221,19 @@
     return samModulePromise;
   }
 
-  async function getSamModel(onProgress) {
+  async function getSamModel() {
     if (!samModelPromise) {
       samModelPromise = (async () => {
         const { SamModel, AutoProcessor } = await getSamModule();
         const [model, processor] = await Promise.all([
           // fp16は端末によってはCPU側にfp16用の演算カーネルがなく、処理が極端に遅くなる/
           // 進まなくなる報告があったため、互換性を優先してfp32を使う(その分ダウンロード量は増える)
+          // progress_callbackを渡すとファイルをストリーミングで少しずつ読み込む方式になり、
+          // 通信環境によってはそれ自体が固まって進まなくなる報告があったため、
+          // 進捗表示より確実に完了することを優先し、あえて渡さない
           SamModel.from_pretrained(SAM_MODEL_ID, {
             dtype: "fp32",
             device: "wasm",
-            progress_callback: onProgress,
           }),
           AutoProcessor.from_pretrained(SAM_MODEL_ID),
         ]);
@@ -454,7 +435,6 @@
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
 
       if (isFirstLoad) {
-        modelDownloadProgress.clear();
         showTraceLoading("AIモデルを準備しています", "初回のみ、セグメンテーションモデル(約40MB)をダウンロードします。");
       } else {
         showTraceLoading("画像を解析しています…");
@@ -463,7 +443,7 @@
       try {
         await withTraceLoadTimeout(
           (async () => {
-            const { model, processor } = await getSamModel(isFirstLoad ? onModelDownloadProgress : undefined);
+            const { model, processor } = await getSamModel();
             const { RawImage } = await getSamModule();
             if (isFirstLoad) showTraceLoading("画像を解析しています…");
             const rawImage = await RawImage.fromURL(url);
