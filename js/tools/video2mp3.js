@@ -7,13 +7,14 @@
   const statusEl = document.getElementById("video2mp3-status");
 
   const CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+  const FFMPEG_WORKER_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js";
 
   let currentFiles = [];
   let ffmpegInstance = null;
   let ffmpegLoadPromise = null;
 
   function isVideoFile(file) {
-    return file.type.startsWith("video/") || /\.(mp4|mov|avi|webm|mkv|wmv|flv|m4v|3gp|mpg|mpeg)$/i.test(file.name);
+    return file.type.startsWith("video/") || /\.(mp4|mov|avi|webm|mkv|wmv|flv|m4v|3gp|3g2|mpg|mpeg|ts|m2ts|mts|ogv|vob|asf|rm|rmvb|divx|f4v|mxf|dv)$/i.test(file.name);
   }
 
   // 画像プレビュー(buildSelectedFilesPreview)はサムネイル画像前提のため、動画には同じ見た目のクラスを使い独自に組み立てる
@@ -91,6 +92,8 @@
       await ffmpeg.load({
         coreURL: await toBlobURL(`${CORE_BASE_URL}/ffmpeg-core.js`, "text/javascript"),
         wasmURL: await toBlobURL(`${CORE_BASE_URL}/ffmpeg-core.wasm`, "application/wasm"),
+        // ワーカー本体もCDN(別オリジン)から読み込むため、blob URL化して同一オリジン扱いにする
+        classWorkerURL: await toBlobURL(FFMPEG_WORKER_URL, "text/javascript"),
       });
       ffmpegInstance = ffmpeg;
       return ffmpeg;
