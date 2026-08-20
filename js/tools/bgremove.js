@@ -133,72 +133,175 @@
     manualStartBtn.disabled = false;
   });
 
-  // ---------- 手動でなぞって切り抜くモード ----------
+  // ---------- クリックで正確に切り抜くモード(SAM: Segment Anything Model) ----------
+  //
+  // 対象物の輪郭を手でなぞらせるのではなく、クリックした位置から「このあたりの
+  // 対象物」をAIに認識させ、正確な輪郭を自動計算させる方式。SlimSAM(SAMの軽量版、
+  // 実機検証済み)を使い、画像1枚につき1回だけ重い解析(埋め込み計算)を行い、
+  // その後のクリックはその結果を使い回すため一瞬で反映される。
 
-  const MAX_TRACE_DIM = 1000; // なぞる作業用キャンバスの最大辺(重い画像でも操作を軽くするため)
+  const MAX_TRACE_DIM = 1000; // 表示用キャンバスの最大辺(実際の解析は元画像の解像度で行われる)
+  const SAM_MODULE_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0";
+  const SAM_MODEL_ID = "Xenova/slimsam-77-uniform";
+  let samModulePromise = null;
+  let samModelPromise = null;
+  let samModuleLoaded = false;
+
+  function getSamModule() {
+    if (!samModulePromise) {
+      samModulePromise = import(SAM_MODULE_URL).catch((err) => {
+        samModulePromise = null;
+        throw err;
+      });
+    }
+    return samModulePromise;
+  }
+
+  async function getSamModel() {
+    if (!samModelPromise) {
+      samModelPromise = (async () => {
+        const { SamModel, AutoProcessor } = await getSamModule();
+        const [model, processor] = await Promise.all([
+          SamModel.from_pretrained(SAM_MODEL_ID, { dtype: "fp16", device: "wasm" }),
+          AutoProcessor.from_pretrained(SAM_MODEL_ID),
+        ]);
+        samModuleLoaded = true;
+        return { model, processor };
+      })().catch((err) => {
+        samModelPromise = null;
+        throw err;
+      });
+    }
+    return samModelPromise;
+  }
+
   const ctx = traceCanvas.getContext("2d");
   let traceImage = null;
   let traceScale = 1;
-  let tracePoints = [];
-  let isDrawing = false;
+  let samImageProcessed = null;
+  let samImageEmbeddings = null;
+  let tracePoints = []; // { x, y: 0〜1の正規化座標, label: 1(含める)/0(除く) }
+  let currentMask = null; // { data: Uint8Array(0/255), width, height }(元画像の実寸解像度)
+  let isDecoding = false;
+  let decodePending = false;
 
-  function redrawTraceCanvas() {
+  function drawBaseImage() {
     ctx.clearRect(0, 0, traceCanvas.width, traceCanvas.height);
     ctx.drawImage(traceImage, 0, 0, traceCanvas.width, traceCanvas.height);
-    if (tracePoints.length > 1) {
+  }
+
+  function redrawTraceCanvas() {
+    drawBaseImage();
+
+    if (currentMask) {
+      const overlay = document.createElement("canvas");
+      overlay.width = currentMask.width;
+      overlay.height = currentMask.height;
+      const octx = overlay.getContext("2d");
+      const imgData = octx.createImageData(currentMask.width, currentMask.height);
+      for (let i = 0; i < currentMask.data.length; i++) {
+        if (currentMask.data[i]) {
+          imgData.data[4 * i] = 46;
+          imgData.data[4 * i + 1] = 143;
+          imgData.data[4 * i + 2] = 230;
+          imgData.data[4 * i + 3] = 130;
+        }
+      }
+      octx.putImageData(imgData, 0, 0);
+      ctx.drawImage(overlay, 0, 0, traceCanvas.width, traceCanvas.height);
+    }
+
+    for (const p of tracePoints) {
       ctx.beginPath();
-      ctx.moveTo(tracePoints[0].x, tracePoints[0].y);
-      for (let i = 1; i < tracePoints.length; i++) ctx.lineTo(tracePoints[i].x, tracePoints[i].y);
-      if (!isDrawing) ctx.closePath();
+      ctx.arc(p.x * traceCanvas.width, p.y * traceCanvas.height, 6, 0, Math.PI * 2);
+      ctx.fillStyle = p.label === 1 ? "#2F9E6E" : "#D24B72";
+      ctx.strokeStyle = "#fff";
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#2E8FE6";
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
+      ctx.fill();
       ctx.stroke();
-      if (!isDrawing) {
-        ctx.fillStyle = "rgba(46, 143, 230, 0.25)";
-        ctx.fill();
+    }
+  }
+
+  function getNormalizedPoint(e) {
+    const rect = traceCanvas.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+    return { x, y };
+  }
+
+  async function decodeMask() {
+    if (isDecoding) {
+      decodePending = true;
+      return;
+    }
+    if (!tracePoints.length) {
+      currentMask = null;
+      redrawTraceCanvas();
+      traceApplyBtn.disabled = true;
+      return;
+    }
+    isDecoding = true;
+
+    try {
+      const { model, processor } = await getSamModel();
+      const { Tensor } = await getSamModule();
+
+      const reshaped = samImageProcessed.reshaped_input_sizes[0];
+      const coords = tracePoints.map((p) => [p.x * reshaped[1], p.y * reshaped[0]]).flat();
+      const labels = tracePoints.map((p) => BigInt(p.label));
+
+      const input_points = new Tensor("float32", coords, [1, 1, tracePoints.length, 2]);
+      const input_labels = new Tensor("int64", labels, [1, 1, tracePoints.length]);
+
+      const { pred_masks, iou_scores } = await model({
+        ...samImageEmbeddings,
+        input_points,
+        input_labels,
+      });
+      const masks = await processor.post_process_masks(
+        pred_masks,
+        samImageProcessed.original_sizes,
+        samImageProcessed.reshaped_input_sizes
+      );
+
+      const maskTensor = masks[0][0];
+      const scores = iou_scores.data;
+      let bestIndex = 0;
+      for (let i = 1; i < scores.length; i++) {
+        if (scores[i] > scores[bestIndex]) bestIndex = i;
+      }
+      const [, mh, mw] = maskTensor.dims;
+      const data = new Uint8Array(mh * mw);
+      for (let i = 0; i < mh * mw; i++) {
+        data[i] = maskTensor.data[bestIndex * mh * mw + i] === 1 ? 255 : 0;
+      }
+      currentMask = { data, width: mw, height: mh };
+      traceApplyBtn.disabled = false;
+      redrawTraceCanvas();
+    } catch (err) {
+      statusEl.textContent = "認識に失敗しました。もう一度クリックしてお試しください。";
+    } finally {
+      isDecoding = false;
+      if (decodePending) {
+        decodePending = false;
+        decodeMask();
       }
     }
   }
 
-  function getCanvasPoint(e) {
-    const rect = traceCanvas.getBoundingClientRect();
-    const scaleX = traceCanvas.width / rect.width;
-    const scaleY = traceCanvas.height / rect.height;
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
-    };
-  }
-
   traceCanvas.addEventListener("pointerdown", (e) => {
-    traceCanvas.setPointerCapture(e.pointerId);
-    isDrawing = true;
-    tracePoints = [getCanvasPoint(e)];
-    traceApplyBtn.disabled = true;
+    if (!samImageEmbeddings) return;
+    const label = e.button === 2 ? 0 : 1; // 右クリック=除外、左クリック=含める
+    tracePoints.push({ ...getNormalizedPoint(e), label });
     redrawTraceCanvas();
+    decodeMask();
   });
 
-  traceCanvas.addEventListener("pointermove", (e) => {
-    if (!isDrawing) return;
-    tracePoints.push(getCanvasPoint(e));
-    redrawTraceCanvas();
-  });
-
-  function endDrawing() {
-    if (!isDrawing) return;
-    isDrawing = false;
-    traceApplyBtn.disabled = tracePoints.length < 3;
-    redrawTraceCanvas();
-  }
-
-  traceCanvas.addEventListener("pointerup", endDrawing);
-  traceCanvas.addEventListener("pointercancel", endDrawing);
+  traceCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
   traceClearBtn.addEventListener("click", () => {
     tracePoints = [];
-    isDrawing = false;
+    currentMask = null;
     traceApplyBtn.disabled = true;
     redrawTraceCanvas();
   });
@@ -207,31 +310,58 @@
     traceStage.hidden = true;
     controls.hidden = false;
     tracePoints = [];
+    currentMask = null;
     traceImage = null;
+    samImageProcessed = null;
+    samImageEmbeddings = null;
   });
 
-  manualStartBtn.addEventListener("click", () => {
+  manualStartBtn.addEventListener("click", async () => {
     if (currentFiles.length !== 1) return;
+
+    const isFirstLoad = !samModuleLoaded;
+    if (isFirstLoad) {
+      const proceed = confirm("クリックモードの前に、初回のみAIモデル(約20MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      if (!proceed) return;
+    }
+
     const file = currentFiles[0];
     const url = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       traceImage = img;
       traceScale = Math.min(1, MAX_TRACE_DIM / Math.max(img.naturalWidth, img.naturalHeight));
       traceCanvas.width = Math.round(img.naturalWidth * traceScale);
       traceCanvas.height = Math.round(img.naturalHeight * traceScale);
       tracePoints = [];
+      currentMask = null;
+      samImageProcessed = null;
+      samImageEmbeddings = null;
       traceApplyBtn.disabled = true;
-      redrawTraceCanvas();
+      drawBaseImage();
       controls.hidden = true;
       traceStage.hidden = false;
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…" : "画像を解析中です…";
+      try {
+        const { model, processor } = await getSamModel();
+        const { RawImage } = await getSamModule();
+        const rawImage = await RawImage.fromURL(url);
+        samImageProcessed = await processor(rawImage);
+        samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
+        statusEl.textContent = "";
+      } catch (err) {
+        statusEl.textContent = "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+        traceStage.hidden = true;
+        controls.hidden = false;
+      }
     };
     img.src = url;
   });
 
   traceApplyBtn.addEventListener("click", async () => {
-    if (!traceImage || tracePoints.length < 3) return;
+    if (!traceImage || !currentMask) return;
     traceApplyBtn.disabled = true;
     traceApplyBtn.textContent = "切り抜き中...";
 
@@ -242,22 +372,29 @@
       const fullCtx = fullCanvas.getContext("2d");
       fullCtx.drawImage(traceImage, 0, 0);
 
-      // 作業用キャンバス上の座標を、元画像の実寸解像度の座標に拡大して使う
-      const inv = 1 / traceScale;
-      fullCtx.beginPath();
-      fullCtx.moveTo(tracePoints[0].x * inv, tracePoints[0].y * inv);
-      for (let i = 1; i < tracePoints.length; i++) {
-        fullCtx.lineTo(tracePoints[i].x * inv, tracePoints[i].y * inv);
+      // マスクは元画像と同じ実寸解像度で計算済みのため、そのまま重ねられる
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = currentMask.width;
+      maskCanvas.height = currentMask.height;
+      const maskCtx = maskCanvas.getContext("2d");
+      const maskImgData = maskCtx.createImageData(currentMask.width, currentMask.height);
+      for (let i = 0; i < currentMask.data.length; i++) {
+        const v = currentMask.data[i];
+        maskImgData.data[4 * i] = v;
+        maskImgData.data[4 * i + 1] = v;
+        maskImgData.data[4 * i + 2] = v;
+        maskImgData.data[4 * i + 3] = v;
       }
-      fullCtx.closePath();
+      maskCtx.putImageData(maskImgData, 0, 0);
+
       fullCtx.globalCompositeOperation = "destination-in";
-      fullCtx.fill();
+      fullCtx.drawImage(maskCanvas, 0, 0, fullCanvas.width, fullCanvas.height);
 
       const file = currentFiles[0];
       const blob = await new Promise((resolve) => fullCanvas.toBlob(resolve, "image/png"));
       const outFile = new File([blob], suggestRemovedName(file.name), { type: "image/png" });
 
-      const saveResult = await saveProcessedFiles([outFile], { category: "画像", tool: "背景削除.手動" }, false);
+      const saveResult = await saveProcessedFiles([outFile], { category: "画像", tool: "背景削除.クリック" }, false);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
 
       traceStage.hidden = true;
@@ -265,7 +402,7 @@
       resultArea.innerHTML = `
         <div class="result-card">
           <div class="result-info">
-            <p>手動でなぞった形で切り抜きました。</p>
+            <p>クリックで認識した形で切り抜きました。</p>
             <p>${savedMsg}</p>
           </div>
         </div>
