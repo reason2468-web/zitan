@@ -1867,6 +1867,34 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin-top: 16px;
 }
 
+.trace-stage {
+  margin-top: 16px;
+}
+
+.trace-canvas-wrap {
+  max-width: 100%;
+  margin: 10px 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  display: inline-block;
+  line-height: 0;
+  background:
+    linear-gradient(45deg, #ccc 25%, transparent 25%) -8px 0/16px 16px,
+    linear-gradient(-45deg, #ccc 25%, transparent 25%) -8px 0/16px 16px,
+    linear-gradient(45deg, transparent 75%, #ccc 75%) -8px 0/16px 16px,
+    linear-gradient(-45deg, transparent 75%, #ccc 75%) -8px 0/16px 16px,
+    #fff;
+}
+
+#bgremove-trace-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
 .batch-list {
   list-style: none;
   padding: 0;

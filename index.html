@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=103">
+<link rel="stylesheet" href="css/style.css?v=104">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -95,7 +95,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">3</span>
+        <span class="category-count">4</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -696,6 +696,24 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">入力した文章をパソコンの音声で読み上げ(声・速さを選択可)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="bgremove" style="--gem:#2F9E6E;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6" cy="6" r="3"/>
+                <circle cx="6" cy="18" r="3"/>
+                <line x1="8.5" y1="8" x2="19" y2="19"/>
+                <line x1="19" y1="5" x2="8.5" y2="16"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">画像の背景削除</span>
+            <span class="tool-caption">AIで自動削除、または自分でなぞって正確に切り抜き(初回はAIモデルの読み込みあり)</span>
           </span>
         </button>
 
@@ -1854,6 +1872,40 @@
         <div class="result-area" id="tts-result"></div>
       </section>
 
+      <section id="bgremove" class="tool-panel">
+        <h2>画像の背景削除</h2>
+        <p class="desc">画像の背景を透明にします。AIモデルによる自動削除(複数枚まとめて可)と、1枚だけの場合に自分で輪郭をなぞって正確に切り抜く手動モードの、2つの方法から選べます。</p>
+        <p class="format-note">自動削除は初回実行時のみAIモデル(数十MB)をダウンロードします。処理はすべてこのブラウザの中で行われ、画像がどこかにアップロードされることはありません。AIによる自動削除は完璧ではないため、輪郭が複雑な被写体などは手動モードもお試しください。</p>
+        <div class="dropzone" data-target="bgremove-input">
+          <p>ここに画像をドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="bgremove-input" accept="image/jpeg,image/png,image/webp,image/bmp,.heic,.heif" multiple hidden></label>
+          </div>
+        </div>
+        <div class="result-area" id="bgremove-result"></div>
+        <div class="controls" id="bgremove-controls" hidden>
+          <div class="dropzone-buttons">
+            <button id="bgremove-auto-run" class="run-btn">AIで自動削除する</button>
+            <button type="button" id="bgremove-manual-start" class="file-btn-outline" hidden>▶ なぞって手動で切り抜く</button>
+          </div>
+          <p class="format-note" id="bgremove-manual-note" hidden>手動での切り抜きは、画像を1枚だけ選んでいるときに使えます。</p>
+        </div>
+        <p class="format-note" id="bgremove-status"></p>
+        <ul class="batch-list" id="bgremove-list"></ul>
+
+        <div class="trace-stage" id="bgremove-trace-stage" hidden>
+          <p class="format-note">残したい部分の輪郭を、マウス(またはタッチ)でなぞってください。指を離す(マウスを離す)と自動で輪郭が閉じます。</p>
+          <div class="trace-canvas-wrap">
+            <canvas id="bgremove-trace-canvas"></canvas>
+          </div>
+          <div class="dropzone-buttons">
+            <button type="button" class="file-btn-outline" id="bgremove-trace-clear">やり直す</button>
+            <button type="button" class="run-btn" id="bgremove-trace-apply" disabled>この形で切り抜く</button>
+            <button type="button" class="file-btn-outline" id="bgremove-trace-cancel">キャンセル</button>
+          </div>
+        </div>
+      </section>
+
       <section id="video2mp3" class="tool-panel">
         <h2>動画からMP3に変換</h2>
         <p class="desc">動画ファイルの音声部分だけを取り出して、MP3ファイルとして保存します。変換はすべてこのブラウザの中で行われ、動画がどこかにアップロードされることはありません。</p>
@@ -2079,7 +2131,8 @@
         <a href="https://github.com/mozilla/pdf.js" target="_blank" rel="noopener">PDF.js</a>,
         <a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener">jsQR</a>,
         <a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js</a>,
-        <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank" rel="noopener">ffmpeg.wasm</a>
+        <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank" rel="noopener">ffmpeg.wasm</a>,
+        <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">@imgly/background-removal</a>
       </p>
     </footer>
 
@@ -2097,36 +2150,37 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=103"></script>
-<script src="js/app.js?v=103"></script>
-<script src="js/settings.js?v=103"></script>
-<script src="js/tools/compress.js?v=103"></script>
-<script src="js/tools/convert.js?v=103"></script>
-<script src="js/tools/resize.js?v=103"></script>
-<script src="js/tools/exif.js?v=103"></script>
-<script src="js/tools/rotate.js?v=103"></script>
-<script src="js/tools/crop.js?v=103"></script>
-<script src="js/tools/filter.js?v=103"></script>
-<script src="js/tools/watermark.js?v=103"></script>
-<script src="js/tools/qrcode.js?v=103"></script>
-<script src="js/tools/qrcodescan.js?v=103"></script>
-<script src="js/tools/charcount.js?v=103"></script>
-<script src="js/tools/colorpicker.js?v=103"></script>
-<script src="js/tools/unitconvert.js?v=103"></script>
-<script src="js/tools/datecalc.js?v=103"></script>
-<script src="js/tools/calculator.js?v=103"></script>
-<script src="js/tools/pdfdesk.js?v=103"></script>
-<script src="js/tools/pdf2image.js?v=103"></script>
-<script src="js/tools/pdfcompress.js?v=103"></script>
-<script src="js/tools/pdf2text.js?v=103"></script>
-<script src="js/tools/rename.js?v=103"></script>
-<script src="js/tools/tts.js?v=103"></script>
-<script src="js/tools/video2mp3.js?v=103"></script>
-<script src="js/tools/videocompress.js?v=103"></script>
-<script src="js/tools/videotrim.js?v=103"></script>
-<script src="js/tools/videoconvert.js?v=103"></script>
-<script src="js/tools/videothumbnail.js?v=103"></script>
-<script src="js/tools/videorotate.js?v=103"></script>
-<script src="js/tools/videovolume.js?v=103"></script>
+<script src="js/common.js?v=104"></script>
+<script src="js/app.js?v=104"></script>
+<script src="js/settings.js?v=104"></script>
+<script src="js/tools/compress.js?v=104"></script>
+<script src="js/tools/convert.js?v=104"></script>
+<script src="js/tools/resize.js?v=104"></script>
+<script src="js/tools/exif.js?v=104"></script>
+<script src="js/tools/rotate.js?v=104"></script>
+<script src="js/tools/crop.js?v=104"></script>
+<script src="js/tools/filter.js?v=104"></script>
+<script src="js/tools/watermark.js?v=104"></script>
+<script src="js/tools/qrcode.js?v=104"></script>
+<script src="js/tools/qrcodescan.js?v=104"></script>
+<script src="js/tools/charcount.js?v=104"></script>
+<script src="js/tools/colorpicker.js?v=104"></script>
+<script src="js/tools/unitconvert.js?v=104"></script>
+<script src="js/tools/datecalc.js?v=104"></script>
+<script src="js/tools/calculator.js?v=104"></script>
+<script src="js/tools/pdfdesk.js?v=104"></script>
+<script src="js/tools/pdf2image.js?v=104"></script>
+<script src="js/tools/pdfcompress.js?v=104"></script>
+<script src="js/tools/pdf2text.js?v=104"></script>
+<script src="js/tools/rename.js?v=104"></script>
+<script src="js/tools/tts.js?v=104"></script>
+<script src="js/tools/video2mp3.js?v=104"></script>
+<script src="js/tools/videocompress.js?v=104"></script>
+<script src="js/tools/videotrim.js?v=104"></script>
+<script src="js/tools/videoconvert.js?v=104"></script>
+<script src="js/tools/videothumbnail.js?v=104"></script>
+<script src="js/tools/videorotate.js?v=104"></script>
+<script src="js/tools/videovolume.js?v=104"></script>
+<script src="js/tools/bgremove.js?v=104"></script>
 </body>
 </html>
