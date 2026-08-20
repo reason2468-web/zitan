@@ -60,6 +60,21 @@
     traceLoadingBar.hidden = false;
     traceLoadingFill.style.width = `${pct}%`;
     traceLoadingDetail.textContent = `${pct}%(${formatBytes(loaded)} / ${formatBytes(total)})`;
+    if (pct >= 100) {
+      traceLoadingText.textContent = "AIモデルを初期化しています";
+      traceLoadingSub.textContent = "ダウンロードは完了しました。もうしばらくお待ちください。";
+    }
+  }
+
+  // 通信状況などで極端に時間がかかった場合に、無限に待たせず失敗として扱うまでの上限
+  const TRACE_LOAD_TIMEOUT_MS = 90000;
+  function withTraceLoadTimeout(promise) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("trace-load-timeout")), TRACE_LOAD_TIMEOUT_MS)
+      ),
+    ]);
   }
 
   let currentFiles = [];
@@ -406,16 +421,23 @@
         showTraceLoading("画像を解析しています…");
       }
       try {
-        const { model, processor } = await getSamModel(isFirstLoad ? onModelDownloadProgress : undefined);
-        const { RawImage } = await getSamModule();
-        if (isFirstLoad) showTraceLoading("画像を解析しています…");
-        const rawImage = await RawImage.fromURL(url);
-        samImageProcessed = await processor(rawImage);
-        samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
+        await withTraceLoadTimeout(
+          (async () => {
+            const { model, processor } = await getSamModel(isFirstLoad ? onModelDownloadProgress : undefined);
+            const { RawImage } = await getSamModule();
+            if (isFirstLoad) showTraceLoading("画像を解析しています…");
+            const rawImage = await RawImage.fromURL(url);
+            samImageProcessed = await processor(rawImage);
+            samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
+          })()
+        );
         hideTraceLoading();
       } catch (err) {
         hideTraceLoading();
-        traceStatus.textContent = "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+        traceStatus.textContent =
+          err && err.message === "trace-load-timeout"
+            ? "読み込みに時間がかかりすぎているため中断しました。ページを再読み込みしてから、もう一度お試しください(広告ブロッカーなどの拡張機能が原因になっている場合もあります)。"
+            : "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
         traceStage.hidden = true;
         controls.hidden = false;
       }
