@@ -45,7 +45,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=79">
+<link rel="stylesheet" href="css/style.css?v=80">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -69,7 +69,7 @@
       <button class="category-btn" data-category="video">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg>
         <span class="category-label">動画</span>
-        <span class="category-count">1</span>
+        <span class="category-count">2</span>
       </button>
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -301,6 +301,23 @@
           <span class="tool-text">
             <span class="tool-label">動画からMP3に変換</span>
             <span class="tool-caption">動画ファイルの音声だけをMP3として取り出す(初回は変換エンジンの読み込みあり)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="videocompress" style="--gem:#2E8FE6;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <path d="M9 9l-2.5 3L9 15" stroke-width="1.6"/>
+                <path d="M15 9l2.5 3L15 15" stroke-width="1.6"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">動画圧縮</span>
+            <span class="tool-caption">重い動画のファイルサイズを小さくする(初回は変換エンジンの読み込みあり)</span>
           </span>
         </button>
 
@@ -1764,6 +1781,34 @@
         <ul class="batch-list" id="video2mp3-list"></ul>
       </section>
 
+      <section id="videocompress" class="tool-panel">
+        <h2>動画圧縮</h2>
+        <p class="desc">動画のファイルサイズを小さくします。変換はすべてこのブラウザの中で行われ、動画がどこかにアップロードされることはありません。出力はMP4形式になります。</p>
+        <p class="format-note">初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。動画の長さやパソコンの性能によって、圧縮に数十秒〜数分かかることがあります。</p>
+        <div class="dropzone" data-target="videocompress-input">
+          <p>ここに動画ファイルをドラッグ&ドロップ<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="videocompress-input" accept="video/*,.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,.3gp,.3g2,.mpg,.mpeg,.ts,.m2ts,.mts,.ogv,.vob,.asf,.rm,.rmvb,.divx,.f4v,.mxf,.dv" multiple hidden></label>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="videocompress-level" value="recommended" checked>
+              <span>おすすめ(画質と軽さのバランス、横幅1280pxまで)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="videocompress-level" value="strong">
+              <span>しっかり圧縮(画質は下がります、横幅854pxまで)</span>
+            </label>
+          </div>
+          <button id="videocompress-run" class="run-btn" disabled>圧縮する</button>
+        </div>
+        <p class="format-note" id="videocompress-status"></p>
+        <div class="result-area" id="videocompress-result"></div>
+        <ul class="batch-list" id="videocompress-list"></ul>
+      </section>
+
     </div>
 
     <footer class="site-footer">
@@ -1796,30 +1841,31 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=79"></script>
-<script src="js/app.js?v=79"></script>
-<script src="js/settings.js?v=79"></script>
-<script src="js/tools/compress.js?v=79"></script>
-<script src="js/tools/convert.js?v=79"></script>
-<script src="js/tools/resize.js?v=79"></script>
-<script src="js/tools/exif.js?v=79"></script>
-<script src="js/tools/rotate.js?v=79"></script>
-<script src="js/tools/crop.js?v=79"></script>
-<script src="js/tools/filter.js?v=79"></script>
-<script src="js/tools/watermark.js?v=79"></script>
-<script src="js/tools/qrcode.js?v=79"></script>
-<script src="js/tools/qrcodescan.js?v=79"></script>
-<script src="js/tools/charcount.js?v=79"></script>
-<script src="js/tools/colorpicker.js?v=79"></script>
-<script src="js/tools/unitconvert.js?v=79"></script>
-<script src="js/tools/datecalc.js?v=79"></script>
-<script src="js/tools/calculator.js?v=79"></script>
-<script src="js/tools/pdfdesk.js?v=79"></script>
-<script src="js/tools/pdf2image.js?v=79"></script>
-<script src="js/tools/pdfcompress.js?v=79"></script>
-<script src="js/tools/pdf2text.js?v=79"></script>
-<script src="js/tools/rename.js?v=79"></script>
-<script src="js/tools/tts.js?v=79"></script>
-<script src="js/tools/video2mp3.js?v=79"></script>
+<script src="js/common.js?v=80"></script>
+<script src="js/app.js?v=80"></script>
+<script src="js/settings.js?v=80"></script>
+<script src="js/tools/compress.js?v=80"></script>
+<script src="js/tools/convert.js?v=80"></script>
+<script src="js/tools/resize.js?v=80"></script>
+<script src="js/tools/exif.js?v=80"></script>
+<script src="js/tools/rotate.js?v=80"></script>
+<script src="js/tools/crop.js?v=80"></script>
+<script src="js/tools/filter.js?v=80"></script>
+<script src="js/tools/watermark.js?v=80"></script>
+<script src="js/tools/qrcode.js?v=80"></script>
+<script src="js/tools/qrcodescan.js?v=80"></script>
+<script src="js/tools/charcount.js?v=80"></script>
+<script src="js/tools/colorpicker.js?v=80"></script>
+<script src="js/tools/unitconvert.js?v=80"></script>
+<script src="js/tools/datecalc.js?v=80"></script>
+<script src="js/tools/calculator.js?v=80"></script>
+<script src="js/tools/pdfdesk.js?v=80"></script>
+<script src="js/tools/pdf2image.js?v=80"></script>
+<script src="js/tools/pdfcompress.js?v=80"></script>
+<script src="js/tools/pdf2text.js?v=80"></script>
+<script src="js/tools/rename.js?v=80"></script>
+<script src="js/tools/tts.js?v=80"></script>
+<script src="js/tools/video2mp3.js?v=80"></script>
+<script src="js/tools/videocompress.js?v=80"></script>
 </body>
 </html>

@@ -1,12 +1,17 @@
 (() => {
-  const dropzone = document.querySelector('[data-target="video2mp3-input"]');
-  const input = document.getElementById("video2mp3-input");
-  const runBtn = document.getElementById("video2mp3-run");
-  const resultArea = document.getElementById("video2mp3-result");
-  const listEl = document.getElementById("video2mp3-list");
-  const statusEl = document.getElementById("video2mp3-status");
+  const dropzone = document.querySelector('[data-target="videocompress-input"]');
+  const input = document.getElementById("videocompress-input");
+  const runBtn = document.getElementById("videocompress-run");
+  const resultArea = document.getElementById("videocompress-result");
+  const listEl = document.getElementById("videocompress-list");
+  const statusEl = document.getElementById("videocompress-status");
 
   let currentFiles = [];
+
+  function getLevel() {
+    const checked = document.querySelector('input[name="videocompress-level"]:checked');
+    return checked ? checked.value : "recommended";
+  }
 
   function loadFiles(fileList) {
     const allFiles = Array.from(fileList);
@@ -27,8 +32,8 @@
 
   setupDropzone(dropzone, input, loadFiles);
 
-  function suggestMp3Name(originalName) {
-    return originalName.replace(/\.[^/.]+$/, "") + ".mp3";
+  function suggestCompressedName(originalName) {
+    return originalName.replace(/\.[^/.]+$/, "") + ".mp4";
   }
 
   function getExt(name) {
@@ -36,10 +41,17 @@
     return m ? m[1] : "mp4";
   }
 
-  async function convertOneFile(ffmpeg, file, onProgress) {
+  function getSettings(level) {
+    return level === "strong"
+      ? { maxWidth: 854, crf: 30, audioBitrate: "96k", preset: "veryfast" }
+      : { maxWidth: 1280, crf: 26, audioBitrate: "128k", preset: "veryfast" };
+  }
+
+  async function compressOneFile(ffmpeg, file, level, onProgress) {
+    const { maxWidth, crf, audioBitrate, preset } = getSettings(level);
     const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const inputName = `in_${uid}.${getExt(file.name)}`;
-    const outputName = `out_${uid}.mp3`;
+    const outputName = `out_${uid}.mp4`;
 
     const progressHandler = ({ progress }) => {
       const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
@@ -50,9 +62,18 @@
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       await ffmpeg.writeFile(inputName, bytes);
-      await ffmpeg.exec(["-i", inputName, "-vn", "-acodec", "libmp3lame", "-b:a", "192k", outputName]);
+      await ffmpeg.exec([
+        "-i", inputName,
+        "-vf", `scale=min(${maxWidth}\\,iw):-2`,
+        "-c:v", "libx264",
+        "-preset", preset,
+        "-crf", String(crf),
+        "-c:a", "aac",
+        "-b:a", audioBitrate,
+        outputName,
+      ]);
       const data = await ffmpeg.readFile(outputName);
-      return new File([data], suggestMp3Name(file.name), { type: "audio/mpeg" });
+      return new File([data], suggestCompressedName(file.name), { type: "video/mp4" });
     } finally {
       ffmpeg.off("progress", progressHandler);
       try { await ffmpeg.deleteFile(inputName); } catch {}
@@ -69,8 +90,10 @@
       if (!proceed) return;
     }
 
+    const level = getLevel();
+
     runBtn.disabled = true;
-    runBtn.textContent = "変換中...";
+    runBtn.textContent = "圧縮中...";
     listEl.innerHTML = "";
     resultArea.innerHTML = "";
     statusEl.textContent = isFirstLoad ? "変換エンジンを読み込み中です…" : "";
@@ -81,44 +104,60 @@
     } catch (err) {
       statusEl.textContent = "変換エンジンの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
       runBtn.disabled = false;
-      runBtn.textContent = "MP3に変換する";
+      runBtn.textContent = "圧縮する";
       return;
     }
     statusEl.textContent = "";
 
     const results = [];
+    let totalBefore = 0;
+    let totalAfter = 0;
+
     for (const file of currentFiles) {
       const li = document.createElement("li");
-      li.innerHTML = `<span>${file.name}</span><span>変換中... 0%</span>`;
+      li.innerHTML = `<span>${file.name}</span><span>圧縮中... 0%</span>`;
       listEl.appendChild(li);
 
       try {
-        const outFile = await convertOneFile(ffmpeg, file, (pct) => {
-          li.innerHTML = `<span>${file.name}</span><span>変換中... ${pct}%</span>`;
+        const outFile = await compressOneFile(ffmpeg, file, level, (pct) => {
+          li.innerHTML = `<span>${file.name}</span><span>圧縮中... ${pct}%</span>`;
         });
-        results.push(outFile);
-        li.innerHTML = `<span>${file.name}</span><span>${formatBytes(file.size)} → ${formatBytes(outFile.size)}</span>`;
+        // 圧縮の効果がなかった(むしろ大きくなった)場合は、元のファイルのまま残す
+        const finalFile = outFile.size < file.size ? outFile : file;
+
+        results.push(finalFile);
+        totalBefore += file.size;
+        totalAfter += finalFile.size;
+
+        const reduction = Math.round((1 - finalFile.size / file.size) * 100);
+        const summary = reduction > 0
+          ? `${formatBytes(file.size)} → ${formatBytes(finalFile.size)}(-${reduction}%)`
+          : `効果なし(元のファイルのまま)`;
+        li.innerHTML = `<span>${file.name}</span><span>${summary}</span>`;
       } catch (err) {
         li.innerHTML = `<span>${file.name}</span><span style="color:red;">失敗</span>`;
       }
     }
 
     if (results.length) {
-      const saveResult = await saveProcessedFiles(results, { category: "動画", tool: "MP3変換" }, currentFiles.length > 1);
+      const saveResult = await saveProcessedFiles(results, { category: "動画", tool: "圧縮" }, currentFiles.length > 1);
       const savedMsg = saveResult === "folder" ? "指定したフォルダに保存しました。" : "ダウンロードしました。";
+      const reduction = Math.round((1 - totalAfter / totalBefore) * 100);
       resultArea.innerHTML = `
         <div class="result-card">
           <div class="result-info">
-            <p>${results.length}件をMP3に変換しました。</p>
+            <p>${results.length}件を処理:${formatBytes(totalBefore)} → ${formatBytes(totalAfter)}
+              <span class="reduction">(${reduction > 0 ? "-" + reduction : reduction}%)</span>
+            </p>
             <p>${savedMsg}</p>
           </div>
         </div>
       `;
     } else {
-      resultArea.innerHTML = `<p style="color:red;">変換できたファイルがありませんでした。</p>`;
+      resultArea.innerHTML = `<p style="color:red;">圧縮できたファイルがありませんでした。</p>`;
     }
 
     runBtn.disabled = false;
-    runBtn.textContent = "MP3に変換する";
+    runBtn.textContent = "圧縮する";
   });
 })();

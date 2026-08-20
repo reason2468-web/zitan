@@ -197,6 +197,58 @@ function renderSelectedFiles(resultArea, files, onChange) {
   render(files);
 }
 
+// ---------- 動画ファイル共通(拡張子判定・選択中ファイルのプレビュー) ----------
+
+function isVideoFile(file) {
+  return file.type.startsWith("video/") || /\.(mp4|mov|avi|webm|mkv|wmv|flv|m4v|3gp|3g2|mpg|mpeg|ts|m2ts|mts|ogv|vob|asf|rm|rmvb|divx|f4v|mxf|dv)$/i.test(file.name);
+}
+
+// 画像プレビュー(buildSelectedFilesPreview)はサムネイル画像前提のため、動画には同じ見た目のクラスを使い独自に組み立てる
+function buildSelectedVideoPreview(files) {
+  const maxShow = 10;
+  const shown = files.slice(0, maxShow);
+  const remaining = files.length - shown.length;
+  const items = shown.map((f, i) => `
+    <li data-index="${i}">
+      <button type="button" class="file-remove-btn" data-index="${i}" aria-label="このファイルを削除">${TRASH_ICON}</button>
+      <span class="file-thumb pdf-file-icon" aria-hidden="true">🎬</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${formatBytes(f.size)}</span>
+    </li>
+  `).join("");
+  const moreItem = remaining > 0 ? `<li class="file-list-more">ほか${remaining}件</li>` : "";
+  return `
+    <div class="selected-file-header">
+      <p>${files.length}件の動画を選択中</p>
+      <button type="button" class="clear-all-btn">すべて削除</button>
+    </div>
+    <ul class="selected-file-list">${items}${moreItem}</ul>
+  `;
+}
+
+function renderSelectedVideoFiles(resultArea, files, onChange) {
+  function render(list) {
+    resultArea.innerHTML = buildSelectedVideoPreview(list);
+    resultArea.querySelectorAll(".file-remove-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.index);
+        list = list.slice(0, idx).concat(list.slice(idx + 1));
+        render(list);
+        onChange(list);
+      });
+    });
+    const clearBtn = resultArea.querySelector(".clear-all-btn");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        list = [];
+        resultArea.innerHTML = "";
+        onChange(list);
+      });
+    }
+  }
+  render(files);
+}
+
 // ドラッグ&ドロップ + クリックでファイル選択できるようにする共通セットアップ
 // (ドラッグ&ドロップはフォルダにも対応、フォルダの中の画像も再帰的に拾う)
 function setupDropzone(dropzoneEl, inputEl, onFiles) {
@@ -325,4 +377,46 @@ async function saveProcessedFiles(files, context, isBatch = false) {
   const blob = await zip.generateAsync({ type: "blob" });
   downloadFile(new File([blob], `${baseName}.zip`, { type: "application/zip" }));
   return "zip";
+}
+
+// ---------- 動画ツール共通(ffmpeg.wasm) ----------
+//
+// @ffmpeg/utilのCDN版UMDビルドはブラウザの<script>タグ読み込みでは正しく動かない既知の不具合があるため使わず、
+// 必要な機能(URLの中身を取得してBlob URL化するだけ)をここで直接実装する。
+// ffmpeg.wasm本体(ffmpeg.min.js・814.ffmpeg.js)は別オリジン(CDN)からのWorker生成がブラウザの
+// セキュリティ制限で弾かれるため、このサイト自身に同梱(js/vendor/ffmpeg/)して同一オリジンで読み込む。
+// 変換エンジン本体(約30MB)はCDNから取得するが、複数の動画ツール間でインスタンスを使い回し、二重ダウンロードを避ける。
+
+const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+
+let sharedFFmpegInstance = null;
+let sharedFFmpegLoadPromise = null;
+
+async function ffmpegToBlobURL(url, mimeType) {
+  const buf = await (await fetch(url)).arrayBuffer();
+  const blob = new Blob([buf], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
+function isFFmpegLoaded() {
+  return !!sharedFFmpegInstance;
+}
+
+function getSharedFFmpeg() {
+  if (sharedFFmpegLoadPromise) return sharedFFmpegLoadPromise;
+  sharedFFmpegLoadPromise = (async () => {
+    const { FFmpeg } = FFmpegWASM;
+    const ffmpeg = new FFmpeg();
+    await ffmpeg.load({
+      coreURL: await ffmpegToBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.js`, "text/javascript"),
+      wasmURL: await ffmpegToBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.wasm`, "application/wasm"),
+    });
+    sharedFFmpegInstance = ffmpeg;
+    return ffmpeg;
+  })();
+  // 読み込みに失敗した場合は次回また最初からやり直せるようにキャッシュを消す
+  sharedFFmpegLoadPromise.catch(() => {
+    sharedFFmpegLoadPromise = null;
+  });
+  return sharedFFmpegLoadPromise;
 }
