@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=102">
+<link rel="stylesheet" href="css/style.css?v=103">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -76,7 +76,7 @@
       <button class="category-btn" data-category="video">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg>
         <span class="category-label">動画</span>
-        <span class="category-count">5</span>
+        <span class="category-count">7</span>
       </button>
       <button class="category-btn" data-category="pdf">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -95,7 +95,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">5</span>
+        <span class="category-count">3</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -378,6 +378,37 @@
           <span class="tool-text">
             <span class="tool-label">動画からサムネイル抽出</span>
             <span class="tool-caption">好きな場面をそのまま画像として保存(変換エンジン不要)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="videorotate" style="--gem:#C77C3B;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">動画の回転</span>
+            <span class="tool-caption">向きが逆さま・横向きの動画を直す(初回は変換エンジンの読み込みあり)</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="videovolume" style="--gem:#D9679C;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 9v6h4l5 5V4L8 9H4z"/>
+                <path d="M16.5 8.5a5 5 0 0 1 0 7"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">動画の音量調整</span>
+            <span class="tool-caption">音割れしない範囲で大きく・小さく(初回は変換エンジンの読み込みあり)</span>
           </span>
         </button>
 
@@ -665,37 +696,6 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">入力した文章をパソコンの音声で読み上げ(声・速さを選択可)</span>
-          </span>
-        </button>
-
-        <button class="tool-card" data-tool="videorotate" style="--gem:#C77C3B;">
-          <span class="tool-sphere-wrap">
-            <span class="tool-shadow"></span>
-            <span class="tool-bubble">
-              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-              </svg>
-            </span>
-          </span>
-          <span class="tool-text">
-            <span class="tool-label">動画の回転</span>
-            <span class="tool-caption">向きが逆さま・横向きの動画を直す(初回は変換エンジンの読み込みあり)</span>
-          </span>
-        </button>
-
-        <button class="tool-card" data-tool="videovolume" style="--gem:#D9679C;">
-          <span class="tool-sphere-wrap">
-            <span class="tool-shadow"></span>
-            <span class="tool-bubble">
-              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 9v6h4l5 5V4L8 9H4z"/>
-                <path d="M16.5 8.5a5 5 0 0 1 0 7"/>
-              </svg>
-            </span>
-          </span>
-          <span class="tool-text">
-            <span class="tool-label">動画の音量調整</span>
-            <span class="tool-caption">音割れしない範囲で大きく・小さく(初回は変換エンジンの読み込みあり)</span>
           </span>
         </button>
 
@@ -2097,36 +2097,36 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=102"></script>
-<script src="js/app.js?v=102"></script>
-<script src="js/settings.js?v=102"></script>
-<script src="js/tools/compress.js?v=102"></script>
-<script src="js/tools/convert.js?v=102"></script>
-<script src="js/tools/resize.js?v=102"></script>
-<script src="js/tools/exif.js?v=102"></script>
-<script src="js/tools/rotate.js?v=102"></script>
-<script src="js/tools/crop.js?v=102"></script>
-<script src="js/tools/filter.js?v=102"></script>
-<script src="js/tools/watermark.js?v=102"></script>
-<script src="js/tools/qrcode.js?v=102"></script>
-<script src="js/tools/qrcodescan.js?v=102"></script>
-<script src="js/tools/charcount.js?v=102"></script>
-<script src="js/tools/colorpicker.js?v=102"></script>
-<script src="js/tools/unitconvert.js?v=102"></script>
-<script src="js/tools/datecalc.js?v=102"></script>
-<script src="js/tools/calculator.js?v=102"></script>
-<script src="js/tools/pdfdesk.js?v=102"></script>
-<script src="js/tools/pdf2image.js?v=102"></script>
-<script src="js/tools/pdfcompress.js?v=102"></script>
-<script src="js/tools/pdf2text.js?v=102"></script>
-<script src="js/tools/rename.js?v=102"></script>
-<script src="js/tools/tts.js?v=102"></script>
-<script src="js/tools/video2mp3.js?v=102"></script>
-<script src="js/tools/videocompress.js?v=102"></script>
-<script src="js/tools/videotrim.js?v=102"></script>
-<script src="js/tools/videoconvert.js?v=102"></script>
-<script src="js/tools/videothumbnail.js?v=102"></script>
-<script src="js/tools/videorotate.js?v=102"></script>
-<script src="js/tools/videovolume.js?v=102"></script>
+<script src="js/common.js?v=103"></script>
+<script src="js/app.js?v=103"></script>
+<script src="js/settings.js?v=103"></script>
+<script src="js/tools/compress.js?v=103"></script>
+<script src="js/tools/convert.js?v=103"></script>
+<script src="js/tools/resize.js?v=103"></script>
+<script src="js/tools/exif.js?v=103"></script>
+<script src="js/tools/rotate.js?v=103"></script>
+<script src="js/tools/crop.js?v=103"></script>
+<script src="js/tools/filter.js?v=103"></script>
+<script src="js/tools/watermark.js?v=103"></script>
+<script src="js/tools/qrcode.js?v=103"></script>
+<script src="js/tools/qrcodescan.js?v=103"></script>
+<script src="js/tools/charcount.js?v=103"></script>
+<script src="js/tools/colorpicker.js?v=103"></script>
+<script src="js/tools/unitconvert.js?v=103"></script>
+<script src="js/tools/datecalc.js?v=103"></script>
+<script src="js/tools/calculator.js?v=103"></script>
+<script src="js/tools/pdfdesk.js?v=103"></script>
+<script src="js/tools/pdf2image.js?v=103"></script>
+<script src="js/tools/pdfcompress.js?v=103"></script>
+<script src="js/tools/pdf2text.js?v=103"></script>
+<script src="js/tools/rename.js?v=103"></script>
+<script src="js/tools/tts.js?v=103"></script>
+<script src="js/tools/video2mp3.js?v=103"></script>
+<script src="js/tools/videocompress.js?v=103"></script>
+<script src="js/tools/videotrim.js?v=103"></script>
+<script src="js/tools/videoconvert.js?v=103"></script>
+<script src="js/tools/videothumbnail.js?v=103"></script>
+<script src="js/tools/videorotate.js?v=103"></script>
+<script src="js/tools/videovolume.js?v=103"></script>
 </body>
 </html>
