@@ -767,6 +767,40 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   background: var(--paper);
 }
 
+.trim-preview-video[hidden] { display: none; }
+
+.trim-preview-video {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #000;
+}
+
+.trim-time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trim-time-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trim-time-row input[type="text"] {
+  width: 90px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
 .qrcode-canvas {
   padding: 16px;
   box-sizing: border-box;
