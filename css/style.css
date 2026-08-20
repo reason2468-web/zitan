@@ -1934,10 +1934,35 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 }
 
 .trace-loading-overlay p.trace-loading-sub {
-  margin-top: -8px;
+  margin-top: -4px;
   font-size: 0.8rem;
   font-weight: 400;
   color: var(--text-muted);
+}
+
+.trace-loading-overlay p.trace-loading-detail {
+  margin-top: -8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary, #4a7dff);
+  min-height: 1.2em;
+}
+
+.trace-loading-bar {
+  width: min(240px, 80%);
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.trace-loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary, #4a7dff);
+  border-radius: 999px;
+  transition: width 0.25s ease;
 }
 
 @keyframes trace-spin {

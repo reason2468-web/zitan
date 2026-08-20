@@ -17,16 +17,49 @@
   const traceStatus = document.getElementById("bgremove-trace-status");
   const traceLoading = document.getElementById("bgremove-trace-loading");
   const traceLoadingText = document.getElementById("bgremove-trace-loading-text");
+  const traceLoadingBar = document.getElementById("bgremove-trace-loading-bar");
+  const traceLoadingFill = document.getElementById("bgremove-trace-loading-fill");
+  const traceLoadingDetail = document.getElementById("bgremove-trace-loading-detail");
+  const traceLoadingSub = document.getElementById("bgremove-trace-loading-sub");
 
-  function showTraceLoading(text) {
+  let traceLoadingStallTimer = null;
+
+  function showTraceLoading(text, sub) {
     traceLoadingText.textContent = text;
+    traceLoadingSub.textContent = sub || "";
+    traceLoadingDetail.textContent = "";
+    traceLoadingBar.hidden = true;
+    traceLoadingFill.style.width = "0%";
     traceLoading.hidden = false;
     traceCanvas.style.pointerEvents = "none";
+
+    clearTimeout(traceLoadingStallTimer);
+    traceLoadingStallTimer = setTimeout(() => {
+      traceLoadingSub.textContent = "通信環境によっては数十秒〜数分かかる場合があります。ページを閉じずにお待ちください。";
+    }, 20000);
   }
 
   function hideTraceLoading() {
+    clearTimeout(traceLoadingStallTimer);
     traceLoading.hidden = true;
     traceCanvas.style.pointerEvents = "";
+  }
+
+  // モデルのダウンロード進捗(バイト数)をファイル単位で受け取り、合算して表示する
+  const modelDownloadProgress = new Map();
+  function onModelDownloadProgress(e) {
+    if (e.status !== "progress" || !(e.total > 0)) return;
+    modelDownloadProgress.set(e.file, { loaded: e.loaded, total: e.total });
+    let loaded = 0;
+    let total = 0;
+    for (const p of modelDownloadProgress.values()) {
+      loaded += p.loaded;
+      total += p.total;
+    }
+    const pct = Math.min(100, Math.round((loaded / total) * 100));
+    traceLoadingBar.hidden = false;
+    traceLoadingFill.style.width = `${pct}%`;
+    traceLoadingDetail.textContent = `${pct}%(${formatBytes(loaded)} / ${formatBytes(total)})`;
   }
 
   let currentFiles = [];
@@ -173,12 +206,16 @@
     return samModulePromise;
   }
 
-  async function getSamModel() {
+  async function getSamModel(onProgress) {
     if (!samModelPromise) {
       samModelPromise = (async () => {
         const { SamModel, AutoProcessor } = await getSamModule();
         const [model, processor] = await Promise.all([
-          SamModel.from_pretrained(SAM_MODEL_ID, { dtype: "fp16", device: "wasm" }),
+          SamModel.from_pretrained(SAM_MODEL_ID, {
+            dtype: "fp16",
+            device: "wasm",
+            progress_callback: onProgress,
+          }),
           AutoProcessor.from_pretrained(SAM_MODEL_ID),
         ]);
         samModuleLoaded = true;
@@ -324,6 +361,7 @@
   });
 
   traceCancelBtn.addEventListener("click", () => {
+    hideTraceLoading();
     traceStage.hidden = true;
     controls.hidden = false;
     tracePoints = [];
@@ -361,12 +399,16 @@
       traceStage.hidden = false;
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      showTraceLoading(
-        isFirstLoad ? "AIモデルを読み込み中です…\n(初回のみ・約20MB)" : "画像を解析中です…"
-      );
+      if (isFirstLoad) {
+        modelDownloadProgress.clear();
+        showTraceLoading("AIモデルを準備しています", "初回のみ、セグメンテーションモデル(約20MB)をダウンロードします。");
+      } else {
+        showTraceLoading("画像を解析しています…");
+      }
       try {
-        const { model, processor } = await getSamModel();
+        const { model, processor } = await getSamModel(isFirstLoad ? onModelDownloadProgress : undefined);
         const { RawImage } = await getSamModule();
+        if (isFirstLoad) showTraceLoading("画像を解析しています…");
         const rawImage = await RawImage.fromURL(url);
         samImageProcessed = await processor(rawImage);
         samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
