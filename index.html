@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=100">
+<link rel="stylesheet" href="css/style.css?v=101">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -2000,9 +2000,9 @@
 
       <section id="videorotate" class="tool-panel">
         <h2>動画の回転</h2>
-        <p class="desc">動画の向きを回転します。スマホで撮った動画が横向き・縦向き逆になっているときなどに。変換はすべてこのブラウザの中で行われます。出力はMP4形式になります。</p>
-        <p class="format-note">動画の中身は書き換えず「回転して表示してね」という目印だけを付けるので、数秒で終わります(スマホの動画が縦向きで正しく再生されるのと同じ仕組みです)。初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。</p>
-        <p class="format-note"><strong>MP4・MOV・3GP形式</strong>はこの仕組みで数秒で終わりますが、<strong>それ以外の形式(WebM・AVIなど)</strong>は目印だけでは対応できないため、動画を実際に書き換える処理になり、時間がかかります。</p>
+        <p class="desc">動画の向きを回転します。スマホで撮った動画が横向き・縦向き逆になっているときなどに。変換はすべてこのブラウザの中で行われます。</p>
+        <p class="format-note">映像データそのものは書き換えず、ファイルに回転情報(メタデータ)を追加する方式のため、数秒で完了します。スマートフォンで縦向き撮影した動画が正しい向きで再生されるのと同じ、標準的な動画の仕組みです。初回実行時のみ、変換エンジン(合計約30MB)をダウンロードします。</p>
+        <p class="format-note"><strong>MP4・MOV・3GP形式</strong>はこの方式に対応しているため数秒で完了し、出力も元のファイルと同じ形式を維持します。<strong>それ以外の形式(WebM・AVIなど)</strong>は回転情報を保持できないため、映像データを再エンコードする処理に切り替わります(時間がかかります。出力はMP4形式になります)。</p>
         <div class="dropzone" data-target="videorotate-input">
           <p>ここに動画ファイルをドラッグ&ドロップ<br>または</p>
           <div class="dropzone-buttons">
@@ -2097,36 +2097,36 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=100"></script>
-<script src="js/app.js?v=100"></script>
-<script src="js/settings.js?v=100"></script>
-<script src="js/tools/compress.js?v=100"></script>
-<script src="js/tools/convert.js?v=100"></script>
-<script src="js/tools/resize.js?v=100"></script>
-<script src="js/tools/exif.js?v=100"></script>
-<script src="js/tools/rotate.js?v=100"></script>
-<script src="js/tools/crop.js?v=100"></script>
-<script src="js/tools/filter.js?v=100"></script>
-<script src="js/tools/watermark.js?v=100"></script>
-<script src="js/tools/qrcode.js?v=100"></script>
-<script src="js/tools/qrcodescan.js?v=100"></script>
-<script src="js/tools/charcount.js?v=100"></script>
-<script src="js/tools/colorpicker.js?v=100"></script>
-<script src="js/tools/unitconvert.js?v=100"></script>
-<script src="js/tools/datecalc.js?v=100"></script>
-<script src="js/tools/calculator.js?v=100"></script>
-<script src="js/tools/pdfdesk.js?v=100"></script>
-<script src="js/tools/pdf2image.js?v=100"></script>
-<script src="js/tools/pdfcompress.js?v=100"></script>
-<script src="js/tools/pdf2text.js?v=100"></script>
-<script src="js/tools/rename.js?v=100"></script>
-<script src="js/tools/tts.js?v=100"></script>
-<script src="js/tools/video2mp3.js?v=100"></script>
-<script src="js/tools/videocompress.js?v=100"></script>
-<script src="js/tools/videotrim.js?v=100"></script>
-<script src="js/tools/videoconvert.js?v=100"></script>
-<script src="js/tools/videothumbnail.js?v=100"></script>
-<script src="js/tools/videorotate.js?v=100"></script>
-<script src="js/tools/videovolume.js?v=100"></script>
+<script src="js/common.js?v=101"></script>
+<script src="js/app.js?v=101"></script>
+<script src="js/settings.js?v=101"></script>
+<script src="js/tools/compress.js?v=101"></script>
+<script src="js/tools/convert.js?v=101"></script>
+<script src="js/tools/resize.js?v=101"></script>
+<script src="js/tools/exif.js?v=101"></script>
+<script src="js/tools/rotate.js?v=101"></script>
+<script src="js/tools/crop.js?v=101"></script>
+<script src="js/tools/filter.js?v=101"></script>
+<script src="js/tools/watermark.js?v=101"></script>
+<script src="js/tools/qrcode.js?v=101"></script>
+<script src="js/tools/qrcodescan.js?v=101"></script>
+<script src="js/tools/charcount.js?v=101"></script>
+<script src="js/tools/colorpicker.js?v=101"></script>
+<script src="js/tools/unitconvert.js?v=101"></script>
+<script src="js/tools/datecalc.js?v=101"></script>
+<script src="js/tools/calculator.js?v=101"></script>
+<script src="js/tools/pdfdesk.js?v=101"></script>
+<script src="js/tools/pdf2image.js?v=101"></script>
+<script src="js/tools/pdfcompress.js?v=101"></script>
+<script src="js/tools/pdf2text.js?v=101"></script>
+<script src="js/tools/rename.js?v=101"></script>
+<script src="js/tools/tts.js?v=101"></script>
+<script src="js/tools/video2mp3.js?v=101"></script>
+<script src="js/tools/videocompress.js?v=101"></script>
+<script src="js/tools/videotrim.js?v=101"></script>
+<script src="js/tools/videoconvert.js?v=101"></script>
+<script src="js/tools/videothumbnail.js?v=101"></script>
+<script src="js/tools/videorotate.js?v=101"></script>
+<script src="js/tools/videovolume.js?v=101"></script>
 </body>
 </html>

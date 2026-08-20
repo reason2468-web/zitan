@@ -54,10 +54,39 @@
   // 見て自動で向きを変えて表示してくれるため、映像を書き換えずコピーするだけで済み、一瞬で終わる。
   // このサイトが使っているffmpeg.wasmは少し古いバージョン(5.1.4)のため、新しい-display_rotationは
   // 使えず、古い形式の-metadata:s:v:0 rotate=Xで書き込む(実機検証済み、向きの符号も同じ)
-  function getRotateMetadataAngle(direction) {
-    if (direction === "ccw") return "90";
-    if (direction === "180") return "180";
-    return "-90";
+  function getRotateMetadataDelta(direction) {
+    if (direction === "ccw") return 90;
+    if (direction === "180") return 180;
+    return -90;
+  }
+
+  // 角度を(-180, 180]の範囲に正規化する(例: -270 → 90)
+  function normalizeAngle(angle) {
+    let n = ((angle % 360) + 360) % 360;
+    if (n > 180) n -= 360;
+    return n;
+  }
+
+  // 入力ファイルに既に回転タグが付いている場合(このツールで既に回転済みのファイルを
+  // 再度読み込んだ場合など)、それを無視して新しい角度で上書きすると、2回目の回転が
+  // 効かなくなってしまう。そのため、まず既存の回転角度をログから読み取り、指定された
+  // 回転を「加算」してから書き込む
+  async function getExistingRotationDegrees(ffmpeg, inputName) {
+    let found = 0;
+    const handler = ({ message }) => {
+      const m = /rotation of (-?[\d.]+) degrees/.exec(message);
+      if (m) found = Math.round(parseFloat(m[1]));
+    };
+    ffmpeg.on("log", handler);
+    try {
+      await ffmpeg.exec(["-i", inputName]);
+    } catch {
+      // 出力ファイルを指定していないため必ずエラーになるが、その前に出力されるログに
+      // 回転情報が含まれているので問題ない
+    } finally {
+      ffmpeg.off("log", handler);
+    }
+    return found;
   }
 
   // MP4/MOV系のコンテナは回転タグを確実に保持できることを実機検証済み。
@@ -77,10 +106,12 @@
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       await ffmpeg.writeFile(inputName, bytes);
+      const existingRotation = await getExistingRotationDegrees(ffmpeg, inputName);
+      const newRotation = normalizeAngle(existingRotation + getRotateMetadataDelta(direction));
       await ffmpeg.exec([
         "-i", inputName,
         "-c", "copy",
-        "-metadata:s:v:0", `rotate=${getRotateMetadataAngle(direction)}`,
+        "-metadata:s:v:0", `rotate=${newRotation}`,
         outputName,
       ]);
       const data = await ffmpeg.readFile(outputName);
