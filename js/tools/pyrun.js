@@ -23,6 +23,41 @@
     outputEl.scrollTop = outputEl.scrollHeight;
   }
 
+  // Python側のshow_image()から呼ばれ、画像をそのまま出力結果欄に表示する
+  function showImageFromBase64(b64) {
+    resultArea.hidden = false;
+    const img = document.createElement("img");
+    img.src = `data:image/png;base64,${b64}`;
+    outputEl.appendChild(img);
+    outputEl.scrollTop = outputEl.scrollHeight;
+  }
+
+  // Python側のsave_file()から呼ばれ、仮想ファイルシステム上のファイルをダウンロードさせる
+  function saveFileFromBase64(name, b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    downloadFile(new File([bytes], name));
+  }
+
+  const PYRUN_SETUP_CODE = `
+def show_image(image):
+    from PIL import Image
+    import base64, io
+    if isinstance(image, str):
+        image = Image.open(image)
+    buf = io.BytesIO()
+    image.convert("RGBA").save(buf, format="PNG")
+    _zitan_show_image_b64(base64.b64encode(buf.getvalue()).decode())
+
+def save_file(path):
+    import base64
+    with open(path, "rb") as f:
+        data = f.read()
+    name = path.rsplit("/", 1)[-1]
+    _zitan_save_file_b64(name, base64.b64encode(data).decode())
+`;
+
   let pyodidePromise = null;
   let pyodideLoaded = false;
   function getPyodide() {
@@ -35,6 +70,9 @@
           stderr: (msg) => appendOutput(msg + "\n", true),
         });
         pyodide.FS.mkdirTree(UPLOAD_DIR);
+        pyodide.globals.set("_zitan_show_image_b64", showImageFromBase64);
+        pyodide.globals.set("_zitan_save_file_b64", saveFileFromBase64);
+        pyodide.runPython(PYRUN_SETUP_CODE);
         pyodideLoaded = true;
         return pyodide;
       })().catch((err) => {
@@ -62,11 +100,23 @@
     filesListEl.innerHTML = "";
     uploadedFiles.forEach((f) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span>${f.name}</span><span class="pyrun-path">${f.path}</span>`;
+      li.innerHTML = `<span>${f.name}</span><span class="pyrun-path" data-path="${f.path}" title="クリックでコピー">${f.path}</span>`;
       filesListEl.appendChild(li);
     });
     filesNoteEl.hidden = uploadedFiles.length === 0;
   }
+
+  filesListEl.addEventListener("click", (e) => {
+    const pathEl = e.target.closest(".pyrun-path");
+    if (!pathEl) return;
+    navigator.clipboard.writeText(pathEl.dataset.path).then(() => {
+      const original = pathEl.textContent;
+      pathEl.textContent = "コピーしました!";
+      setTimeout(() => {
+        pathEl.textContent = original;
+      }, 1200);
+    });
+  });
 
   // 既にアップロード済みの名前と重ならないよう、同名ファイルには連番を振る
   function uniqueUploadName(name, takenNames) {
@@ -113,6 +163,9 @@
       const pyodide = await loadPyodideWithStatus();
       statusEl.textContent = "実行中です…";
       await pyodide.loadPackagesFromImports(code);
+      if (/\bshow_image\s*\(/.test(code)) {
+        await pyodide.loadPackage("Pillow");
+      }
       await pyodide.runPythonAsync(code);
       statusEl.textContent = "";
     } catch (err) {
