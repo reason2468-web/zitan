@@ -11,6 +11,7 @@
 
   const traceStage = document.getElementById("bgremove-trace-stage");
   const traceCanvas = document.getElementById("bgremove-trace-canvas");
+  const traceUndoBtn = document.getElementById("bgremove-trace-undo");
   const traceClearBtn = document.getElementById("bgremove-trace-clear");
   const traceApplyBtn = document.getElementById("bgremove-trace-apply");
   const traceCancelBtn = document.getElementById("bgremove-trace-cancel");
@@ -298,6 +299,13 @@
   });
 
   traceCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  traceUndoBtn.addEventListener("click", () => {
+    if (!tracePoints.length) return;
+    tracePoints.pop();
+    redrawTraceCanvas();
+    decodeMask();
+  });
 
   traceClearBtn.addEventListener("click", () => {
     tracePoints = [];
