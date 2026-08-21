@@ -36,7 +36,7 @@
     { label: "九九表を作る", code: `for (let i = 1; i <= 9; i++) {\n  let row = [];\n  for (let j = 1; j <= 9; j++) {\n    row.push(\`\${i}x\${j}=\${i * j}\`);\n  }\n  console.log(row.join(" "));\n}` },
     { label: "配列の合計・平均を計算", code: `const scores = [80, 65, 90, 72, 88, 55, 100];\nconst sum = scores.reduce((a, b) => a + b, 0);\nconsole.log("合計:", sum);\nconsole.log("平均:", sum / scores.length);\nconsole.log("最高点:", Math.max(...scores));` },
     { label: "今日の日付を表示", code: `const today = new Date();\nconsole.log(today.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" }));` },
-    { label: "簡単なオブジェクト操作", code: `const user = { name: "たくと", age: 25 };\nconsole.log(JSON.stringify(user, null, 2));` },
+    { label: "簡単なオブジェクト操作", code: `const user = { name: "山田太郎", age: 25 };\nconsole.log(JSON.stringify(user, null, 2));` },
   ];
 
   SAMPLES.forEach((item, i) => {
