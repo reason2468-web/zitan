@@ -59,6 +59,9 @@
       Tesseract.createWorker("jpn+eng"),
       Tesseract.createWorker("jpn_vert"),
     ]);
+    // 縦書きは「単一ブロックの縦書き」モードを明示しないと、複数の行(列)を
+    // 上から下ではなく横一列ごとに区切ってしまい、文字の並び順が崩れるため設定する
+    await vertical.setParameters({ tessedit_pageseg_mode: "5" });
     ocrWorkers = { horizontal, vertical };
     return ocrWorkers;
   }
@@ -92,7 +95,10 @@
     return joined;
   }
 
-  // 縦書き・横書きの両方でOCRを試し、読み取り精度(confidence)が高いほうを採用する
+  // 縦書き・横書きの両方でOCRを試し、読み取り精度(confidence)が高いほうを採用する。
+  // 信頼度が同点になることがあり、その場合に横書きを優先すると、縦書き画像で
+  // 行の順序が崩れた結果(横一列ごとに読んでしまう)が選ばれてしまうため、
+  // 同点のときは縦書きを優先する
   async function ocrCanvas(canvas) {
     const { horizontal, vertical } = await getOcrWorkers();
     const [hRes, vRes] = await Promise.all([
@@ -101,7 +107,7 @@
     ]);
     const hConf = hRes?.data?.confidence ?? -1;
     const vConf = vRes?.data?.confidence ?? -1;
-    const best = hConf >= vConf ? hRes : vRes;
+    const best = hConf > vConf ? hRes : vRes;
     return cleanupOcrText(fixMojibakeUtf8(best?.data?.text ?? ""));
   }
 
