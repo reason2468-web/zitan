@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=128">
+<link rel="stylesheet" href="css/style.css?v=129">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1895,6 +1895,13 @@
         <p class="format-note">初回実行時のみ、Pythonの実行環境(数十MB)をダウンロードします。通信環境によっては少し時間がかかります。numpyなど主要なライブラリのimportにも対応しています。</p>
 
         <div class="controls">
+          <label class="template-label">ファイルを渡す(任意)</label>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pyrun-upload" multiple hidden></label>
+          </div>
+          <ul class="batch-list" id="pyrun-files"></ul>
+          <p class="format-note" id="pyrun-files-note" hidden>アップロードしたファイルは、コード内で <code>open("/uploads/ファイル名")</code> のように開けます。</p>
+
           <label class="template-label">Pythonのコード
             <textarea id="pyrun-code" class="template-input pyrun-editor" rows="12" spellcheck="false">print("Hello, Zitan!")</textarea>
           </label>
@@ -2192,38 +2199,38 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=128"></script>
-<script src="js/app.js?v=128"></script>
-<script src="js/settings.js?v=128"></script>
-<script src="js/tools/compress.js?v=128"></script>
-<script src="js/tools/convert.js?v=128"></script>
-<script src="js/tools/resize.js?v=128"></script>
-<script src="js/tools/exif.js?v=128"></script>
-<script src="js/tools/rotate.js?v=128"></script>
-<script src="js/tools/crop.js?v=128"></script>
-<script src="js/tools/filter.js?v=128"></script>
-<script src="js/tools/watermark.js?v=128"></script>
-<script src="js/tools/qrcode.js?v=128"></script>
-<script src="js/tools/qrcodescan.js?v=128"></script>
-<script src="js/tools/charcount.js?v=128"></script>
-<script src="js/tools/colorpicker.js?v=128"></script>
-<script src="js/tools/unitconvert.js?v=128"></script>
-<script src="js/tools/datecalc.js?v=128"></script>
-<script src="js/tools/calculator.js?v=128"></script>
-<script src="js/tools/pdfdesk.js?v=128"></script>
-<script src="js/tools/pdf2image.js?v=128"></script>
-<script src="js/tools/pdfcompress.js?v=128"></script>
-<script src="js/tools/pdf2text.js?v=128"></script>
-<script src="js/tools/rename.js?v=128"></script>
-<script src="js/tools/tts.js?v=128"></script>
-<script src="js/tools/pyrun.js?v=128"></script>
-<script src="js/tools/video2mp3.js?v=128"></script>
-<script src="js/tools/videocompress.js?v=128"></script>
-<script src="js/tools/videotrim.js?v=128"></script>
-<script src="js/tools/videoconvert.js?v=128"></script>
-<script src="js/tools/videothumbnail.js?v=128"></script>
-<script src="js/tools/videorotate.js?v=128"></script>
-<script src="js/tools/videovolume.js?v=128"></script>
-<script src="js/tools/bgremove.js?v=128"></script>
+<script src="js/common.js?v=129"></script>
+<script src="js/app.js?v=129"></script>
+<script src="js/settings.js?v=129"></script>
+<script src="js/tools/compress.js?v=129"></script>
+<script src="js/tools/convert.js?v=129"></script>
+<script src="js/tools/resize.js?v=129"></script>
+<script src="js/tools/exif.js?v=129"></script>
+<script src="js/tools/rotate.js?v=129"></script>
+<script src="js/tools/crop.js?v=129"></script>
+<script src="js/tools/filter.js?v=129"></script>
+<script src="js/tools/watermark.js?v=129"></script>
+<script src="js/tools/qrcode.js?v=129"></script>
+<script src="js/tools/qrcodescan.js?v=129"></script>
+<script src="js/tools/charcount.js?v=129"></script>
+<script src="js/tools/colorpicker.js?v=129"></script>
+<script src="js/tools/unitconvert.js?v=129"></script>
+<script src="js/tools/datecalc.js?v=129"></script>
+<script src="js/tools/calculator.js?v=129"></script>
+<script src="js/tools/pdfdesk.js?v=129"></script>
+<script src="js/tools/pdf2image.js?v=129"></script>
+<script src="js/tools/pdfcompress.js?v=129"></script>
+<script src="js/tools/pdf2text.js?v=129"></script>
+<script src="js/tools/rename.js?v=129"></script>
+<script src="js/tools/tts.js?v=129"></script>
+<script src="js/tools/pyrun.js?v=129"></script>
+<script src="js/tools/video2mp3.js?v=129"></script>
+<script src="js/tools/videocompress.js?v=129"></script>
+<script src="js/tools/videotrim.js?v=129"></script>
+<script src="js/tools/videoconvert.js?v=129"></script>
+<script src="js/tools/videothumbnail.js?v=129"></script>
+<script src="js/tools/videorotate.js?v=129"></script>
+<script src="js/tools/videovolume.js?v=129"></script>
+<script src="js/tools/bgremove.js?v=129"></script>
 </body>
 </html>

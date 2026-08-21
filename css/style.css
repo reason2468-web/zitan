@@ -398,6 +398,11 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 }
 .pyrun-console .pyrun-error { color: #FF9B9B; }
 
+.pyrun-path {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  color: var(--text-muted);
+}
+
 .dropzone {
   border: 2px dashed var(--line);
   border-radius: 14px;
