@@ -382,6 +382,31 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   tab-size: 4;
 }
 
+.speedtest-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+}
+.speedtest-stat {
+  background: var(--moss-pale);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 16px;
+  text-align: center;
+}
+.speedtest-stat-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.speedtest-stat-value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--moss-dark);
+}
+
 .pyrun-editor + .CodeMirror {
   border: 1px solid var(--line);
   border-radius: 10px;

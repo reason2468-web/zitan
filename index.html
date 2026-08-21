@@ -53,7 +53,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=139">
+<link rel="stylesheet" href="css/style.css?v=140">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
 </head>
@@ -106,7 +106,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">3</span>
+        <span class="category-count">4</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -725,6 +725,23 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">文章をパソコンの<br>音声で読み上げ</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="speedtest" style="--gem:#D9834F;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 15a8 8 0 1 1 16 0"/>
+                <line x1="12" y1="15" x2="16" y2="10"/>
+                <circle cx="12" cy="15" r="1.2" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">ネット速度<br>測定</span>
+            <span class="tool-caption">ダウンロード・<br>アップロード速度を測定</span>
           </span>
         </button>
 
@@ -1936,6 +1953,41 @@
         <div class="result-area" id="tts-result"></div>
       </section>
 
+      <section id="speedtest" class="tool-panel">
+        <h2>ネット速度測定</h2>
+        <p class="desc">今お使いの回線の、ダウンロード・アップロード速度や応答速度(Ping)を測定します。Cloudflare社の世界的な回線網を使って測定するので、精度の高い結果が得られます。</p>
+        <p class="format-note">測定には数百MB程度の通信を行います(スマホなどの従量制回線では、通信量にご注意ください)。また、測定結果はCloudflare社にも統計目的で送信されます。個人を特定する情報は含まれません。</p>
+
+        <div class="controls">
+          <div class="dropzone-buttons">
+            <button type="button" class="run-btn" id="speedtest-start">測定を始める</button>
+          </div>
+          <div class="loading-banner" id="speedtest-status"></div>
+        </div>
+
+        <div class="result-area">
+          <div class="speedtest-stats" id="speedtest-stats" hidden>
+            <div class="speedtest-stat">
+              <span class="speedtest-stat-label">ダウンロード</span>
+              <span class="speedtest-stat-value" id="speedtest-download">-</span>
+            </div>
+            <div class="speedtest-stat">
+              <span class="speedtest-stat-label">アップロード</span>
+              <span class="speedtest-stat-value" id="speedtest-upload">-</span>
+            </div>
+            <div class="speedtest-stat">
+              <span class="speedtest-stat-label">応答速度(Ping)</span>
+              <span class="speedtest-stat-value" id="speedtest-latency">-</span>
+            </div>
+            <div class="speedtest-stat">
+              <span class="speedtest-stat-label">揺らぎ(ジッター)</span>
+              <span class="speedtest-stat-value" id="speedtest-jitter">-</span>
+            </div>
+          </div>
+          <p class="format-note" id="speedtest-error" hidden></p>
+        </div>
+      </section>
+
       <section id="pyrun" class="tool-panel">
         <h2>Pythonを実行</h2>
         <p class="desc">ブラウザの中だけでPythonのコードを実行します。パソコンへのインストールは不要で、入力したコードが外部のサーバーに送られることもありません。</p>
@@ -2296,38 +2348,39 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=139"></script>
-<script src="js/app.js?v=139"></script>
-<script src="js/settings.js?v=139"></script>
-<script src="js/tools/compress.js?v=139"></script>
-<script src="js/tools/convert.js?v=139"></script>
-<script src="js/tools/resize.js?v=139"></script>
-<script src="js/tools/exif.js?v=139"></script>
-<script src="js/tools/rotate.js?v=139"></script>
-<script src="js/tools/crop.js?v=139"></script>
-<script src="js/tools/filter.js?v=139"></script>
-<script src="js/tools/watermark.js?v=139"></script>
-<script src="js/tools/qrcode.js?v=139"></script>
-<script src="js/tools/qrcodescan.js?v=139"></script>
-<script src="js/tools/charcount.js?v=139"></script>
-<script src="js/tools/colorpicker.js?v=139"></script>
-<script src="js/tools/unitconvert.js?v=139"></script>
-<script src="js/tools/datecalc.js?v=139"></script>
-<script src="js/tools/calculator.js?v=139"></script>
-<script src="js/tools/pdfdesk.js?v=139"></script>
-<script src="js/tools/pdf2image.js?v=139"></script>
-<script src="js/tools/pdfcompress.js?v=139"></script>
-<script src="js/tools/pdf2text.js?v=139"></script>
-<script src="js/tools/rename.js?v=139"></script>
-<script src="js/tools/tts.js?v=139"></script><script src="js/tools/pyrun.js?v=139"></script>
-<script src="js/tools/jsrun.js?v=139"></script>
-<script src="js/tools/video2mp3.js?v=139"></script>
-<script src="js/tools/videocompress.js?v=139"></script>
-<script src="js/tools/videotrim.js?v=139"></script>
-<script src="js/tools/videoconvert.js?v=139"></script>
-<script src="js/tools/videothumbnail.js?v=139"></script>
-<script src="js/tools/videorotate.js?v=139"></script>
-<script src="js/tools/videovolume.js?v=139"></script>
-<script src="js/tools/bgremove.js?v=139"></script>
+<script src="js/common.js?v=140"></script>
+<script src="js/app.js?v=140"></script>
+<script src="js/settings.js?v=140"></script>
+<script src="js/tools/compress.js?v=140"></script>
+<script src="js/tools/convert.js?v=140"></script>
+<script src="js/tools/resize.js?v=140"></script>
+<script src="js/tools/exif.js?v=140"></script>
+<script src="js/tools/rotate.js?v=140"></script>
+<script src="js/tools/crop.js?v=140"></script>
+<script src="js/tools/filter.js?v=140"></script>
+<script src="js/tools/watermark.js?v=140"></script>
+<script src="js/tools/qrcode.js?v=140"></script>
+<script src="js/tools/qrcodescan.js?v=140"></script>
+<script src="js/tools/charcount.js?v=140"></script>
+<script src="js/tools/colorpicker.js?v=140"></script>
+<script src="js/tools/unitconvert.js?v=140"></script>
+<script src="js/tools/datecalc.js?v=140"></script>
+<script src="js/tools/calculator.js?v=140"></script>
+<script src="js/tools/pdfdesk.js?v=140"></script>
+<script src="js/tools/pdf2image.js?v=140"></script>
+<script src="js/tools/pdfcompress.js?v=140"></script>
+<script src="js/tools/pdf2text.js?v=140"></script>
+<script src="js/tools/rename.js?v=140"></script>
+<script src="js/tools/tts.js?v=140"></script><script src="js/tools/pyrun.js?v=140"></script>
+<script src="js/tools/jsrun.js?v=140"></script>
+<script src="js/tools/speedtest.js?v=140"></script>
+<script src="js/tools/video2mp3.js?v=140"></script>
+<script src="js/tools/videocompress.js?v=140"></script>
+<script src="js/tools/videotrim.js?v=140"></script>
+<script src="js/tools/videoconvert.js?v=140"></script>
+<script src="js/tools/videothumbnail.js?v=140"></script>
+<script src="js/tools/videorotate.js?v=140"></script>
+<script src="js/tools/videovolume.js?v=140"></script>
+<script src="js/tools/bgremove.js?v=140"></script>
 </body>
 </html>
