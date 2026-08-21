@@ -77,6 +77,12 @@
         stream: true,
         max_tokens: 400,
         abortSignal: abortController.signal,
+        // 小型モデルは同じ言葉のループにハマりやすいため、繰り返しを抑える設定を入れる
+        temp: 0.7,
+        top_p: 0.9,
+        top_k: 40,
+        penalty_repeat: 1.3,
+        penalty_last_n: 64,
       });
       let full = "";
       for await (const chunk of stream) {
