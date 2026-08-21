@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=138">
+<link rel="stylesheet" href="css/style.css?v=139">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
 </head>
@@ -105,7 +105,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">4</span>
+        <span class="category-count">3</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -724,23 +724,6 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">文章をパソコンの<br>音声で読み上げ</span>
-          </span>
-        </button>
-
-        <button class="tool-card" data-tool="aichat" style="--gem:#9B59B6;">
-          <span class="tool-sphere-wrap">
-            <span class="tool-shadow"></span>
-            <span class="tool-bubble">
-              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 5h16v11H8l-4 4V5z"/>
-                <line x1="8" y1="9" x2="16" y2="9"/>
-                <line x1="8" y1="13" x2="13" y2="13"/>
-              </svg>
-            </span>
-          </span>
-          <span class="tool-text">
-            <span class="tool-label">AIチャット(実験的)</span>
-            <span class="tool-caption">小型AIと<br>ブラウザだけで会話</span>
           </span>
         </button>
 
@@ -1952,31 +1935,6 @@
         <div class="result-area" id="tts-result"></div>
       </section>
 
-      <section id="aichat" class="tool-panel">
-        <h2>AIチャット(実験的)</h2>
-        <p class="desc">ブラウザの中だけで、小型のAIとチャットできます。サーバーへの送信は一切ありません。</p>
-        <p class="format-note">初回のみAIモデル(約270MB)をダウンロードします。小型のAIなので、簡単な質問や短い文章の要約向けです。複雑な質問や長い文章の処理には向きません。</p>
-
-        <div class="controls">
-          <button type="button" class="run-btn" id="aichat-load">AIモデルを読み込んで会話を始める</button>
-        </div>
-
-        <p class="format-note loading-banner" id="aichat-status"></p>
-
-        <div class="pyrun-console aichat-log" id="aichat-log" hidden></div>
-
-        <div class="controls" id="aichat-input-area" hidden>
-          <label class="template-label">メッセージ
-            <textarea id="aichat-input" class="template-input" rows="3" placeholder="質問や、要約したい文章を入力してください"></textarea>
-          </label>
-          <div class="dropzone-buttons">
-            <button type="button" class="run-btn" id="aichat-send">送信する</button>
-            <button type="button" class="run-btn pyrun-stop-btn" id="aichat-stop" hidden>■ 停止する</button>
-            <button type="button" class="file-btn-outline" id="aichat-clear">会話をクリア</button>
-          </div>
-        </div>
-      </section>
-
       <section id="pyrun" class="tool-panel">
         <h2>Pythonを実行</h2>
         <p class="desc">ブラウザの中だけでPythonのコードを実行します。パソコンへのインストールは不要で、入力したコードが外部のサーバーに送られることもありません。</p>
@@ -2337,40 +2295,38 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=138"></script>
-<script src="js/app.js?v=138"></script>
-<script src="js/settings.js?v=138"></script>
-<script src="js/tools/compress.js?v=138"></script>
-<script src="js/tools/convert.js?v=138"></script>
-<script src="js/tools/resize.js?v=138"></script>
-<script src="js/tools/exif.js?v=138"></script>
-<script src="js/tools/rotate.js?v=138"></script>
-<script src="js/tools/crop.js?v=138"></script>
-<script src="js/tools/filter.js?v=138"></script>
-<script src="js/tools/watermark.js?v=138"></script>
-<script src="js/tools/qrcode.js?v=138"></script>
-<script src="js/tools/qrcodescan.js?v=138"></script>
-<script src="js/tools/charcount.js?v=138"></script>
-<script src="js/tools/colorpicker.js?v=138"></script>
-<script src="js/tools/unitconvert.js?v=138"></script>
-<script src="js/tools/datecalc.js?v=138"></script>
-<script src="js/tools/calculator.js?v=138"></script>
-<script src="js/tools/pdfdesk.js?v=138"></script>
-<script src="js/tools/pdf2image.js?v=138"></script>
-<script src="js/tools/pdfcompress.js?v=138"></script>
-<script src="js/tools/pdf2text.js?v=138"></script>
-<script src="js/tools/rename.js?v=138"></script>
-<script src="js/tools/tts.js?v=138"></script>
-<script src="js/tools/aichat.js?v=138"></script>
-<script src="js/tools/pyrun.js?v=138"></script>
-<script src="js/tools/jsrun.js?v=138"></script>
-<script src="js/tools/video2mp3.js?v=138"></script>
-<script src="js/tools/videocompress.js?v=138"></script>
-<script src="js/tools/videotrim.js?v=138"></script>
-<script src="js/tools/videoconvert.js?v=138"></script>
-<script src="js/tools/videothumbnail.js?v=138"></script>
-<script src="js/tools/videorotate.js?v=138"></script>
-<script src="js/tools/videovolume.js?v=138"></script>
-<script src="js/tools/bgremove.js?v=138"></script>
+<script src="js/common.js?v=139"></script>
+<script src="js/app.js?v=139"></script>
+<script src="js/settings.js?v=139"></script>
+<script src="js/tools/compress.js?v=139"></script>
+<script src="js/tools/convert.js?v=139"></script>
+<script src="js/tools/resize.js?v=139"></script>
+<script src="js/tools/exif.js?v=139"></script>
+<script src="js/tools/rotate.js?v=139"></script>
+<script src="js/tools/crop.js?v=139"></script>
+<script src="js/tools/filter.js?v=139"></script>
+<script src="js/tools/watermark.js?v=139"></script>
+<script src="js/tools/qrcode.js?v=139"></script>
+<script src="js/tools/qrcodescan.js?v=139"></script>
+<script src="js/tools/charcount.js?v=139"></script>
+<script src="js/tools/colorpicker.js?v=139"></script>
+<script src="js/tools/unitconvert.js?v=139"></script>
+<script src="js/tools/datecalc.js?v=139"></script>
+<script src="js/tools/calculator.js?v=139"></script>
+<script src="js/tools/pdfdesk.js?v=139"></script>
+<script src="js/tools/pdf2image.js?v=139"></script>
+<script src="js/tools/pdfcompress.js?v=139"></script>
+<script src="js/tools/pdf2text.js?v=139"></script>
+<script src="js/tools/rename.js?v=139"></script>
+<script src="js/tools/tts.js?v=139"></script><script src="js/tools/pyrun.js?v=139"></script>
+<script src="js/tools/jsrun.js?v=139"></script>
+<script src="js/tools/video2mp3.js?v=139"></script>
+<script src="js/tools/videocompress.js?v=139"></script>
+<script src="js/tools/videotrim.js?v=139"></script>
+<script src="js/tools/videoconvert.js?v=139"></script>
+<script src="js/tools/videothumbnail.js?v=139"></script>
+<script src="js/tools/videorotate.js?v=139"></script>
+<script src="js/tools/videovolume.js?v=139"></script>
+<script src="js/tools/bgremove.js?v=139"></script>
 </body>
 </html>
