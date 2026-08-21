@@ -53,7 +53,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=147">
+<link rel="stylesheet" href="css/style.css?v=148">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css" media="print" onload="this.media='all'">
 <noscript>
@@ -110,7 +110,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">4</span>
+        <span class="category-count">5</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -764,6 +764,23 @@
           <span class="tool-text">
             <span class="tool-label">音声・動画の<br>文字起こし</span>
             <span class="tool-caption">AIで音声の内容を<br>テキスト化</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="screenocr" style="--gem:#3E8E7E;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 2.5"/>
+                <line x1="7" y1="9" x2="17" y2="9"/>
+                <line x1="7" y1="13" x2="14" y2="13"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">画像・スクショ<br>から文字を抽出</span>
+            <span class="tool-caption">範囲を選んでOCR、<br>画面キャプチャも対応</span>
           </span>
         </button>
 
@@ -2055,6 +2072,42 @@
         </div>
       </section>
 
+      <section id="screenocr" class="tool-panel">
+        <h2>画像・スクショから文字を抽出</h2>
+        <p class="desc">画像やスクリーンショットから、文字だけを読み取ってテキスト化します。読み取りたい範囲だけを選ぶこともできます。</p>
+        <p class="format-note">対応形式:JPEG・PNG・WebP・BMPなど。日本語・英語に対応し、縦書き・横書きも自動で判定します。パソコンの画面をそのままキャプチャして読み取ることもできます。</p>
+
+        <div class="dropzone" data-target="screenocr-input">
+          <p>ここに画像をドラッグ&ドロップ、貼り付け(Ctrl+V)<br>または</p>
+          <div class="dropzone-buttons">
+            <label class="file-btn">ファイルを選択<input type="file" id="screenocr-input" accept="image/*" hidden></label>
+            <button type="button" class="file-btn-outline" id="screenocr-capture">画面をキャプチャ</button>
+          </div>
+        </div>
+        <div id="screenocr-file-status"></div>
+
+        <div class="crop-stage"><img id="screenocr-image" style="max-width:100%; display:none;"></div>
+
+        <div class="controls">
+          <p class="format-note" id="screenocr-select-note" hidden>枠をドラッグすると、読み取る範囲を絞り込めます(初期状態では画像全体を読み取ります)。</p>
+          <div class="dropzone-buttons">
+            <button type="button" class="run-btn" id="screenocr-run" disabled>文字を読み取る</button>
+          </div>
+          <div class="loading-banner" id="screenocr-status"></div>
+        </div>
+
+        <div class="result-area">
+          <p class="format-note" id="screenocr-error" hidden></p>
+          <label class="template-label" id="screenocr-output-label" hidden>読み取った文字
+            <textarea id="screenocr-output" class="template-input" rows="8" readonly></textarea>
+          </label>
+          <div class="dropzone-buttons">
+            <button type="button" class="file-btn-outline" id="screenocr-copy" hidden>コピーする</button>
+            <button type="button" class="file-btn-outline" id="screenocr-download" hidden>テキストをダウンロード</button>
+          </div>
+        </div>
+      </section>
+
       <section id="pyrun" class="tool-panel">
         <h2>Pythonを実行</h2>
         <p class="desc">ブラウザの中だけでPythonのコードを実行します。パソコンへのインストールは不要で、入力したコードが外部のサーバーに送られることもありません。</p>
@@ -2415,41 +2468,42 @@
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
 <script defer src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script defer src="js/common.js?v=147"></script>
-<script defer src="js/app.js?v=147"></script>
-<script defer src="js/settings.js?v=147"></script>
-<script defer src="js/tools/compress.js?v=147"></script>
-<script defer src="js/tools/convert.js?v=147"></script>
-<script defer src="js/tools/resize.js?v=147"></script>
-<script defer src="js/tools/exif.js?v=147"></script>
-<script defer src="js/tools/rotate.js?v=147"></script>
-<script defer src="js/tools/crop.js?v=147"></script>
-<script defer src="js/tools/filter.js?v=147"></script>
-<script defer src="js/tools/watermark.js?v=147"></script>
-<script defer src="js/tools/qrcode.js?v=147"></script>
-<script defer src="js/tools/qrcodescan.js?v=147"></script>
-<script defer src="js/tools/charcount.js?v=147"></script>
-<script defer src="js/tools/colorpicker.js?v=147"></script>
-<script defer src="js/tools/unitconvert.js?v=147"></script>
-<script defer src="js/tools/datecalc.js?v=147"></script>
-<script defer src="js/tools/calculator.js?v=147"></script>
-<script defer src="js/tools/pdfdesk.js?v=147"></script>
-<script defer src="js/tools/pdf2image.js?v=147"></script>
-<script defer src="js/tools/pdfcompress.js?v=147"></script>
-<script defer src="js/tools/pdf2text.js?v=147"></script>
-<script defer src="js/tools/rename.js?v=147"></script>
-<script defer src="js/tools/tts.js?v=147"></script>
-<script defer src="js/tools/pyrun.js?v=147"></script>
-<script defer src="js/tools/jsrun.js?v=147"></script>
-<script defer src="js/tools/speedtest.js?v=147"></script>
-<script defer src="js/tools/transcribe.js?v=147"></script>
-<script defer src="js/tools/video2mp3.js?v=147"></script>
-<script defer src="js/tools/videocompress.js?v=147"></script>
-<script defer src="js/tools/videotrim.js?v=147"></script>
-<script defer src="js/tools/videoconvert.js?v=147"></script>
-<script defer src="js/tools/videothumbnail.js?v=147"></script>
-<script defer src="js/tools/videorotate.js?v=147"></script>
-<script defer src="js/tools/videovolume.js?v=147"></script>
-<script defer src="js/tools/bgremove.js?v=147"></script>
+<script defer src="js/common.js?v=148"></script>
+<script defer src="js/app.js?v=148"></script>
+<script defer src="js/settings.js?v=148"></script>
+<script defer src="js/tools/compress.js?v=148"></script>
+<script defer src="js/tools/convert.js?v=148"></script>
+<script defer src="js/tools/resize.js?v=148"></script>
+<script defer src="js/tools/exif.js?v=148"></script>
+<script defer src="js/tools/rotate.js?v=148"></script>
+<script defer src="js/tools/crop.js?v=148"></script>
+<script defer src="js/tools/filter.js?v=148"></script>
+<script defer src="js/tools/watermark.js?v=148"></script>
+<script defer src="js/tools/qrcode.js?v=148"></script>
+<script defer src="js/tools/qrcodescan.js?v=148"></script>
+<script defer src="js/tools/charcount.js?v=148"></script>
+<script defer src="js/tools/colorpicker.js?v=148"></script>
+<script defer src="js/tools/unitconvert.js?v=148"></script>
+<script defer src="js/tools/datecalc.js?v=148"></script>
+<script defer src="js/tools/calculator.js?v=148"></script>
+<script defer src="js/tools/pdfdesk.js?v=148"></script>
+<script defer src="js/tools/pdf2image.js?v=148"></script>
+<script defer src="js/tools/pdfcompress.js?v=148"></script>
+<script defer src="js/tools/pdf2text.js?v=148"></script>
+<script defer src="js/tools/rename.js?v=148"></script>
+<script defer src="js/tools/tts.js?v=148"></script>
+<script defer src="js/tools/pyrun.js?v=148"></script>
+<script defer src="js/tools/jsrun.js?v=148"></script>
+<script defer src="js/tools/speedtest.js?v=148"></script>
+<script defer src="js/tools/transcribe.js?v=148"></script>
+<script defer src="js/tools/screenocr.js?v=148"></script>
+<script defer src="js/tools/video2mp3.js?v=148"></script>
+<script defer src="js/tools/videocompress.js?v=148"></script>
+<script defer src="js/tools/videotrim.js?v=148"></script>
+<script defer src="js/tools/videoconvert.js?v=148"></script>
+<script defer src="js/tools/videothumbnail.js?v=148"></script>
+<script defer src="js/tools/videorotate.js?v=148"></script>
+<script defer src="js/tools/videovolume.js?v=148"></script>
+<script defer src="js/tools/bgremove.js?v=148"></script>
 </body>
 </html>
