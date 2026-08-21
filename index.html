@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=133">
+<link rel="stylesheet" href="css/style.css?v=134">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
 </head>
@@ -89,6 +89,15 @@
         <span class="category-label">その他</span>
         <span class="category-count">7</span>
       </button>
+      <button class="category-btn" data-category="code">
+        <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <polyline points="6 9 10 12 6 15"/>
+          <line x1="12" y1="15" x2="17" y2="15"/>
+        </svg>
+        <span class="category-label">コード実行</span>
+        <span class="category-count">1</span>
+      </button>
       <button class="category-btn" data-category="beta">
         <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 2v6L3 20a1 1 0 0 0 1 2h16a1 1 0 0 0 1-2L15 8V2"/>
@@ -96,7 +105,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">4</span>
+        <span class="category-count">3</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -717,6 +726,26 @@
             <span class="tool-caption">文章をパソコンの<br>音声で読み上げ</span>
           </span>
         </button>
+
+      </div>
+    </div>
+
+    <!-- カテゴリ: コード実行 -->
+    <div id="category-code" class="category-panel">
+      <div class="category-header">
+        <span class="category-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <polyline points="6 9 10 12 6 15"/>
+            <line x1="12" y1="15" x2="17" y2="15"/>
+          </svg>
+        </span>
+        <span>
+          <h2 class="category-title">コード実行</h2>
+          <p class="category-desc">ブラウザの中だけでコードを実行するツールです</p>
+        </span>
+      </div>
+      <div class="tool-grid">
 
         <button class="tool-card" data-tool="pyrun" style="--gem:#4A7DFF;">
           <span class="tool-sphere-wrap">
@@ -2219,38 +2248,38 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/closebrackets.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=133"></script>
-<script src="js/app.js?v=133"></script>
-<script src="js/settings.js?v=133"></script>
-<script src="js/tools/compress.js?v=133"></script>
-<script src="js/tools/convert.js?v=133"></script>
-<script src="js/tools/resize.js?v=133"></script>
-<script src="js/tools/exif.js?v=133"></script>
-<script src="js/tools/rotate.js?v=133"></script>
-<script src="js/tools/crop.js?v=133"></script>
-<script src="js/tools/filter.js?v=133"></script>
-<script src="js/tools/watermark.js?v=133"></script>
-<script src="js/tools/qrcode.js?v=133"></script>
-<script src="js/tools/qrcodescan.js?v=133"></script>
-<script src="js/tools/charcount.js?v=133"></script>
-<script src="js/tools/colorpicker.js?v=133"></script>
-<script src="js/tools/unitconvert.js?v=133"></script>
-<script src="js/tools/datecalc.js?v=133"></script>
-<script src="js/tools/calculator.js?v=133"></script>
-<script src="js/tools/pdfdesk.js?v=133"></script>
-<script src="js/tools/pdf2image.js?v=133"></script>
-<script src="js/tools/pdfcompress.js?v=133"></script>
-<script src="js/tools/pdf2text.js?v=133"></script>
-<script src="js/tools/rename.js?v=133"></script>
-<script src="js/tools/tts.js?v=133"></script>
-<script src="js/tools/pyrun.js?v=133"></script>
-<script src="js/tools/video2mp3.js?v=133"></script>
-<script src="js/tools/videocompress.js?v=133"></script>
-<script src="js/tools/videotrim.js?v=133"></script>
-<script src="js/tools/videoconvert.js?v=133"></script>
-<script src="js/tools/videothumbnail.js?v=133"></script>
-<script src="js/tools/videorotate.js?v=133"></script>
-<script src="js/tools/videovolume.js?v=133"></script>
-<script src="js/tools/bgremove.js?v=133"></script>
+<script src="js/common.js?v=134"></script>
+<script src="js/app.js?v=134"></script>
+<script src="js/settings.js?v=134"></script>
+<script src="js/tools/compress.js?v=134"></script>
+<script src="js/tools/convert.js?v=134"></script>
+<script src="js/tools/resize.js?v=134"></script>
+<script src="js/tools/exif.js?v=134"></script>
+<script src="js/tools/rotate.js?v=134"></script>
+<script src="js/tools/crop.js?v=134"></script>
+<script src="js/tools/filter.js?v=134"></script>
+<script src="js/tools/watermark.js?v=134"></script>
+<script src="js/tools/qrcode.js?v=134"></script>
+<script src="js/tools/qrcodescan.js?v=134"></script>
+<script src="js/tools/charcount.js?v=134"></script>
+<script src="js/tools/colorpicker.js?v=134"></script>
+<script src="js/tools/unitconvert.js?v=134"></script>
+<script src="js/tools/datecalc.js?v=134"></script>
+<script src="js/tools/calculator.js?v=134"></script>
+<script src="js/tools/pdfdesk.js?v=134"></script>
+<script src="js/tools/pdf2image.js?v=134"></script>
+<script src="js/tools/pdfcompress.js?v=134"></script>
+<script src="js/tools/pdf2text.js?v=134"></script>
+<script src="js/tools/rename.js?v=134"></script>
+<script src="js/tools/tts.js?v=134"></script>
+<script src="js/tools/pyrun.js?v=134"></script>
+<script src="js/tools/video2mp3.js?v=134"></script>
+<script src="js/tools/videocompress.js?v=134"></script>
+<script src="js/tools/videotrim.js?v=134"></script>
+<script src="js/tools/videoconvert.js?v=134"></script>
+<script src="js/tools/videothumbnail.js?v=134"></script>
+<script src="js/tools/videorotate.js?v=134"></script>
+<script src="js/tools/videovolume.js?v=134"></script>
+<script src="js/tools/bgremove.js?v=134"></script>
 </body>
 </html>
