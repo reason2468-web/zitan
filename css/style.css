@@ -458,6 +458,35 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
 .pyrun-table-wrap th { background: rgba(230, 237, 229, 0.12); font-weight: 700; }
 .pyrun-table-wrap tr:nth-child(even) td { background: rgba(230, 237, 229, 0.06); }
 
+.aichat-log {
+  min-height: 120px;
+  max-height: 450px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0;
+}
+.aichat-msg {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+.aichat-msg-user {
+  align-self: flex-end;
+  background: var(--moss);
+  color: white;
+}
+.aichat-msg-ai {
+  align-self: flex-start;
+  background: rgba(230, 237, 229, 0.12);
+  color: #E6EDE5;
+}
+
 .dropzone {
   border: 2px dashed var(--line);
   border-radius: 14px;
