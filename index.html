@@ -52,8 +52,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=131">
+<link rel="stylesheet" href="css/style.css?v=133">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
 </head>
 <body>
 
@@ -1893,15 +1894,26 @@
         <h2>Pythonを実行</h2>
         <p class="desc">ブラウザの中だけでPythonのコードを実行します。パソコンへのインストールは不要で、入力したコードが外部のサーバーに送られることもありません。</p>
         <p class="format-note">初回実行時のみ、Pythonの実行環境(数十MB)をダウンロードします。通信環境によっては少し時間がかかります。numpyなど主要なライブラリのimportにも対応しています。</p>
-        <p class="format-note">画像を表示したいときは <code>show_image("/uploads/ファイル名")</code> 、動画を再生したいときは <code>show_video("/uploads/ファイル名")</code> 、作ったファイルをダウンロードしたいときは <code>save_file("ファイルの場所")</code> が使えます。</p>
+        <p class="format-note">画像を表示したいときは <code>show_image("/uploads/ファイル名")</code> 、動画を再生したいときは <code>show_video("/uploads/ファイル名")</code> 、表(pandasのDataFrame)を見やすく表示したいときは <code>show_table(df)</code> が使えます。</p>
+        <p class="format-note">作ったファイルをダウンロードしたいときは <code>save_file("ファイルの場所")</code> 、複数のファイルをまとめてZIPでダウンロードしたいときは <code>save_files(["場所1", "場所2"])</code> が使えます。</p>
 
         <div class="controls">
           <label class="template-label">ファイルを渡す(任意)</label>
-          <div class="dropzone-buttons">
-            <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pyrun-upload" multiple hidden></label>
+          <div class="dropzone" data-target="pyrun-upload" id="pyrun-dropzone">
+            <p>ここにファイルをドラッグ&ドロップ<br>または</p>
+            <div class="dropzone-buttons">
+              <label class="file-btn">ファイルを選択(複数可)<input type="file" id="pyrun-upload" multiple hidden></label>
+            </div>
           </div>
           <ul class="batch-list" id="pyrun-files"></ul>
           <p class="format-note" id="pyrun-files-note" hidden>アップロードしたファイルは、コード内で <code>open("/uploads/ファイル名")</code> のように開けます。場所の文字をクリックすると、その場所をコピーできます。</p>
+
+          <div class="custom-width-row">
+            <label>サンプルコード:
+              <select id="pyrun-sample-select"></select>
+            </label>
+            <button type="button" class="file-btn-outline" id="pyrun-sample-insert">挿入する</button>
+          </div>
 
           <label class="template-label">Pythonのコード
             <textarea id="pyrun-code" class="template-input pyrun-editor" rows="12" spellcheck="false">print("Hello, Zitan!")</textarea>
@@ -1909,6 +1921,7 @@
 
           <div class="dropzone-buttons">
             <button type="button" class="run-btn" id="pyrun-run">実行する</button>
+            <button type="button" class="run-btn pyrun-stop-btn" id="pyrun-stop" hidden>■ 停止する</button>
             <button type="button" class="file-btn-outline" id="pyrun-clear">出力をクリア</button>
           </div>
         </div>
@@ -2182,7 +2195,9 @@
         <a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js</a>,
         <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank" rel="noopener">ffmpeg.wasm</a>,
         <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener">@imgly/background-removal</a>,
-        <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">Transformers.js</a>
+        <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">Transformers.js</a>,
+        <a href="https://github.com/pyodide/pyodide" target="_blank" rel="noopener">Pyodide</a>,
+        <a href="https://github.com/codemirror/codemirror5" target="_blank" rel="noopener">CodeMirror</a>
       </p>
     </footer>
 
@@ -2199,39 +2214,43 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/closebrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=131"></script>
-<script src="js/app.js?v=131"></script>
-<script src="js/settings.js?v=131"></script>
-<script src="js/tools/compress.js?v=131"></script>
-<script src="js/tools/convert.js?v=131"></script>
-<script src="js/tools/resize.js?v=131"></script>
-<script src="js/tools/exif.js?v=131"></script>
-<script src="js/tools/rotate.js?v=131"></script>
-<script src="js/tools/crop.js?v=131"></script>
-<script src="js/tools/filter.js?v=131"></script>
-<script src="js/tools/watermark.js?v=131"></script>
-<script src="js/tools/qrcode.js?v=131"></script>
-<script src="js/tools/qrcodescan.js?v=131"></script>
-<script src="js/tools/charcount.js?v=131"></script>
-<script src="js/tools/colorpicker.js?v=131"></script>
-<script src="js/tools/unitconvert.js?v=131"></script>
-<script src="js/tools/datecalc.js?v=131"></script>
-<script src="js/tools/calculator.js?v=131"></script>
-<script src="js/tools/pdfdesk.js?v=131"></script>
-<script src="js/tools/pdf2image.js?v=131"></script>
-<script src="js/tools/pdfcompress.js?v=131"></script>
-<script src="js/tools/pdf2text.js?v=131"></script>
-<script src="js/tools/rename.js?v=131"></script>
-<script src="js/tools/tts.js?v=131"></script>
-<script src="js/tools/pyrun.js?v=131"></script>
-<script src="js/tools/video2mp3.js?v=131"></script>
-<script src="js/tools/videocompress.js?v=131"></script>
-<script src="js/tools/videotrim.js?v=131"></script>
-<script src="js/tools/videoconvert.js?v=131"></script>
-<script src="js/tools/videothumbnail.js?v=131"></script>
-<script src="js/tools/videorotate.js?v=131"></script>
-<script src="js/tools/videovolume.js?v=131"></script>
-<script src="js/tools/bgremove.js?v=131"></script>
+<script src="js/common.js?v=133"></script>
+<script src="js/app.js?v=133"></script>
+<script src="js/settings.js?v=133"></script>
+<script src="js/tools/compress.js?v=133"></script>
+<script src="js/tools/convert.js?v=133"></script>
+<script src="js/tools/resize.js?v=133"></script>
+<script src="js/tools/exif.js?v=133"></script>
+<script src="js/tools/rotate.js?v=133"></script>
+<script src="js/tools/crop.js?v=133"></script>
+<script src="js/tools/filter.js?v=133"></script>
+<script src="js/tools/watermark.js?v=133"></script>
+<script src="js/tools/qrcode.js?v=133"></script>
+<script src="js/tools/qrcodescan.js?v=133"></script>
+<script src="js/tools/charcount.js?v=133"></script>
+<script src="js/tools/colorpicker.js?v=133"></script>
+<script src="js/tools/unitconvert.js?v=133"></script>
+<script src="js/tools/datecalc.js?v=133"></script>
+<script src="js/tools/calculator.js?v=133"></script>
+<script src="js/tools/pdfdesk.js?v=133"></script>
+<script src="js/tools/pdf2image.js?v=133"></script>
+<script src="js/tools/pdfcompress.js?v=133"></script>
+<script src="js/tools/pdf2text.js?v=133"></script>
+<script src="js/tools/rename.js?v=133"></script>
+<script src="js/tools/tts.js?v=133"></script>
+<script src="js/tools/pyrun.js?v=133"></script>
+<script src="js/tools/video2mp3.js?v=133"></script>
+<script src="js/tools/videocompress.js?v=133"></script>
+<script src="js/tools/videotrim.js?v=133"></script>
+<script src="js/tools/videoconvert.js?v=133"></script>
+<script src="js/tools/videothumbnail.js?v=133"></script>
+<script src="js/tools/videorotate.js?v=133"></script>
+<script src="js/tools/videovolume.js?v=133"></script>
+<script src="js/tools/bgremove.js?v=133"></script>
 </body>
 </html>

@@ -382,6 +382,16 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   tab-size: 4;
 }
 
+.pyrun-editor + .CodeMirror {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  height: auto;
+  min-height: 260px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+}
+.pyrun-editor + .CodeMirror .CodeMirror-gutters { border-radius: 10px 0 0 10px; }
+
 .pyrun-console {
   background: var(--ink);
   color: #E6EDE5;
@@ -397,6 +407,7 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin: 0;
 }
 .pyrun-console .pyrun-error { color: #FF9B9B; }
+.pyrun-console .pyrun-hint { color: #8FD4C1; }
 .pyrun-console img,
 .pyrun-console video {
   display: block;
@@ -411,6 +422,41 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   cursor: pointer;
 }
 .pyrun-path:hover { text-decoration: underline; color: var(--moss-dark); }
+
+.pyrun-file-delete {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0 0 10px;
+  line-height: 1;
+}
+.pyrun-file-delete:hover { color: #C0392B; }
+
+.pyrun-stop-btn {
+  background: linear-gradient(180deg, #E06A5A, #C0392B);
+  box-shadow: 0 4px 10px rgba(192, 57, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.pyrun-stop-btn:hover { background: linear-gradient(180deg, #C0392B, #A5301F); }
+
+.pyrun-table-wrap {
+  overflow-x: auto;
+  margin: 6px 0;
+}
+.pyrun-table-wrap table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 100%;
+}
+.pyrun-table-wrap th, .pyrun-table-wrap td {
+  border: 1px solid rgba(230, 237, 229, 0.25);
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+.pyrun-table-wrap th { background: rgba(230, 237, 229, 0.12); font-weight: 700; }
+.pyrun-table-wrap tr:nth-child(even) td { background: rgba(230, 237, 229, 0.06); }
 
 .dropzone {
   border: 2px dashed var(--line);
