@@ -397,7 +397,8 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   margin: 0;
 }
 .pyrun-console .pyrun-error { color: #FF9B9B; }
-.pyrun-console img {
+.pyrun-console img,
+.pyrun-console video {
   display: block;
   max-width: 100%;
   border-radius: 6px;

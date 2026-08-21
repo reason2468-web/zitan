@@ -32,6 +32,18 @@
     outputEl.scrollTop = outputEl.scrollHeight;
   }
 
+  const VIDEO_MIME_TYPES = { mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", ogg: "video/ogg", ogv: "video/ogg" };
+
+  // Python側のshow_video()から呼ばれ、動画をそのまま出力結果欄に表示する
+  function showVideoFromBase64(ext, b64) {
+    resultArea.hidden = false;
+    const video = document.createElement("video");
+    video.controls = true;
+    video.src = `data:${VIDEO_MIME_TYPES[ext] || "video/mp4"};base64,${b64}`;
+    outputEl.appendChild(video);
+    outputEl.scrollTop = outputEl.scrollHeight;
+  }
+
   // Python側のsave_file()から呼ばれ、仮想ファイルシステム上のファイルをダウンロードさせる
   function saveFileFromBase64(name, b64) {
     const binary = atob(b64);
@@ -49,6 +61,13 @@ def show_image(image):
     buf = io.BytesIO()
     image.convert("RGBA").save(buf, format="PNG")
     _zitan_show_image_b64(base64.b64encode(buf.getvalue()).decode())
+
+def show_video(path):
+    import base64
+    with open(path, "rb") as f:
+        data = f.read()
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else "mp4"
+    _zitan_show_video_b64(ext, base64.b64encode(data).decode())
 
 def save_file(path):
     import base64
@@ -71,6 +90,7 @@ def save_file(path):
         });
         pyodide.FS.mkdirTree(UPLOAD_DIR);
         pyodide.globals.set("_zitan_show_image_b64", showImageFromBase64);
+        pyodide.globals.set("_zitan_show_video_b64", showVideoFromBase64);
         pyodide.globals.set("_zitan_save_file_b64", saveFileFromBase64);
         pyodide.runPython(PYRUN_SETUP_CODE);
         pyodideLoaded = true;
