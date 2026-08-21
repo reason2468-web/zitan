@@ -1,7 +1,6 @@
 (() => {
   const dropzone = document.querySelector('[data-target="screenocr-input"]');
   const input = document.getElementById("screenocr-input");
-  const captureBtn = document.getElementById("screenocr-capture");
   const fileStatusEl = document.getElementById("screenocr-file-status");
   const imageEl = document.getElementById("screenocr-image");
   const selectNote = document.getElementById("screenocr-select-note");
@@ -52,37 +51,6 @@
     if (!file) return;
     e.preventDefault();
     loadFiles([file]);
-  });
-
-  captureBtn.addEventListener("click", async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      fileStatusEl.innerHTML = `<p style="color:red;">お使いのブラウザは画面キャプチャに対応していません。</p>`;
-      return;
-    }
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    } catch (err) {
-      // キャンセルされた場合は何もしない
-      return;
-    }
-
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    video.muted = true;
-    await video.play();
-    // 最初の1フレームが安定して描画されるまで少し待つ
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    stream.getTracks().forEach((t) => t.stop());
-
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-    fileStatusEl.innerHTML = `<p>画面をキャプチャしました(${canvas.width} × ${canvas.height}px)</p>`;
-    setImage(URL.createObjectURL(blob));
   });
 
   async function getOcrWorkers() {
