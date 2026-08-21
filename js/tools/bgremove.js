@@ -14,68 +14,6 @@
   const traceClearBtn = document.getElementById("bgremove-trace-clear");
   const traceApplyBtn = document.getElementById("bgremove-trace-apply");
   const traceCancelBtn = document.getElementById("bgremove-trace-cancel");
-  const traceStatus = document.getElementById("bgremove-trace-status");
-  const traceLoading = document.getElementById("bgremove-trace-loading");
-  const traceLoadingText = document.getElementById("bgremove-trace-loading-text");
-  const traceLoadingBar = document.getElementById("bgremove-trace-loading-bar");
-  const traceLoadingFill = document.getElementById("bgremove-trace-loading-fill");
-  const traceLoadingDetail = document.getElementById("bgremove-trace-loading-detail");
-  const traceLoadingSub = document.getElementById("bgremove-trace-loading-sub");
-  const traceLoadingElapsed = document.getElementById("bgremove-trace-loading-elapsed");
-
-  let traceLoadingStallTimer = null;
-  let traceElapsedTimer = null;
-  let traceElapsedStart = 0;
-
-  // 経過秒数を1秒ごとに表示し続けることで、「本当に動いているのか」を可視化する
-  function startTraceElapsed() {
-    traceElapsedStart = Date.now();
-    clearInterval(traceElapsedTimer);
-    traceLoadingElapsed.textContent = "経過時間: 0秒";
-    traceElapsedTimer = setInterval(() => {
-      const sec = Math.floor((Date.now() - traceElapsedStart) / 1000);
-      traceLoadingElapsed.textContent = `経過時間: ${sec}秒`;
-    }, 1000);
-  }
-
-  function stopTraceElapsed() {
-    clearInterval(traceElapsedTimer);
-    traceElapsedTimer = null;
-    traceLoadingElapsed.textContent = "";
-  }
-
-  function showTraceLoading(text, sub) {
-    traceLoadingText.textContent = text;
-    traceLoadingSub.textContent = sub || "";
-    traceLoadingDetail.textContent = "";
-    traceLoadingBar.hidden = true;
-    traceLoadingFill.style.width = "0%";
-    traceLoading.hidden = false;
-    traceCanvas.style.pointerEvents = "none";
-
-    clearTimeout(traceLoadingStallTimer);
-    traceLoadingStallTimer = setTimeout(() => {
-      traceLoadingSub.textContent = "処理には端末の性能によって数十秒〜数分かかる場合があります。ブラウザを閉じずにそのままお待ちください。";
-    }, 20000);
-  }
-
-  function hideTraceLoading() {
-    clearTimeout(traceLoadingStallTimer);
-    stopTraceElapsed();
-    traceLoading.hidden = true;
-    traceCanvas.style.pointerEvents = "";
-  }
-
-  // 通信状況や端末の性能などで極端に時間がかかった場合に、無限に待たせず失敗として扱うまでの上限
-  const TRACE_LOAD_TIMEOUT_MS = 150000;
-  function withTraceLoadTimeout(promise) {
-    return Promise.race([
-      promise,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("trace-load-timeout")), TRACE_LOAD_TIMEOUT_MS)
-      ),
-    ]);
-  }
 
   let currentFiles = [];
 
@@ -226,15 +164,7 @@
       samModelPromise = (async () => {
         const { SamModel, AutoProcessor } = await getSamModule();
         const [model, processor] = await Promise.all([
-          // fp16は端末によってはCPU側にfp16用の演算カーネルがなく、処理が極端に遅くなる/
-          // 進まなくなる報告があったため、互換性を優先してfp32を使う(その分ダウンロード量は増える)
-          // progress_callbackを渡すとファイルをストリーミングで少しずつ読み込む方式になり、
-          // 通信環境によってはそれ自体が固まって進まなくなる報告があったため、
-          // 進捗表示より確実に完了することを優先し、あえて渡さない
-          SamModel.from_pretrained(SAM_MODEL_ID, {
-            dtype: "fp32",
-            device: "wasm",
-          }),
+          SamModel.from_pretrained(SAM_MODEL_ID, { dtype: "fp16", device: "wasm" }),
           AutoProcessor.from_pretrained(SAM_MODEL_ID),
         ]);
         samModuleLoaded = true;
@@ -349,10 +279,9 @@
       }
       currentMask = { data, width: mw, height: mh };
       traceApplyBtn.disabled = false;
-      traceStatus.textContent = "";
       redrawTraceCanvas();
     } catch (err) {
-      traceStatus.textContent = "認識に失敗しました。もう一度クリックしてお試しください。";
+      statusEl.textContent = "認識に失敗しました。もう一度クリックしてお試しください。";
     } finally {
       isDecoding = false;
       if (decodePending) {
@@ -380,12 +309,6 @@
   });
 
   traceCancelBtn.addEventListener("click", () => {
-    // 実行中の読み込みがあれば無効化し(バックグラウンドで残っても結果を無視する)、
-    // すぐにもう一度「クリックして正確に切り抜く」を押せる状態に戻す
-    traceRunToken++;
-    traceStartInProgress = false;
-    manualStartBtn.disabled = false;
-    hideTraceLoading();
     traceStage.hidden = true;
     controls.hidden = false;
     tracePoints = [];
@@ -395,24 +318,13 @@
     samImageEmbeddings = null;
   });
 
-  let traceStartInProgress = false;
-
   manualStartBtn.addEventListener("click", async () => {
     if (currentFiles.length !== 1) return;
-    // 読み込み中にもう一度押されると、内部処理が二重に走って状態が壊れるため、
-    // 完了(成功・失敗いずれか)するまでボタンを無効化して再入を防ぐ
-    if (traceStartInProgress) return;
-    traceStartInProgress = true;
-    manualStartBtn.disabled = true;
 
     const isFirstLoad = !samModuleLoaded;
     if (isFirstLoad) {
-      const proceed = confirm("クリックモードの前に、初回のみAIモデル(約40MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
-      if (!proceed) {
-        traceStartInProgress = false;
-        manualStartBtn.disabled = false;
-        return;
-      }
+      const proceed = confirm("クリックモードの前に、初回のみAIモデル(約20MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      if (!proceed) return;
     }
 
     const file = currentFiles[0];
@@ -430,39 +342,21 @@
       traceApplyBtn.disabled = true;
       drawBaseImage();
       controls.hidden = true;
-      traceStatus.textContent = "";
       traceStage.hidden = false;
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      if (isFirstLoad) {
-        showTraceLoading("AIモデルを準備しています", "初回のみ、セグメンテーションモデル(約40MB)をダウンロードします。");
-      } else {
-        showTraceLoading("画像を解析しています…");
-      }
-      startTraceElapsed();
+      statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…" : "画像を解析中です…";
       try {
-        await withTraceLoadTimeout(
-          (async () => {
-            const { model, processor } = await getSamModel();
-            const { RawImage } = await getSamModule();
-            if (isFirstLoad) showTraceLoading("画像を解析しています…");
-            const rawImage = await RawImage.fromURL(url);
-            samImageProcessed = await processor(rawImage);
-            samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
-          })()
-        );
-        hideTraceLoading();
+        const { model, processor } = await getSamModel();
+        const { RawImage } = await getSamModule();
+        const rawImage = await RawImage.fromURL(url);
+        samImageProcessed = await processor(rawImage);
+        samImageEmbeddings = await model.get_image_embeddings(samImageProcessed);
+        statusEl.textContent = "";
       } catch (err) {
-        hideTraceLoading();
-        traceStatus.textContent =
-          err && err.message === "trace-load-timeout"
-            ? "処理に時間がかかりすぎているため中断しました。端末の性能によっては、このクリックモードが動作しないことがあります。お手数ですが、AIによる自動削除モードもお試しください。"
-            : "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
+        statusEl.textContent = "AIモデルの読み込みに失敗しました。通信環境を確認して、もう一度お試しください。";
         traceStage.hidden = true;
         controls.hidden = false;
-      } finally {
-        traceStartInProgress = false;
-        manualStartBtn.disabled = false;
       }
     };
     img.src = url;

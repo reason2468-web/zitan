@@ -52,7 +52,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=121">
+<link rel="stylesheet" href="css/style.css?v=122">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 </head>
 <body>
@@ -1894,20 +1894,9 @@
         <ul class="batch-list" id="bgremove-list"></ul>
 
         <div class="trace-stage" id="bgremove-trace-stage" hidden>
-          <p class="format-note" id="bgremove-trace-instructions">切り抜きたい被写体の上でクリックしてください。AIが自動で対象物の輪郭を認識し、高精度な範囲を生成します。誤って含まれた部分は右クリックで除外指定できます。</p>
-          <p class="format-note" id="bgremove-trace-status"></p>
+          <p class="format-note" id="bgremove-trace-instructions">残したい対象物の上をクリックしてください。AIが自動でその対象物の輪郭を認識します。間違って含まれてしまった部分は、右クリックで「ここは違う」と伝えられます。</p>
           <div class="trace-canvas-wrap">
             <canvas id="bgremove-trace-canvas"></canvas>
-            <div class="trace-loading-overlay" id="bgremove-trace-loading">
-              <div class="trace-loading-spinner"></div>
-              <p id="bgremove-trace-loading-text">AIモデルを準備しています</p>
-              <div class="trace-loading-bar" id="bgremove-trace-loading-bar" hidden>
-                <div class="trace-loading-bar-fill" id="bgremove-trace-loading-fill"></div>
-              </div>
-              <p class="trace-loading-detail" id="bgremove-trace-loading-detail"></p>
-              <p class="trace-loading-sub" id="bgremove-trace-loading-sub">画像をクリックできるようになるまで、今しばらくお待ちください。</p>
-              <p class="trace-loading-elapsed" id="bgremove-trace-loading-elapsed"></p>
-            </div>
           </div>
           <div class="dropzone-buttons">
             <button type="button" class="file-btn-outline" id="bgremove-trace-clear">やり直す</button>
@@ -2162,37 +2151,37 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=121"></script>
-<script src="js/app.js?v=121"></script>
-<script src="js/settings.js?v=121"></script>
-<script src="js/tools/compress.js?v=121"></script>
-<script src="js/tools/convert.js?v=121"></script>
-<script src="js/tools/resize.js?v=121"></script>
-<script src="js/tools/exif.js?v=121"></script>
-<script src="js/tools/rotate.js?v=121"></script>
-<script src="js/tools/crop.js?v=121"></script>
-<script src="js/tools/filter.js?v=121"></script>
-<script src="js/tools/watermark.js?v=121"></script>
-<script src="js/tools/qrcode.js?v=121"></script>
-<script src="js/tools/qrcodescan.js?v=121"></script>
-<script src="js/tools/charcount.js?v=121"></script>
-<script src="js/tools/colorpicker.js?v=121"></script>
-<script src="js/tools/unitconvert.js?v=121"></script>
-<script src="js/tools/datecalc.js?v=121"></script>
-<script src="js/tools/calculator.js?v=121"></script>
-<script src="js/tools/pdfdesk.js?v=121"></script>
-<script src="js/tools/pdf2image.js?v=121"></script>
-<script src="js/tools/pdfcompress.js?v=121"></script>
-<script src="js/tools/pdf2text.js?v=121"></script>
-<script src="js/tools/rename.js?v=121"></script>
-<script src="js/tools/tts.js?v=121"></script>
-<script src="js/tools/video2mp3.js?v=121"></script>
-<script src="js/tools/videocompress.js?v=121"></script>
-<script src="js/tools/videotrim.js?v=121"></script>
-<script src="js/tools/videoconvert.js?v=121"></script>
-<script src="js/tools/videothumbnail.js?v=121"></script>
-<script src="js/tools/videorotate.js?v=121"></script>
-<script src="js/tools/videovolume.js?v=121"></script>
-<script src="js/tools/bgremove.js?v=121"></script>
+<script src="js/common.js?v=122"></script>
+<script src="js/app.js?v=122"></script>
+<script src="js/settings.js?v=122"></script>
+<script src="js/tools/compress.js?v=122"></script>
+<script src="js/tools/convert.js?v=122"></script>
+<script src="js/tools/resize.js?v=122"></script>
+<script src="js/tools/exif.js?v=122"></script>
+<script src="js/tools/rotate.js?v=122"></script>
+<script src="js/tools/crop.js?v=122"></script>
+<script src="js/tools/filter.js?v=122"></script>
+<script src="js/tools/watermark.js?v=122"></script>
+<script src="js/tools/qrcode.js?v=122"></script>
+<script src="js/tools/qrcodescan.js?v=122"></script>
+<script src="js/tools/charcount.js?v=122"></script>
+<script src="js/tools/colorpicker.js?v=122"></script>
+<script src="js/tools/unitconvert.js?v=122"></script>
+<script src="js/tools/datecalc.js?v=122"></script>
+<script src="js/tools/calculator.js?v=122"></script>
+<script src="js/tools/pdfdesk.js?v=122"></script>
+<script src="js/tools/pdf2image.js?v=122"></script>
+<script src="js/tools/pdfcompress.js?v=122"></script>
+<script src="js/tools/pdf2text.js?v=122"></script>
+<script src="js/tools/rename.js?v=122"></script>
+<script src="js/tools/tts.js?v=122"></script>
+<script src="js/tools/video2mp3.js?v=122"></script>
+<script src="js/tools/videocompress.js?v=122"></script>
+<script src="js/tools/videotrim.js?v=122"></script>
+<script src="js/tools/videoconvert.js?v=122"></script>
+<script src="js/tools/videothumbnail.js?v=122"></script>
+<script src="js/tools/videorotate.js?v=122"></script>
+<script src="js/tools/videovolume.js?v=122"></script>
+<script src="js/tools/bgremove.js?v=122"></script>
 </body>
 </html>
