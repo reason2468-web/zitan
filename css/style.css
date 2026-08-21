@@ -382,6 +382,14 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   tab-size: 4;
 }
 
+.micrecord-timer {
+  font-size: 2.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--moss-dark);
+  text-align: center;
+}
+
 .speedtest-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
