@@ -53,7 +53,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=141">
+<link rel="stylesheet" href="css/style.css?v=142">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
 </head>
@@ -106,7 +106,7 @@
           <line x1="6.5" y1="14" x2="17.5" y2="14"/>
         </svg>
         <span class="category-label">開発中(β版)</span>
-        <span class="category-count">3</span>
+        <span class="category-count">4</span>
       </button>
     </nav>
     <nav class="category-list settings-nav">
@@ -742,6 +742,24 @@
           <span class="tool-text">
             <span class="tool-label">文章の読み上げ</span>
             <span class="tool-caption">文章をパソコンの<br>音声で読み上げ</span>
+          </span>
+        </button>
+
+        <button class="tool-card" data-tool="transcribe" style="--gem:#C25B8F;">
+          <span class="tool-sphere-wrap">
+            <span class="tool-shadow"></span>
+            <span class="tool-bubble">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="12" rx="3"/>
+                <path d="M5 11a7 7 0 0 0 14 0"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="8" y1="22" x2="16" y2="22"/>
+              </svg>
+            </span>
+          </span>
+          <span class="tool-text">
+            <span class="tool-label">音声・動画の<br>文字起こし</span>
+            <span class="tool-caption">AIで音声の内容を<br>テキスト化</span>
           </span>
         </button>
 
@@ -1988,6 +2006,50 @@
         <div class="result-area" id="tts-result"></div>
       </section>
 
+      <section id="transcribe" class="tool-panel">
+        <h2>音声・動画の文字起こし</h2>
+        <p class="desc">録音した音声や動画から、AI(Whisper)が話している内容をテキストに変換します。パソコンへのインストールは不要で、ファイルが外部のサーバーに送られることもありません。</p>
+        <p class="format-note">MP3・WAV・M4Aなどの音声ファイル、MP4・MOVなどの動画ファイルに対応しています(動画は自動で音声だけを取り出してから処理します)。</p>
+        <p class="format-note">精度を優先するほど、AIモデルのダウンロード量・処理時間が増えます。長い音声・動画は、文字起こしに数分〜十数分ほどかかることがあります。</p>
+
+        <div class="controls">
+          <div class="dropzone" data-target="transcribe-upload" id="transcribe-dropzone">
+            <p>ここに音声・動画ファイルをドラッグ&ドロップ<br>または</p>
+            <div class="dropzone-buttons">
+              <label class="file-btn">ファイルを選択<input type="file" id="transcribe-upload" accept="audio/*,video/*" hidden></label>
+            </div>
+          </div>
+          <div id="transcribe-file-info"></div>
+
+          <div class="custom-width-row">
+            <label>精度:
+              <select id="transcribe-quality">
+                <option value="small" selected>高精度(推奨・約970MB)</option>
+                <option value="base">バランス(約290MB)</option>
+                <option value="tiny">高速(約150MB)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="dropzone-buttons">
+            <button type="button" class="run-btn" id="transcribe-run" disabled>文字起こしを始める</button>
+            <button type="button" class="run-btn pyrun-stop-btn" id="transcribe-stop" hidden>■ 停止する</button>
+          </div>
+          <div class="loading-banner" id="transcribe-status"></div>
+        </div>
+
+        <div class="result-area">
+          <p class="format-note" id="transcribe-error" hidden></p>
+          <label class="template-label" id="transcribe-output-label" hidden>文字起こし結果
+            <textarea id="transcribe-output" class="template-input" rows="10" readonly></textarea>
+          </label>
+          <div class="dropzone-buttons">
+            <button type="button" class="file-btn-outline" id="transcribe-copy" hidden>コピーする</button>
+            <button type="button" class="file-btn-outline" id="transcribe-download" hidden>テキストをダウンロード</button>
+          </div>
+        </div>
+      </section>
+
       <section id="pyrun" class="tool-panel">
         <h2>Pythonを実行</h2>
         <p class="desc">ブラウザの中だけでPythonのコードを実行します。パソコンへのインストールは不要で、入力したコードが外部のサーバーに送られることもありません。</p>
@@ -2348,39 +2410,40 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
 <script src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script src="js/common.js?v=141"></script>
-<script src="js/app.js?v=141"></script>
-<script src="js/settings.js?v=141"></script>
-<script src="js/tools/compress.js?v=141"></script>
-<script src="js/tools/convert.js?v=141"></script>
-<script src="js/tools/resize.js?v=141"></script>
-<script src="js/tools/exif.js?v=141"></script>
-<script src="js/tools/rotate.js?v=141"></script>
-<script src="js/tools/crop.js?v=141"></script>
-<script src="js/tools/filter.js?v=141"></script>
-<script src="js/tools/watermark.js?v=141"></script>
-<script src="js/tools/qrcode.js?v=141"></script>
-<script src="js/tools/qrcodescan.js?v=141"></script>
-<script src="js/tools/charcount.js?v=141"></script>
-<script src="js/tools/colorpicker.js?v=141"></script>
-<script src="js/tools/unitconvert.js?v=141"></script>
-<script src="js/tools/datecalc.js?v=141"></script>
-<script src="js/tools/calculator.js?v=141"></script>
-<script src="js/tools/pdfdesk.js?v=141"></script>
-<script src="js/tools/pdf2image.js?v=141"></script>
-<script src="js/tools/pdfcompress.js?v=141"></script>
-<script src="js/tools/pdf2text.js?v=141"></script>
-<script src="js/tools/rename.js?v=141"></script>
-<script src="js/tools/tts.js?v=141"></script><script src="js/tools/pyrun.js?v=141"></script>
-<script src="js/tools/jsrun.js?v=141"></script>
-<script src="js/tools/speedtest.js?v=141"></script>
-<script src="js/tools/video2mp3.js?v=141"></script>
-<script src="js/tools/videocompress.js?v=141"></script>
-<script src="js/tools/videotrim.js?v=141"></script>
-<script src="js/tools/videoconvert.js?v=141"></script>
-<script src="js/tools/videothumbnail.js?v=141"></script>
-<script src="js/tools/videorotate.js?v=141"></script>
-<script src="js/tools/videovolume.js?v=141"></script>
-<script src="js/tools/bgremove.js?v=141"></script>
+<script src="js/common.js?v=142"></script>
+<script src="js/app.js?v=142"></script>
+<script src="js/settings.js?v=142"></script>
+<script src="js/tools/compress.js?v=142"></script>
+<script src="js/tools/convert.js?v=142"></script>
+<script src="js/tools/resize.js?v=142"></script>
+<script src="js/tools/exif.js?v=142"></script>
+<script src="js/tools/rotate.js?v=142"></script>
+<script src="js/tools/crop.js?v=142"></script>
+<script src="js/tools/filter.js?v=142"></script>
+<script src="js/tools/watermark.js?v=142"></script>
+<script src="js/tools/qrcode.js?v=142"></script>
+<script src="js/tools/qrcodescan.js?v=142"></script>
+<script src="js/tools/charcount.js?v=142"></script>
+<script src="js/tools/colorpicker.js?v=142"></script>
+<script src="js/tools/unitconvert.js?v=142"></script>
+<script src="js/tools/datecalc.js?v=142"></script>
+<script src="js/tools/calculator.js?v=142"></script>
+<script src="js/tools/pdfdesk.js?v=142"></script>
+<script src="js/tools/pdf2image.js?v=142"></script>
+<script src="js/tools/pdfcompress.js?v=142"></script>
+<script src="js/tools/pdf2text.js?v=142"></script>
+<script src="js/tools/rename.js?v=142"></script>
+<script src="js/tools/tts.js?v=142"></script><script src="js/tools/pyrun.js?v=142"></script>
+<script src="js/tools/jsrun.js?v=142"></script>
+<script src="js/tools/speedtest.js?v=142"></script>
+<script src="js/tools/transcribe.js?v=142"></script>
+<script src="js/tools/video2mp3.js?v=142"></script>
+<script src="js/tools/videocompress.js?v=142"></script>
+<script src="js/tools/videotrim.js?v=142"></script>
+<script src="js/tools/videoconvert.js?v=142"></script>
+<script src="js/tools/videothumbnail.js?v=142"></script>
+<script src="js/tools/videorotate.js?v=142"></script>
+<script src="js/tools/videovolume.js?v=142"></script>
+<script src="js/tools/bgremove.js?v=142"></script>
 </body>
 </html>
