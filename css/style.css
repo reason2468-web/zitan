@@ -349,6 +349,33 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   font-size: 0.85em;
 }
 
+#bgremove-status:not(:empty) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--moss-dark);
+  background: var(--moss-pale);
+  border: 1px solid var(--moss);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 14px 0;
+}
+#bgremove-status:not(:empty)::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 3px solid var(--line);
+  border-top-color: var(--moss);
+  border-radius: 50%;
+  animation: bgremove-status-spin 0.8s linear infinite;
+}
+@keyframes bgremove-status-spin {
+  to { transform: rotate(360deg); }
+}
+
 .dropzone {
   border: 2px dashed var(--line);
   border-radius: 14px;

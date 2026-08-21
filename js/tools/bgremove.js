@@ -63,9 +63,7 @@
   }
 
   async function removeOneBackground(module, file) {
-    // 実機比較の結果、軽量版(isnet_quint8)は輪郭が欠けることが多かったため、
-    // 精度を優先してisnet_fp16(標準品質・約90MB)を使う
-    const outBlob = await module.removeBackground(file, { model: "isnet_fp16" });
+    const outBlob = await module.removeBackground(file, { model: "isnet_quint8" });
     return new File([outBlob], suggestRemovedName(file.name), { type: "image/png" });
   }
 
@@ -74,14 +72,14 @@
 
     const isFirstLoad = !bgRemoveModuleLoaded;
     if (isFirstLoad) {
-      const proceed = confirm("背景削除の前に、初回のみAIモデル(約90MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
+      const proceed = confirm("背景削除の前に、初回のみAIモデル(数十MB)をダウンロードします。通信環境によっては少し時間がかかります。続けますか?");
       if (!proceed) return;
     }
 
     autoRunBtn.disabled = true;
     manualStartBtn.disabled = true;
     listEl.innerHTML = "";
-    statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…(約90MBのため少し時間がかかります)" : "";
+    statusEl.textContent = isFirstLoad ? "AIモデルを読み込んでいます。完了するまで少々お待ちください。(数十MBのため少し時間がかかります)" : "";
 
     let module;
     try {
@@ -345,7 +343,7 @@
       traceStage.hidden = false;
       traceStage.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      statusEl.textContent = isFirstLoad ? "AIモデルを読み込み中です…" : "画像を解析中です…";
+      statusEl.textContent = isFirstLoad ? "AIモデルを読み込んでいます。完了するまで少々お待ちください。" : "画像を解析中です…";
       try {
         const { model, processor } = await getSamModel();
         const { RawImage } = await getSamModule();
