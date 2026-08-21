@@ -350,10 +350,27 @@ function buildSaveName(context) {
   return formatSaveName(template, context);
 }
 
+// 元のファイル名が重複していると、フォルダ保存やZIP展開時に後の同名ファイルが
+// 前のファイルを上書きしてしまう(例: ブラウザから複数枚とも"images.jpg"のまま
+// 取り込んだ場合)ため、保存直前に同名ファイルへ連番を振って一意にする
+function dedupeFileNames(files) {
+  const counts = new Map();
+  return files.map((file) => {
+    const count = counts.get(file.name) || 0;
+    counts.set(file.name, count + 1);
+    if (count === 0) return file;
+    const dot = file.name.lastIndexOf(".");
+    const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+    const ext = dot > 0 ? file.name.slice(dot) : "";
+    return new File([file], `${base} (${count + 1})${ext}`, { type: file.type });
+  });
+}
+
 // 設定の保存先(フォルダ指定 / ZIPダウンロード / 単体ダウンロード)に従って処理済みファイルを保存する
 // context: { category: "画像", tool: "圧縮" } のように、保存名テンプレートに使う情報を渡す
 // isBatch: 複数ファイルを選んで処理した場合はtrue(結果が1件だけでもZIPにまとめる)
 async function saveProcessedFiles(files, context, isBatch = false) {
+  files = dedupeFileNames(files);
   const baseName = buildSaveName(context);
 
   if (getSaveMode() === "folder" && supportsFolderSave() && chosenDirectoryHandle) {
