@@ -12,9 +12,14 @@
   const errorEl = document.getElementById("micrecord-error");
   const recordArea = document.getElementById("micrecord-record-area");
   const postArea = document.getElementById("micrecord-post-area");
+  const previewRawBtn = document.getElementById("micrecord-preview-raw");
+  const rawAudioEl = document.getElementById("micrecord-raw-audio");
   const optNoise = document.getElementById("micrecord-opt-noise");
   const optQuality = document.getElementById("micrecord-opt-quality");
   const optVolume = document.getElementById("micrecord-opt-volume");
+  const previewBtn = document.getElementById("micrecord-preview");
+  const previewAudioEl = document.getElementById("micrecord-preview-audio");
+  const previewVolumeEl = document.getElementById("micrecord-preview-volume");
   const exportBtn = document.getElementById("micrecord-export");
   const backBtn = document.getElementById("micrecord-back");
   const statusEl = document.getElementById("micrecord-status");
@@ -30,6 +35,9 @@
   let recordingStartedAt = 0;
   let confirmedMs = 0;
   let timerInterval = null;
+  let rawSamplesCache = null; // 録音完了後、結合済みの元音声(Float32Array)をキャッシュしておく
+  let rawAudioUrl = null;
+  let previewAudioUrl = null;
 
   // ---------- 録音まわり ----------
 
@@ -65,6 +73,12 @@
     finishBtn.hidden = state !== "paused";
     finishBtn.disabled = !hasSegments;
     resetBtn.hidden = state === "idle";
+    previewRawBtn.hidden = state !== "paused";
+    previewRawBtn.disabled = !hasSegments;
+    if (state !== "paused") {
+      rawAudioEl.hidden = true;
+      rawAudioEl.pause();
+    }
   }
 
   function pickMimeType() {
@@ -94,6 +108,7 @@
       const durationMs = Date.now() - recordingStartedAt;
       segments.push({ blob, durationMs });
       trash = [];
+      rawSamplesCache = null;
       confirmedMs += durationMs;
       recordingStartedAt = 0;
       updateSegmentInfo();
@@ -138,6 +153,7 @@
     if (!segments.length) return;
     const removed = segments.pop();
     trash.push(removed);
+    rawSamplesCache = null;
     confirmedMs -= removed.durationMs;
     updateTimerDisplay();
     updateSegmentInfo();
@@ -148,6 +164,7 @@
     if (!trash.length) return;
     const restored = trash.pop();
     segments.push(restored);
+    rawSamplesCache = null;
     confirmedMs += restored.durationMs;
     updateTimerDisplay();
     updateSegmentInfo();
@@ -170,9 +187,16 @@
     }
     segments = [];
     trash = [];
+    rawSamplesCache = null;
     confirmedMs = 0;
     recordingStartedAt = 0;
     timerEl.textContent = "00:00";
+    if (rawAudioUrl) { URL.revokeObjectURL(rawAudioUrl); rawAudioUrl = null; }
+    if (previewAudioUrl) { URL.revokeObjectURL(previewAudioUrl); previewAudioUrl = null; }
+    rawAudioEl.removeAttribute("src");
+    previewAudioEl.removeAttribute("src");
+    previewAudioEl.hidden = true;
+    previewVolumeEl.hidden = true;
     updateSegmentInfo();
     updateButtons("idle");
     postArea.hidden = true;
@@ -192,12 +216,37 @@
     recordArea.hidden = true;
     postArea.hidden = false;
     resultArea.innerHTML = "";
+    previewAudioEl.hidden = true;
+    previewAudioEl.pause();
+    previewVolumeEl.hidden = true;
   });
 
   backBtn.addEventListener("click", () => {
     postArea.hidden = true;
     recordArea.hidden = false;
     updateButtons(segments.length ? "paused" : "idle");
+    previewAudioEl.pause();
+  });
+
+  previewRawBtn.addEventListener("click", async () => {
+    previewRawBtn.disabled = true;
+    errorEl.hidden = true;
+    const originalText = previewRawBtn.textContent;
+    previewRawBtn.textContent = "読み込み中...";
+    try {
+      const samples = await concatenateSegments(segments);
+      const wav = encodeWav(samples, TARGET_SAMPLE_RATE);
+      if (rawAudioUrl) URL.revokeObjectURL(rawAudioUrl);
+      rawAudioUrl = URL.createObjectURL(wav);
+      rawAudioEl.src = rawAudioUrl;
+      rawAudioEl.hidden = false;
+      rawAudioEl.play();
+    } catch (err) {
+      errorEl.textContent = "再生用の音声を準備できませんでした。もう一度お試しください。";
+      errorEl.hidden = false;
+    }
+    previewRawBtn.disabled = !segments.length;
+    previewRawBtn.textContent = originalText;
   });
 
   // ---------- 書き出し(結合・ノイズ除去・音質調整・音量・MP3化) ----------
@@ -354,28 +403,86 @@
     }
   }
 
+  // 結合済みの元音声はキャッシュして使い回す(区間を変更したらキャッシュを破棄している)
+  async function getRawSamples() {
+    if (!rawSamplesCache) {
+      rawSamplesCache = await concatenateSegments(segments);
+    }
+    return rawSamplesCache;
+  }
+
+  // チェックの状態に応じて、元音声に処理を適用する(試し聴き・書き出しの両方から使う)
+  async function processSamples(onStatus) {
+    let samples = await getRawSamples();
+    if (optNoise.checked) {
+      onStatus("AIでノイズを除去しています。(初回のみエンジンのダウンロードが必要です)");
+      samples = await denoiseSamples(samples);
+    }
+    if (optQuality.checked) {
+      onStatus("音質を整えています...");
+      samples = await applyQualityChain(samples, TARGET_SAMPLE_RATE);
+    }
+    if (optVolume.checked) {
+      onStatus("音量を調整しています...");
+      samples = normalizeVolume(samples);
+    }
+    return samples;
+  }
+
+  function computeLoudnessLabel(samples) {
+    let peak = 0;
+    let sumSq = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const v = samples[i];
+      const av = Math.abs(v);
+      if (av > peak) peak = av;
+      sumSq += v * v;
+    }
+    const rms = Math.sqrt(sumSq / Math.max(1, samples.length));
+    const peakDb = peak > 0 ? 20 * Math.log10(peak) : -Infinity;
+    const rmsDb = rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+    let label = "ちょうどいい音量です";
+    if (rmsDb < -30) label = "やや小さめの音量です";
+    else if (rmsDb > -12) label = "やや大きめの音量です(割れて聞こえないか確認してください)";
+    const peakLabel = peakDb === -Infinity ? "-∞" : peakDb.toFixed(1);
+    return `${label}(ピーク音量の目安: ${peakLabel}dB、0dBに近いほど大きい音です)`;
+  }
+
+  previewBtn.addEventListener("click", async () => {
+    if (!segments.length) return;
+    previewBtn.disabled = true;
+    exportBtn.disabled = true;
+    backBtn.disabled = true;
+    previewVolumeEl.hidden = true;
+    try {
+      const samples = await processSamples((msg) => { statusEl.textContent = msg; });
+      statusEl.textContent = "";
+      const wav = encodeWav(samples, TARGET_SAMPLE_RATE);
+      if (previewAudioUrl) URL.revokeObjectURL(previewAudioUrl);
+      previewAudioUrl = URL.createObjectURL(wav);
+      previewAudioEl.src = previewAudioUrl;
+      previewAudioEl.hidden = false;
+      previewVolumeEl.textContent = computeLoudnessLabel(samples);
+      previewVolumeEl.hidden = false;
+      previewAudioEl.play();
+    } catch (err) {
+      statusEl.textContent = "";
+      resultArea.innerHTML = `<p style="color:red;">試し聴き用の音声を準備できませんでした。もう一度お試しください。</p>`;
+    }
+    previewBtn.disabled = false;
+    exportBtn.disabled = false;
+    backBtn.disabled = false;
+  });
+
   exportBtn.addEventListener("click", async () => {
     if (!segments.length) return;
     exportBtn.disabled = true;
     backBtn.disabled = true;
+    previewBtn.disabled = true;
     resultArea.innerHTML = "";
 
     try {
-      statusEl.textContent = "音声を結合しています...";
-      let samples = await concatenateSegments(segments);
-
-      if (optNoise.checked) {
-        statusEl.textContent = "AIでノイズを除去しています。(初回のみエンジンのダウンロードが必要です)";
-        samples = await denoiseSamples(samples);
-      }
-      if (optQuality.checked) {
-        statusEl.textContent = "音質を整えています...";
-        samples = await applyQualityChain(samples, TARGET_SAMPLE_RATE);
-      }
-      if (optVolume.checked) {
-        statusEl.textContent = "音量を調整しています...";
-        samples = normalizeVolume(samples);
-      }
+      const samples = await processSamples((msg) => { statusEl.textContent = msg; });
 
       statusEl.textContent = "MP3に変換しています。(初回のみ変換エンジンのダウンロードが必要です)";
       const wavBlob = encodeWav(samples, TARGET_SAMPLE_RATE);
@@ -404,5 +511,6 @@
 
     exportBtn.disabled = false;
     backBtn.disabled = false;
+    previewBtn.disabled = false;
   });
 })();

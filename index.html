@@ -53,7 +53,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+JP:wght@600;700;900&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=152">
+<link rel="stylesheet" href="css/style.css?v=153">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css" media="print" onload="this.media='all'">
 <noscript>
@@ -2110,6 +2110,10 @@
             <button type="button" class="file-btn-outline" id="micrecord-redo" hidden disabled>↷ やり直す</button>
           </div>
           <div class="dropzone-buttons">
+            <button type="button" class="file-btn-outline" id="micrecord-preview-raw" hidden disabled>▶ ここまでの録音を再生</button>
+          </div>
+          <audio id="micrecord-raw-audio" controls hidden style="width:100%; margin-top:6px;"></audio>
+          <div class="dropzone-buttons">
             <button type="button" class="run-btn" id="micrecord-finish" hidden disabled>録音を完了する</button>
             <button type="button" class="file-btn-outline" id="micrecord-reset" hidden>最初からやり直す</button>
           </div>
@@ -2118,6 +2122,7 @@
 
         <div class="controls" id="micrecord-post-area" hidden>
           <h3>仕上げの処理</h3>
+          <p class="format-note">チェックを変えたら「試し聴きする」で、保存する前に音を確認できます。気に入った組み合わせのまま「MP3で書き出す」を押してください。</p>
           <div class="radio-group">
             <label class="radio-option">
               <input type="checkbox" id="micrecord-opt-noise" checked>
@@ -2132,6 +2137,11 @@
               <span>音量を上げる</span>
             </label>
           </div>
+          <div class="dropzone-buttons">
+            <button type="button" class="file-btn-outline" id="micrecord-preview">▶ 試し聴きする</button>
+          </div>
+          <audio id="micrecord-preview-audio" controls hidden style="width:100%; margin-top:6px;"></audio>
+          <p class="format-note" id="micrecord-preview-volume" hidden></p>
           <div class="dropzone-buttons">
             <button type="button" class="run-btn" id="micrecord-export">MP3で書き出す</button>
             <button type="button" class="file-btn-outline" id="micrecord-back">録音に戻る</button>
@@ -2538,43 +2548,43 @@
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/edit/matchbrackets.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
 <script defer src="js/vendor/ffmpeg/ffmpeg.min.js"></script>
-<script defer src="js/common.js?v=152"></script>
-<script defer src="js/app.js?v=152"></script>
-<script defer src="js/settings.js?v=152"></script>
-<script defer src="js/tools/compress.js?v=152"></script>
-<script defer src="js/tools/convert.js?v=152"></script>
-<script defer src="js/tools/resize.js?v=152"></script>
-<script defer src="js/tools/exif.js?v=152"></script>
-<script defer src="js/tools/rotate.js?v=152"></script>
-<script defer src="js/tools/crop.js?v=152"></script>
-<script defer src="js/tools/filter.js?v=152"></script>
-<script defer src="js/tools/watermark.js?v=152"></script>
-<script defer src="js/tools/qrcode.js?v=152"></script>
-<script defer src="js/tools/qrcodescan.js?v=152"></script>
-<script defer src="js/tools/charcount.js?v=152"></script>
-<script defer src="js/tools/colorpicker.js?v=152"></script>
-<script defer src="js/tools/unitconvert.js?v=152"></script>
-<script defer src="js/tools/datecalc.js?v=152"></script>
-<script defer src="js/tools/calculator.js?v=152"></script>
-<script defer src="js/tools/pdfdesk.js?v=152"></script>
-<script defer src="js/tools/pdf2image.js?v=152"></script>
-<script defer src="js/tools/pdfcompress.js?v=152"></script>
-<script defer src="js/tools/pdf2text.js?v=152"></script>
-<script defer src="js/tools/rename.js?v=152"></script>
-<script defer src="js/tools/tts.js?v=152"></script>
-<script defer src="js/tools/pyrun.js?v=152"></script>
-<script defer src="js/tools/jsrun.js?v=152"></script>
-<script defer src="js/tools/speedtest.js?v=152"></script>
-<script defer src="js/tools/transcribe.js?v=152"></script>
-<script defer src="js/tools/micrecord.js?v=152"></script>
-<script defer src="js/tools/screenocr.js?v=152"></script>
-<script defer src="js/tools/video2mp3.js?v=152"></script>
-<script defer src="js/tools/videocompress.js?v=152"></script>
-<script defer src="js/tools/videotrim.js?v=152"></script>
-<script defer src="js/tools/videoconvert.js?v=152"></script>
-<script defer src="js/tools/videothumbnail.js?v=152"></script>
-<script defer src="js/tools/videorotate.js?v=152"></script>
-<script defer src="js/tools/videovolume.js?v=152"></script>
-<script defer src="js/tools/bgremove.js?v=152"></script>
+<script defer src="js/common.js?v=153"></script>
+<script defer src="js/app.js?v=153"></script>
+<script defer src="js/settings.js?v=153"></script>
+<script defer src="js/tools/compress.js?v=153"></script>
+<script defer src="js/tools/convert.js?v=153"></script>
+<script defer src="js/tools/resize.js?v=153"></script>
+<script defer src="js/tools/exif.js?v=153"></script>
+<script defer src="js/tools/rotate.js?v=153"></script>
+<script defer src="js/tools/crop.js?v=153"></script>
+<script defer src="js/tools/filter.js?v=153"></script>
+<script defer src="js/tools/watermark.js?v=153"></script>
+<script defer src="js/tools/qrcode.js?v=153"></script>
+<script defer src="js/tools/qrcodescan.js?v=153"></script>
+<script defer src="js/tools/charcount.js?v=153"></script>
+<script defer src="js/tools/colorpicker.js?v=153"></script>
+<script defer src="js/tools/unitconvert.js?v=153"></script>
+<script defer src="js/tools/datecalc.js?v=153"></script>
+<script defer src="js/tools/calculator.js?v=153"></script>
+<script defer src="js/tools/pdfdesk.js?v=153"></script>
+<script defer src="js/tools/pdf2image.js?v=153"></script>
+<script defer src="js/tools/pdfcompress.js?v=153"></script>
+<script defer src="js/tools/pdf2text.js?v=153"></script>
+<script defer src="js/tools/rename.js?v=153"></script>
+<script defer src="js/tools/tts.js?v=153"></script>
+<script defer src="js/tools/pyrun.js?v=153"></script>
+<script defer src="js/tools/jsrun.js?v=153"></script>
+<script defer src="js/tools/speedtest.js?v=153"></script>
+<script defer src="js/tools/transcribe.js?v=153"></script>
+<script defer src="js/tools/micrecord.js?v=153"></script>
+<script defer src="js/tools/screenocr.js?v=153"></script>
+<script defer src="js/tools/video2mp3.js?v=153"></script>
+<script defer src="js/tools/videocompress.js?v=153"></script>
+<script defer src="js/tools/videotrim.js?v=153"></script>
+<script defer src="js/tools/videoconvert.js?v=153"></script>
+<script defer src="js/tools/videothumbnail.js?v=153"></script>
+<script defer src="js/tools/videorotate.js?v=153"></script>
+<script defer src="js/tools/videovolume.js?v=153"></script>
+<script defer src="js/tools/bgremove.js?v=153"></script>
 </body>
 </html>
