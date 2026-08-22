@@ -382,6 +382,31 @@ h1, h2, .brand, .category-label, .category-title, .tool-label {
   tab-size: 4;
 }
 
+.bmi-table-wrap {
+  overflow-x: auto;
+  margin: 14px 0;
+}
+.bmi-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.bmi-table th, .bmi-table td {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+.bmi-table th {
+  background: var(--moss-pale);
+  color: var(--moss-dark);
+}
+.bmi-table tr.bmi-table-current td {
+  background: var(--moss-pale);
+  font-weight: 700;
+  color: var(--moss-dark);
+}
+
 .micrecord-timer {
   font-size: 2.4rem;
   font-weight: 800;
